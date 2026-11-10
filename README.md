@@ -1,26 +1,36 @@
-# The Verge — Изометрический клиент на Unity 6
+# The Verge — клиент на Unity 6
 
-Чистый старт клиентской части игры на базе протокола Ultima Online (ModernUO).
+2D-изометрическая онлайн-игра с механиками Ultima Online. Сервер — форк ModernUO (папка `../../server/ModernUO`), клиент — этот Unity-проект. Сейчас переносим оригинальные механики UO эпохи Renaissance (одна Фелукка, ориентир — русские pre-AoS шарды вроде The Abyss); графика — позже.
 
-## Архитектура проекта
-- **Core (`Assets/TheVerge/Core/`):** интерфейсы клиент-серверных адаптеров (`ISessionAdapter`, `IMovementAdapter`, `IWorldEntityAdapter`, `IInventoryAdapter`, `IGameplayActionsAdapter`, `IStatsAdapter`), все DTO-модели, примитивы (`Serial`, `Point3D`, `Direction`, `Layer`, `SkillType`, `SkillInfo`), маппер координат, модель статов `PlayerStatsModel` и автономный симулятор `LocalWorldSimulator`.
-- **Network (`Assets/TheVerge/Network/`):** реализация сетевого адаптера `ModernUONetworkAdapter`, протокол UO 7.0.95.0, сжатие Хаффмана, таблица длин пакетов, билдер создания персонажа (0xF8), процессоры пакетов авторизации, мира, движения, боя, инвентаря, диалогов и статов, а также встроенный сервер-эмулятор `ModernUOLoopbackServer`.
-- **Presentation (`Assets/TheVerge/Presentation/`):**
-  - **Авторизация и персонаж (`UI/Auth/`):** экраны логина (`LoginView`), выбора персонажа (`CharacterSelectView`), создания персонажа (`CharacterCreationView`), панели 52 навыков (`CharacterCreationSkillsPanel`), UI-тема (`AuthUiTheme`) и оркестратор (`AuthAndCharacterUiPresenter`).
-  - **Системы:** меню выхода по Escape (`InGameEscapeMenuModal`), контроль бездействия AFK (`InactivityAfkController`), сетевой HUD (`NetworkStatusHudPresenter`), презентер статов (`PlayerStatsPresenter`) и диспетчер потоков (`MainThreadDispatcher`).
-  - **Точка входа (`Bootstrap/GameBootstrap.cs`):** автоматическое обнаружение живого сервера ModernUO (порт 2593) либо прозрачный запуск локального loopback-сервера (порт 2594), инициализация адаптеров и показ окна авторизации.
-- **Scenes (`Assets/TheVerge/Scenes/`):** стартовая сцена `Bootstrap.unity`.
-- **Editor (`Assets/TheVerge/Editor/`):** утилита `BootstrapBuild.cs` (меню `The Verge -> Prepare Bootstrap Scene`).
+## С чего начать
 
-## Запуск
-1. Откройте Unity Hub.
-2. Нажмите **Add** (Добавить проект из диска) и выберите папку `The Verge` (версия Unity 6000.6.8f1).
-3. Откройте сцену `Assets/TheVerge/Scenes/Bootstrap.unity` и нажмите **Play**.
+| Кто вы | Что читать |
+|---|---|
+| ИИ-агент | `AGENTS.md` — правила и карта всех документов |
+| Руководитель проекта | `PROGRESS.md` — что готово и что сейчас в работе |
 
 ## Документы
-- `AGENTS.md` — правила для ИИ-агентов и код-стайл.
-- `PROGRESS.md` — статус и хроника; `docs/PLAN.md` — план стадий 0–9.
-- `docs/TARGET.md` — версия клиента 7.0.95.0, эра Renaissance (только Фелукка), пакеты и лимиты сервера.
-- `docs/adr/` — принятые решения; `docs/server-patches.md` — правки сервера ModernUO.
 
-Для полноценной работы нужны файлы данных классического клиента UO 7.0.95.0 (свои, в репозитории их нет) — см. `docs/adr/0003-world-data.md`.
+| Файл | О чём |
+|---|---|
+| `AGENTS.md` | правила для агентов: архитектура, код-стайл, порядок работы, как отвечать |
+| `PROGRESS.md` | статус стадий и задач, хроника |
+| `docs/PLAN.md` | план стадий 0–9 и трека F, критерии готовности |
+| `docs/TARGET.md` | версия клиента, эра, пакеты этой версии, лимиты сервера, настройки стенда |
+| `docs/SERVER-MAP.md` | где что лежит на сервере ModernUO |
+| `docs/TECH-DEBT.md` | технический долг прототипа и сервера |
+| `docs/server-patches.md` | все наши правки сервера |
+| `docs/protocol/extensions.md` | чем наш протокол отличается от ModernUO |
+| `docs/adr/` | принятые решения и их причины |
+| `CONTROLS.md` | управление (клавиши и мышь) |
+| `docs/archive/` | старые версии и прошлые аудиты — только история |
+
+## Как запустить (сейчас — прототип)
+
+1. Откройте Unity Hub → проект **The Verge** (Unity 6000.6.8f1). Если проекта нет в списке: **Add → Add project from disk** → папка `client/The Verge`.
+2. В окне Project откройте `Assets/TheVerge/Scenes/Bootstrap.unity` и нажмите **Play**.
+3. Если сервер ModernUO запущен, клиент подключится к нему (`127.0.0.1:2593`); если нет — запустит встроенный учебный сервер (это старый код прототипа, он будет удалён, см. `docs/TECH-DEBT.md`).
+
+Код прототипа в `Assets/TheVerge` написан до нынешних правил и будет постепенно заменён (`docs/TECH-DEBT.md` §1).
+
+Для полноценной работы нужна установка классического клиента UO (файлы данных принадлежат EA, в репозитории их нет) — см. `docs/adr/0003-world-data.md`.

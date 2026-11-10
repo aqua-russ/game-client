@@ -2,7 +2,7 @@
 
 Журнал всех отличий нашего форка `server/ModernUO` от оригинала. Обязателен к обновлению при любой правке сервера (`AGENTS.md` §5). Правки движка (`Projects/Server`) — только с разрешения руководителя, с комментарием `// THE VERGE: <причина>`.
 
-*Состояние на 10 ноября 2026. Все правки закоммичены в ветке `theverge/uor-baseline` (от `main`), в `origin` не отправлялись. Сборка после правок **не проверена** (нет .NET в среде агента): первая задача на стенде — `dotnet build`.*
+*Состояние на 10 ноября 2026. Все правки закоммичены в ветке `theverge/uor-baseline` и отправлены в `github.com/aqua-russ/game-server`. Сборка `dotnet build -c Release` проходит без ошибок и предупреждений. Список сверен с `git diff` против оригинала ModernUO: 16 файлов, все в таблицах ниже.*
 
 ## Движок (`Projects/Server`) — риск конфликтов при обновлении ModernUO
 
@@ -15,7 +15,7 @@
 | `Network/Packets/OutgoingVendorSellPackets.cs`, `OutgoingMenuPackets.cs`, `OutgoingEquipmentPackets.cs` | строки с длиной впереди — UTF-8, длина в байтах | кириллица | ADR 0005 |
 | `Network/Packets/OutgoingMobilePackets.cs` | имя в 0x98 и 0x11 — UTF-8 | кириллица | ADR 0005 |
 
-Новые правки помечены `// THE VERGE:`; в трёх первых файлах (ранние правки) комментариев нет — добавить.
+Новые правки помечены `// THE VERGE:`; в трёх ранних (`SpanWriter.cs`, `OutgoingAccountPackets.cs`, `OutgoingMobilePackets.cs`) комментариев нет — долг, см. [`TECH-DEBT.md`](TECH-DEBT.md).
 
 ## Контент (`Projects/UOContent`)
 
@@ -44,3 +44,7 @@
 | `Distribution/Configuration/FeatureFlags/flags.json` | `speedhack_detection` = true | ADR 0004 |
 
 `Distribution/Configuration/` не хранится в git (так задумано в ModernUO). Версионируемая копия значений The Verge — `Distribution/ConfigurationTemplates/theverge/` (см. README там); при изменении реальной конфигурации обновлять шаблон. Копия до правок 10 ноября — `Distribution/Configuration/backup-2026-11-10/` (локально).
+
+## Как проверить, что журнал полный
+
+В папке сервера: `git diff --stat upstream/main...theverge/uor-baseline -- Projects`. Каждый файл из вывода должен быть в таблицах выше; если появился новый — журнал отстал.
