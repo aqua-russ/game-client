@@ -43,4 +43,4 @@
 | `Distribution/Configuration/modernuo.json` | значения эры UOR, `theverge.sandbox.enable`, `serverListing.address` = 127.0.0.1 | ADR 0002, ADR 0004 |
 | `Distribution/Configuration/FeatureFlags/flags.json` | `speedhack_detection` = true | ADR 0004 |
 
-`Distribution/Configuration/` не хранится в git; копия до изменений — `Distribution/Configuration/backup-2026-11-10/`.
+`Distribution/Configuration/` не хранится в git (так задумано в ModernUO). Версионируемая копия значений The Verge — `Distribution/ConfigurationTemplates/theverge/` (см. README там); при изменении реальной конфигурации обновлять шаблон. Копия до правок 10 ноября — `Distribution/Configuration/backup-2026-11-10/` (локально).

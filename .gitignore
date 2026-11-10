@@ -202,11 +202,34 @@ node_modules/
 *.key
 *.p12
 *.pfx
-client-unity/remaster/
 *.zip
-.local/
 
+# ===== The Verge =====
+# Unity генерирует *.csproj/*.sln в корне — их игнорируем (см. выше), а наши проекты в dotnet/ — храним.
+!/dotnet/*.sln
+!/dotnet/**/*.csproj
 
-# The Verge: сборки вне Unity (dotnet/)
+# Сборки dotnet-проектов
 /dotnet/**/bin/
 /dotnet/**/obj/
+/dotnet/**/TestResults/
+
+# Файлы данных Ultima Online принадлежат EA — в репозиторий не кладём (ADR 0003).
+# Пути к ним задаются в настройках клиента, рекомендуемое место — /UOData/.
+/UOData/
+*.mul
+*.uop
+*.idx
+verdata.mul
+
+# Эталонные логи трафика (Стадия 0) обязаны храниться, несмотря на правило *.log выше.
+!/golden/
+!/golden/**
+
+# Дампы пакетов и сбои, локальные настройки
+/packet-dumps/
+*.dmp
+.idea/
+.vscode/
+.claude/
+.utmp/
