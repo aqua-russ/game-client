@@ -1,0 +1,11 @@
+{
+  "name": "TheVerge.Presentation",
+  "rootNamespace": "TheVerge.Presentation",
+  "references": [
+    "TheVerge.Core",
+    "TheVerge.Network",
+    "Unity.InputSystem",
+    "UnityEngine.UI",
+    "Unity.TextMeshPro"
+  ]
+}

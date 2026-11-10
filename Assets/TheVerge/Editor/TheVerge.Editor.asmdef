@@ -1,0 +1,14 @@
+{
+  "name": "TheVerge.Editor",
+  "rootNamespace": "TheVerge.Editor",
+  "references": [
+    "TheVerge.Core",
+    "TheVerge.Network",
+    "TheVerge.Presentation",
+    "Unity.TextMeshPro",
+    "Unity.TextMeshPro.Editor"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ]
+}
