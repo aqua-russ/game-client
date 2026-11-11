@@ -1,7 +1,7 @@
 using System;
 using TheVerge.Core.Session;
 using TheVerge.Data;
-using TheVerge.Network;
+using TheVerge.Network.Compression;
 
 namespace TheVerge.Bot
 {
@@ -15,7 +15,7 @@ namespace TheVerge.Bot
         {
             Console.WriteLine("TheVerge.Bot: сборки загружены:");
             PrintAssembly(typeof(ServerLimits));
-            PrintAssembly(typeof(HuffmanCodec));
+            PrintAssembly(typeof(HuffmanDecoder));
             PrintAssembly(typeof(DataAssembly));
             Console.WriteLine("TheVerge.Bot: ОК (вход на сервер появится на Стадии 1)");
             return 0;

@@ -37,6 +37,4 @@ namespace-folder | Assets/TheVerge/Core/Simulators/LocalWorldSimulator.cs | TheV
 namespace-folder | Assets/TheVerge/Core/State/PlayerStatsModel.cs | TheVerge.Core | 1
 namespace-folder | Assets/TheVerge/Core/Threading/IMainThreadDispatcher.cs | TheVerge.Core | 1
 namespace-folder | Assets/TheVerge/Core/World/MinocMapSliceData.cs | TheVerge.Core | 1
-namespace-folder | Assets/TheVerge/Network/Compression/HuffmanCodec.cs | TheVerge.Network | 1
-nesting | Assets/TheVerge/Network/Compression/HuffmanCodec.cs | HuffmanCodec.HuffmanCodec | 4
 types-per-file | Assets/TheVerge/Core/Adapters/AdapterModels.cs |  | 11

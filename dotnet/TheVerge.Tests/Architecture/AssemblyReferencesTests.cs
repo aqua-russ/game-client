@@ -3,7 +3,7 @@ using System.Reflection;
 using NUnit.Framework;
 using TheVerge.Core;
 using TheVerge.Data;
-using TheVerge.Network;
+using TheVerge.Network.Compression;
 
 namespace TheVerge.Tests.Architecture
 {
@@ -15,7 +15,7 @@ namespace TheVerge.Tests.Architecture
     public sealed class AssemblyReferencesTests
     {
         private static readonly Assembly CoreAssembly = typeof(Serial).Assembly;
-        private static readonly Assembly NetworkAssembly = typeof(HuffmanCodec).Assembly;
+        private static readonly Assembly NetworkAssembly = typeof(HuffmanDecoder).Assembly;
         private static readonly Assembly DataAssemblyRef = typeof(DataAssembly).Assembly;
 
         [Test]

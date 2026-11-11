@@ -14,7 +14,7 @@
 |---|---|---|
 | 1. Presentation, Bootstrap, Editor | удалить старый UI на uGUI (окна входа, окно сети, меню Esc, AFK), диспетчер главного потока; упростить `GameBootstrap`; метка `PresentationAssembly`; `.asmdef` без uGUI и TextMeshPro | ✅ |
 | 2. Network | удалить `ModernUONetworkAdapter`, `Processors/*` (7), `ModernUOLoopbackServer`, `PacketLengthTable`, `CharacterCreationPacketBuilder` | ✅ |
-| 3. Network/Compression | `HuffmanCodec` → `HuffmanDecoder` через тесты (эталон сервера, переполнение буфера) | ⬜ |
+| 3. Network/Compression | `HuffmanCodec` → `HuffmanDecoder` через тесты (эталон сервера, переполнение буфера) | ✅ |
 | 4. Core | удалить фасады `Adapters/*`, симулятор, кусок карты Минока, навыки GDD, модель статов, диспетчер, `CoordinateMapper`, `INetworkDiagnostics`; базовые типы — тесты по серверу и папка `Core/Primitives` | ⬜ |
 | 5. Core/Movement | `MovementSequenceQueue` через тесты по серверу | ⬜ |
 
@@ -45,5 +45,5 @@
 
 | Файл | Что внутри | Как уменьшать |
 |---|---|---|
-| `tools/check/architecture-baseline.txt` | нарушения правил размеров и именования в коде прототипа: было 75, после частей 1–2 аудита — 38 | исправил или удалил файл → `tools/check/architecture.sh --shrink-baseline` |
+| `tools/check/architecture-baseline.txt` | нарушения правил размеров и именования в коде прототипа: было 75, после частей 1–3 аудита — 36 | исправил или удалил файл → `tools/check/architecture.sh --shrink-baseline` |
 | `tools/check/dotnet-warnings-baseline.txt` | предупреждения CS0067 (неиспользуемые события): было 8, осталось 6 — все в `LocalWorldSimulator` (удаляется в части 4 аудита) | исчезают вместе с файлами; строку убрать руками |
