@@ -1,7 +1,7 @@
 using System.Linq;
 using System.Reflection;
 using NUnit.Framework;
-using TheVerge.Core;
+using TheVerge.Core.Primitives;
 using TheVerge.Data;
 using TheVerge.Network.Compression;
 

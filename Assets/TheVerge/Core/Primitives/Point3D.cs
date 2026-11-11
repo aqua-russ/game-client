@@ -1,9 +1,9 @@
 using System;
 
-namespace TheVerge.Core
+namespace TheVerge.Core.Primitives
 {
     /// <summary>
-    /// Серверные целочисленные координаты клетки мира UO (X, Y) и дискретной высоты Z.
+    /// Клетка мира UO: X, Y и высота Z. В пакетах Z — один байт со знаком (кроме 0x1B, где два байта).
     /// </summary>
     public readonly struct Point3D : IEquatable<Point3D>
     {
@@ -21,7 +21,8 @@ namespace TheVerge.Core
         }
 
         /// <summary>
-        /// Возвращает координаты соседней клетки при шаге в указанном направлении.
+        /// Соседняя клетка в направлении шага; флаг бега не влияет. Высоту не меняет: её считает проверка шага.
+        /// Сдвиги — как у сервера: Projects/Server/Mobiles/Movement.cs, Movement.Offset.
         /// </summary>
         public Point3D GetStepPoint(Direction direction)
         {

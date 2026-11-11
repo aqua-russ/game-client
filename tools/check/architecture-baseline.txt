@@ -2,39 +2,4 @@
 # Проверка не ругается на эти строки, пока значение не растёт. Новые строки — только с согласия
 # пользователя (AGENTS.md §8). Исправил — запусти tools/check/architecture.sh --shrink-baseline.
 
-ctor-params | Assets/TheVerge/Core/Adapters/AdapterModels.cs | MobileStateDto.MobileStateDto | 10
-ctor-params | Assets/TheVerge/Core/Adapters/AdapterModels.cs | PlayerStatusDto.PlayerStatusDto | 15
-ctor-params | Assets/TheVerge/Core/Adapters/CharacterCreationArgsDto.cs | CharacterCreationArgsDto.CharacterCreationArgsDto | 14
-file-lines | Assets/TheVerge/Core/Simulators/LocalWorldSimulator.cs |  | 688
-file-name | Assets/TheVerge/Core/Adapters/AdapterModels.cs | AdapterModels | 1
-interface-members | Assets/TheVerge/Core/Adapters/IGameplayActionsAdapter.cs | IGameplayActionsAdapter | 21
-interface-members | Assets/TheVerge/Core/Adapters/IInventoryAdapter.cs | IInventoryAdapter | 15
-interface-members | Assets/TheVerge/Core/Adapters/ISessionAdapter.cs | ISessionAdapter | 15
-method-lines | Assets/TheVerge/Core/Simulators/LocalWorldSimulator.cs | LocalWorldSimulator.LiftItem | 57
-method-lines | Assets/TheVerge/Core/Simulators/LocalWorldSimulator.cs | LocalWorldSimulator.RequestHotbarAbility | 51
-method-lines | Assets/TheVerge/Core/Simulators/LocalWorldSimulator.cs | LocalWorldSimulator.SpawnDefaultWorld | 65
-method-lines | Assets/TheVerge/Core/Simulators/LocalWorldSimulator.cs | LocalWorldSimulator.TryRequestMove | 89
-namespace-folder | Assets/TheVerge/Core/Adapters/AdapterModels.cs | TheVerge.Core | 1
-namespace-folder | Assets/TheVerge/Core/Adapters/CharacterCreationArgsDto.cs | TheVerge.Core | 1
-namespace-folder | Assets/TheVerge/Core/Adapters/CharacterListDto.cs | TheVerge.Core | 1
-namespace-folder | Assets/TheVerge/Core/Adapters/CharacterPresetType.cs | TheVerge.Core | 1
-namespace-folder | Assets/TheVerge/Core/Adapters/CharacterSlotDto.cs | TheVerge.Core | 1
-namespace-folder | Assets/TheVerge/Core/Adapters/IGameplayActionsAdapter.cs | TheVerge.Core | 1
-namespace-folder | Assets/TheVerge/Core/Adapters/IInventoryAdapter.cs | TheVerge.Core | 1
-namespace-folder | Assets/TheVerge/Core/Adapters/IMovementAdapter.cs | TheVerge.Core | 1
-namespace-folder | Assets/TheVerge/Core/Adapters/ISessionAdapter.cs | TheVerge.Core | 1
-namespace-folder | Assets/TheVerge/Core/Adapters/IStatsAdapter.cs | TheVerge.Core | 1
-namespace-folder | Assets/TheVerge/Core/Adapters/IWorldEntityAdapter.cs | TheVerge.Core | 1
-namespace-folder | Assets/TheVerge/Core/Coordinates/CoordinateMapper.cs | TheVerge.Core | 1
 namespace-folder | Assets/TheVerge/Core/Movement/MovementSequenceQueue.cs | TheVerge.Core | 1
-namespace-folder | Assets/TheVerge/Core/Primitives/Direction.cs | TheVerge.Core | 1
-namespace-folder | Assets/TheVerge/Core/Primitives/Layer.cs | TheVerge.Core | 1
-namespace-folder | Assets/TheVerge/Core/Primitives/Point3D.cs | TheVerge.Core | 1
-namespace-folder | Assets/TheVerge/Core/Primitives/Serial.cs | TheVerge.Core | 1
-namespace-folder | Assets/TheVerge/Core/Primitives/SkillInfo.cs | TheVerge.Core | 1
-namespace-folder | Assets/TheVerge/Core/Primitives/SkillType.cs | TheVerge.Core | 1
-namespace-folder | Assets/TheVerge/Core/Simulators/LocalWorldSimulator.cs | TheVerge.Core | 1
-namespace-folder | Assets/TheVerge/Core/State/PlayerStatsModel.cs | TheVerge.Core | 1
-namespace-folder | Assets/TheVerge/Core/Threading/IMainThreadDispatcher.cs | TheVerge.Core | 1
-namespace-folder | Assets/TheVerge/Core/World/MinocMapSliceData.cs | TheVerge.Core | 1
-types-per-file | Assets/TheVerge/Core/Adapters/AdapterModels.cs |  | 11
