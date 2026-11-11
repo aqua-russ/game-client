@@ -12,7 +12,7 @@
 
 | Часть (ADR 0011) | Что | Статус |
 |---|---|---|
-| 1. Presentation, Bootstrap, Editor | удалить старый UI на uGUI (окна входа, окно сети, меню Esc, AFK), диспетчер главного потока; упростить `GameBootstrap`; метка `PresentationAssembly`; `.asmdef` без uGUI и TextMeshPro | ⬜ |
+| 1. Presentation, Bootstrap, Editor | удалить старый UI на uGUI (окна входа, окно сети, меню Esc, AFK), диспетчер главного потока; упростить `GameBootstrap`; метка `PresentationAssembly`; `.asmdef` без uGUI и TextMeshPro | ✅ |
 | 2. Network | удалить `ModernUONetworkAdapter`, `Processors/*` (7), `ModernUOLoopbackServer`, `PacketLengthTable`, `CharacterCreationPacketBuilder` | ⬜ |
 | 3. Network/Compression | `HuffmanCodec` → `HuffmanDecoder` через тесты (эталон сервера, переполнение буфера) | ⬜ |
 | 4. Core | удалить фасады `Adapters/*`, симулятор, кусок карты Минока, навыки GDD, модель статов, диспетчер, `CoordinateMapper`, `INetworkDiagnostics`; базовые типы — тесты по серверу и папка `Core/Primitives` | ⬜ |
@@ -24,7 +24,7 @@
 |---|---|---|---|
 | Способ ввода (`Active Input Handling`) | «Both» (старый Input Manager и Input System) — Unity предупреждает при открытии | только Input System | Стадия 3 (вместе с вводом WASD) |
 | ~~Ссылка `Presentation → Network` в `.asmdef`~~ | ~~есть~~ | снята; объекты связывает `Bootstrap` | ✅ задача 0.1 |
-| Пакет `com.unity.ugui` и TextMeshPro | нужны старому UI | убрать, когда весь UI переедет на UI Toolkit | после Стадии 1 |
+| Пакет `com.unity.ugui`, TextMeshPro и папка `Assets/TextMesh Pro` | старый UI удалён (0.9), сборки `TheVerge.*` на них не ссылаются, но пакеты ещё в `manifest.json` | убрать из `manifest.json` и папку TextMesh Pro — только с согласия пользователя (AGENTS §6) | вместе с задачей 1.16 |
 | Стартовая сцена | `Assets/TheVerge/Scenes/Bootstrap.unity`, собирается меню `The Verge → Prepare Bootstrap Scene` | так и остаётся; при открытии проекта Unity может показать пустую сцену «Untitled» — нужно открыть `Bootstrap` | — |
 
 ## 3. Сервер
@@ -45,5 +45,5 @@
 
 | Файл | Что внутри | Как уменьшать |
 |---|---|---|
-| `tools/check/architecture-baseline.txt` | 75 нарушений правил размеров и именования в коде прототипа | исправил или удалил файл → `tools/check/architecture.sh --shrink-baseline` |
+| `tools/check/architecture-baseline.txt` | нарушения правил размеров и именования в коде прототипа: было 75, после части 1 аудита — 51 | исправил или удалил файл → `tools/check/architecture.sh --shrink-baseline` |
 | `tools/check/dotnet-warnings-baseline.txt` | 8 предупреждений CS0067 (неиспользуемые события) в `LocalWorldSimulator`, `InventoryPacketProcessor`, `LoginPacketProcessor` | исчезают вместе с файлами; строку убрать руками |
