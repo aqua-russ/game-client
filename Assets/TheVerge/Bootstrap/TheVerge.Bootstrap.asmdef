@@ -1,0 +1,10 @@
+{
+  "name": "TheVerge.Bootstrap",
+  "rootNamespace": "TheVerge.Bootstrap",
+  "references": [
+    "TheVerge.Core",
+    "TheVerge.Network",
+    "TheVerge.Data",
+    "TheVerge.Presentation"
+  ]
+}

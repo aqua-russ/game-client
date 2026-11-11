@@ -166,7 +166,7 @@ The Verge/                         ← корень репо = Unity-проек�
 ### 3.1. Язык
 
 - **C# 9** (предел компилятора Unity 6). Нельзя: file-scoped namespace, `global using`, `record struct`, required members. `dotnet/*.csproj` держат `<LangVersion>9.0</LangVersion>` и `netstandard2.1`, чтобы ошибка ловилась без Unity.
-- Nullable включён во всех чистых сборках (Core, Network, Data) один раз на сборку: файл `csc.rsp` со строкой `-nullable:enable` рядом с `.asmdef` и `<Nullable>enable</Nullable>` в `.csproj`. В каждом файле `#nullable` не пишется.
+- Nullable включён во всех чистых сборках (Core, Network, Data) один раз на сборку: файл `csc.rsp` со строкой `-nullable:enable` рядом с `.asmdef` и `<Nullable>enable</Nullable>` в `.csproj`. В каждом файле `#nullable` не пишется. Исключение — файлы долга прототипа из `docs/TECH-DEBT.md`: первая строка `#nullable disable` ([ADR 0009](docs/adr/0009-check-tooling-and-debt-baseline.md)); новый код так не делает.
 - Горячий путь (обработчики пакетов, `Tick`, проверка шага): без LINQ, без `new` ссылочных типов и без упаковки в установившемся режиме; буферы — из `ArrayPool`.
 - Внешние пакеты (NuGet, `manifest.json`) в Core, Network и Data не добавляются: только стандартная библиотека `netstandard2.1`.
 - Классы по умолчанию `sealed`. Наследование — только осознанно.
@@ -289,11 +289,12 @@ The Verge/                         ← корень репо = Unity-проек�
 
 ## 7. Определение «готово»
 
-Одна команда проверяет первые два пункта: `tools/check/all.sh` (печатает `ОК` или список ошибок). Пока задача 0.1 из `PROGRESS.md` не закрыта, этих инструментов нет — их создание и есть задача 0.1.
+Одна команда проверяет первые два пункта: `tools/check/all.sh` (печатает `ОК` или список ошибок). Компиляция Unity — `tools/check/unity.sh` (только Mac, редактор закрыт); `tools/check/all.sh --unity` — всё вместе.
+Старые нарушения прототипа записаны в `tools/check/architecture-baseline.txt` и `dotnet-warnings-baseline.txt` ([ADR 0009](docs/adr/0009-check-tooling-and-debt-baseline.md)): проверка падает на новом нарушении и на росте старого. Строки оттуда только убираются (`architecture.sh --shrink-baseline`); добавлять — только с согласия пользователя.
 
 - [ ] `dotnet build dotnet/TheVerge.sln` и `dotnet test` — зелёные, без новых предупреждений.
 - [ ] `tools/check/architecture.sh` — без нарушений (размеры, `using UnityEngine` в Core/Network/Data, запрещённые API).
-- [ ] Если менялись Presentation/Bootstrap/Editor — Unity компилируется в batchmode без ошибок (`-batchmode -nographics -quit`, лог проверен).
+- [ ] Если менялись Presentation/Bootstrap/Editor — Unity компилируется в batchmode без ошибок (`tools/check/unity.sh`, лог в `Logs/check/unity.log`).
 - [ ] Если менялся сервер — `dotnet build` ModernUO зелёный.
 - [ ] Новый код парсинга покрыт тестом на реальных байтах.
 - [ ] Новые файлы в пределах §3.2; старые файлы не выросли (см. §8).

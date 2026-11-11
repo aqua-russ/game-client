@@ -1,8 +1,9 @@
 using TheVerge.Core;
 using TheVerge.Network;
+using TheVerge.Presentation;
 using UnityEngine;
 
-namespace TheVerge.Presentation
+namespace TheVerge.Bootstrap
 {
     /// <summary>
     /// Главная точка входа в проект на сцене Bootstrap.unity.

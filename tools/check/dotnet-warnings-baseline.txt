@@ -1,0 +1,10 @@
+# Известные предупреждения сборки dotnet (код прототипа). Формат: код | файл | текст.
+# Новые строки — только с согласия пользователя (AGENTS.md §7–§8).
+CS0067 | Assets/TheVerge/Core/Simulators/LocalWorldSimulator.cs | The event 'LocalWorldSimulator.OnCharacterDeleteFailed' is never used
+CS0067 | Assets/TheVerge/Core/Simulators/LocalWorldSimulator.cs | The event 'LocalWorldSimulator.OnMobileMoved' is never used
+CS0067 | Assets/TheVerge/Core/Simulators/LocalWorldSimulator.cs | The event 'LocalWorldSimulator.OnMobileNameUpdated' is never used
+CS0067 | Assets/TheVerge/Core/Simulators/LocalWorldSimulator.cs | The event 'LocalWorldSimulator.OnMobileUpdated' is never used
+CS0067 | Assets/TheVerge/Core/Simulators/LocalWorldSimulator.cs | The event 'LocalWorldSimulator.OnSessionError' is never used
+CS0067 | Assets/TheVerge/Core/Simulators/LocalWorldSimulator.cs | The event 'LocalWorldSimulator.OnTargetCursorRequested' is never used
+CS0067 | Assets/TheVerge/Network/Processors/InventoryPacketProcessor.cs | The event 'InventoryPacketProcessor.OnItemUnequipped' is never used
+CS0067 | Assets/TheVerge/Network/Processors/LoginPacketProcessor.cs | The event 'LoginPacketProcessor.OnSessionError' is never used

@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Исходники живут в Unity: Assets/TheVerge/Data. Этот проект собирает те же файлы вне Unity
+    для тестов и бота. Файлы сюда не копируются. LangVersion 9.0 и netstandard2.1 — пределы Unity 6
+    (AGENTS.md §3.1): ошибка ловится здесь, без запуска Unity.
+  -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <RootNamespace>TheVerge.Data</RootNamespace>
+    <AssemblyName>TheVerge.Data</AssemblyName>
+    <EnableDefaultItems>false</EnableDefaultItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="../Assets/TheVerge/Data/**/*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="TheVerge.Core.csproj" />
+  </ItemGroup>
+</Project>

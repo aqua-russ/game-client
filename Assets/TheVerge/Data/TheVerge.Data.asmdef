@@ -1,0 +1,8 @@
+{
+  "name": "TheVerge.Data",
+  "rootNamespace": "TheVerge.Data",
+  "references": [
+    "TheVerge.Core"
+  ],
+  "noEngineReferences": true
+}

@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Консольный клиент без Unity: те же Core, Network и Data, что в игре. Presentation ему не нужна. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <RootNamespace>TheVerge.Bot</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../TheVerge.Core.csproj" />
+    <ProjectReference Include="../TheVerge.Network.csproj" />
+    <ProjectReference Include="../TheVerge.Data.csproj" />
+  </ItemGroup>
+</Project>

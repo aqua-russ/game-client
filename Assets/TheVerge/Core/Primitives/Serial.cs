@@ -21,7 +21,7 @@ namespace TheVerge.Core
         }
 
         public bool Equals(Serial other) => Value == other.Value;
-        public override bool Equals(object obj) => obj is Serial other && Equals(other);
+        public override bool Equals(object? obj) => obj is Serial other && Equals(other);
         public override int GetHashCode() => (int)Value;
         public int CompareTo(Serial other) => Value.CompareTo(other.Value);
         public override string ToString() => $"0x{Value:X8}";

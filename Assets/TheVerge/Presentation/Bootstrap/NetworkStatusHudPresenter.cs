@@ -1,5 +1,5 @@
 using System;
-using TheVerge.Network;
+using TheVerge.Core.Ports;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -13,7 +13,7 @@ namespace TheVerge.Presentation
     /// </summary>
     public sealed class NetworkStatusHudPresenter : MonoBehaviour
     {
-        private ModernUONetworkAdapter _networkAdapter;
+        private INetworkDiagnostics _diagnostics;
         private TheVerge.Core.PlayerStatsModel _playerStats;
         private bool _isUsingSimulator;
 
@@ -35,9 +35,9 @@ namespace TheVerge.Presentation
 
         public void SetVisible(bool visible) => _canvasObj?.SetActive(visible);
 
-        public void Initialize(ModernUONetworkAdapter networkAdapter, bool isUsingSimulator)
+        public void Initialize(INetworkDiagnostics diagnostics, bool isUsingSimulator)
         {
-            _networkAdapter = networkAdapter;
+            _diagnostics = diagnostics;
             _isUsingSimulator = isUsingSimulator;
 
             BuildUI();
@@ -249,7 +249,7 @@ namespace TheVerge.Presentation
         {
             if (_headerTitleText == null) return;
 
-            if (_isUsingSimulator || _networkAdapter == null)
+            if (_isUsingSimulator || _diagnostics == null)
             {
                 if (_isCollapsed)
                 {
@@ -271,25 +271,25 @@ namespace TheVerge.Presentation
                 return;
             }
 
-            string modePrefix = _networkAdapter.IsLiveServer
+            string modePrefix = _diagnostics.IsLiveServer
                 ? "🟢 Живой ModernUO (2593)"
-                : $"🟡 TCP-сервер ({_networkAdapter.ConnectedPort})";
+                : $"🟡 TCP-сервер ({_diagnostics.ConnectedPort})";
 
             string statsSummary = _playerStats != null
                 ? $"HP:{_playerStats.Hits}/{_playerStats.MaxHits} STAM:{_playerStats.Stamina}/{_playerStats.MaxStamina} MANA:{_playerStats.Mana}/{_playerStats.MaxMana} | Вес:{_playerStats.Weight}/{_playerStats.MaxWeight}"
-                : $"TX: {_networkAdapter.SentPacketsCount} RX: {_networkAdapter.ReceivedPacketsCount} пак";
+                : $"TX: {_diagnostics.SentPacketsCount} RX: {_diagnostics.ReceivedPacketsCount} пак";
 
             if (_isCollapsed)
             {
                 _headerTitleText.text = $"{modePrefix} | {statsSummary}";
-                _headerTitleText.color = _networkAdapter.IsConnected
+                _headerTitleText.color = _diagnostics.IsConnected
                     ? new Color(0.35f, 0.90f, 0.45f)
                     : new Color(0.95f, 0.45f, 0.35f);
             }
             else
             {
                 _headerTitleText.text = $"{modePrefix} | Сеть";
-                _headerTitleText.color = _networkAdapter.IsConnected
+                _headerTitleText.color = _diagnostics.IsConnected
                     ? new Color(0.35f, 0.90f, 0.45f)
                     : new Color(0.95f, 0.45f, 0.35f);
 
@@ -298,8 +298,8 @@ namespace TheVerge.Presentation
                     string heroName = _playerStats != null && !string.IsNullOrEmpty(_playerStats.Name)
                         ? $" [{_playerStats.Name}]"
                         : string.Empty;
-                    _statusText.text = $"{modePrefix}{heroName}\n{_networkAdapter.AuthStageDescription}";
-                    _statusText.color = _networkAdapter.IsConnected
+                    _statusText.text = $"{modePrefix}{heroName}\n{_diagnostics.AuthStageDescription}";
+                    _statusText.color = _diagnostics.IsConnected
                         ? new Color(0.35f, 0.90f, 0.45f)
                         : new Color(0.95f, 0.45f, 0.35f);
                 }
@@ -312,16 +312,16 @@ namespace TheVerge.Presentation
                         : "Ожидание пакета характеристик от сервера (0x11)...";
 
                     _statsText.text =
-                        $"TX: {_networkAdapter.SentPacketsCount} | RX: {_networkAdapter.ReceivedPacketsCount} ({_networkAdapter.ReceivedBytesCount} B) | Seq: {_networkAdapter.LastSequenceKey}\n{statsLine}";
+                        $"TX: {_diagnostics.SentPacketsCount} | RX: {_diagnostics.ReceivedPacketsCount} ({_diagnostics.ReceivedBytesCount} B) | Seq: {_diagnostics.LastSequenceKey}\n{statsLine}";
                 }
             }
         }
 
         private void OnTestRejectClicked()
         {
-            if (_networkAdapter != null)
+            if (_diagnostics != null)
             {
-                _networkAdapter.SimulateMoveReject();
+                _diagnostics.SimulateMoveReject();
             }
         }
     }

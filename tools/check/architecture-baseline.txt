@@ -1,0 +1,79 @@
+# Известные нарушения кода прототипа (docs/TECH-DEBT.md). Формат: правило | файл | что | значение.
+# Проверка не ругается на эти строки, пока значение не растёт. Новые строки — только с согласия
+# пользователя (AGENTS.md §8). Исправил — запусти tools/check/architecture.sh --shrink-baseline.
+
+ctor-params | Assets/TheVerge/Core/Adapters/AdapterModels.cs | MobileStateDto.MobileStateDto | 10
+ctor-params | Assets/TheVerge/Core/Adapters/AdapterModels.cs | PlayerStatusDto.PlayerStatusDto | 15
+ctor-params | Assets/TheVerge/Core/Adapters/CharacterCreationArgsDto.cs | CharacterCreationArgsDto.CharacterCreationArgsDto | 14
+file-lines | Assets/TheVerge/Core/Simulators/LocalWorldSimulator.cs |  | 688
+file-lines | Assets/TheVerge/Network/Loopback/ModernUOLoopbackServer.cs |  | 646
+file-lines | Assets/TheVerge/Network/ModernUONetworkAdapter.cs |  | 483
+file-lines | Assets/TheVerge/Presentation/Bootstrap/NetworkStatusHudPresenter.cs |  | 328
+file-name | Assets/TheVerge/Core/Adapters/AdapterModels.cs | AdapterModels | 1
+interface-members | Assets/TheVerge/Core/Adapters/IGameplayActionsAdapter.cs | IGameplayActionsAdapter | 21
+interface-members | Assets/TheVerge/Core/Adapters/IInventoryAdapter.cs | IInventoryAdapter | 15
+interface-members | Assets/TheVerge/Core/Adapters/ISessionAdapter.cs | ISessionAdapter | 15
+method-lines | Assets/TheVerge/Core/Simulators/LocalWorldSimulator.cs | LocalWorldSimulator.LiftItem | 57
+method-lines | Assets/TheVerge/Core/Simulators/LocalWorldSimulator.cs | LocalWorldSimulator.RequestHotbarAbility | 51
+method-lines | Assets/TheVerge/Core/Simulators/LocalWorldSimulator.cs | LocalWorldSimulator.SpawnDefaultWorld | 65
+method-lines | Assets/TheVerge/Core/Simulators/LocalWorldSimulator.cs | LocalWorldSimulator.TryRequestMove | 89
+method-lines | Assets/TheVerge/Network/Loopback/ModernUOLoopbackServer.cs | ModernUOLoopbackServer.HandleClientAsync | 418
+method-lines | Assets/TheVerge/Network/ModernUONetworkAdapter.cs | ModernUONetworkAdapter.ParsePacket | 61
+method-lines | Assets/TheVerge/Network/ModernUONetworkAdapter.cs | ModernUONetworkAdapter.WireProcessorEvents | 57
+method-lines | Assets/TheVerge/Network/Protocol/PacketLengthTable.cs | PacketLengthTable.PacketLengthTable | 100
+method-lines | Assets/TheVerge/Presentation/Bootstrap/NetworkStatusHudPresenter.cs | NetworkStatusHudPresenter.BuildUI | 118
+method-lines | Assets/TheVerge/Presentation/Bootstrap/NetworkStatusHudPresenter.cs | NetworkStatusHudPresenter.UpdateView | 71
+method-lines | Assets/TheVerge/Presentation/UI/Auth/CharacterCreationSkillsPanel.cs | CharacterCreationSkillsPanel.CharacterCreationSkillsPanel | 53
+method-lines | Assets/TheVerge/Presentation/UI/Auth/CharacterCreationView.cs | CharacterCreationView.CharacterCreationView | 67
+method-lines | Assets/TheVerge/Presentation/UI/Auth/CharacterSelectView.cs | CharacterSelectView.PopulateSlots | 64
+method-lines | Assets/TheVerge/Presentation/UI/Auth/LoginView.cs | LoginView.LoginView | 51
+method-lines | Assets/TheVerge/Presentation/UI/InGameEscapeMenuModal.cs | InGameEscapeMenuModal.BuildModal | 64
+namespace-folder | Assets/TheVerge/Core/Adapters/AdapterModels.cs | TheVerge.Core | 1
+namespace-folder | Assets/TheVerge/Core/Adapters/CharacterCreationArgsDto.cs | TheVerge.Core | 1
+namespace-folder | Assets/TheVerge/Core/Adapters/CharacterListDto.cs | TheVerge.Core | 1
+namespace-folder | Assets/TheVerge/Core/Adapters/CharacterPresetType.cs | TheVerge.Core | 1
+namespace-folder | Assets/TheVerge/Core/Adapters/CharacterSlotDto.cs | TheVerge.Core | 1
+namespace-folder | Assets/TheVerge/Core/Adapters/IGameplayActionsAdapter.cs | TheVerge.Core | 1
+namespace-folder | Assets/TheVerge/Core/Adapters/IInventoryAdapter.cs | TheVerge.Core | 1
+namespace-folder | Assets/TheVerge/Core/Adapters/IMovementAdapter.cs | TheVerge.Core | 1
+namespace-folder | Assets/TheVerge/Core/Adapters/ISessionAdapter.cs | TheVerge.Core | 1
+namespace-folder | Assets/TheVerge/Core/Adapters/IStatsAdapter.cs | TheVerge.Core | 1
+namespace-folder | Assets/TheVerge/Core/Adapters/IWorldEntityAdapter.cs | TheVerge.Core | 1
+namespace-folder | Assets/TheVerge/Core/Coordinates/CoordinateMapper.cs | TheVerge.Core | 1
+namespace-folder | Assets/TheVerge/Core/Movement/MovementSequenceQueue.cs | TheVerge.Core | 1
+namespace-folder | Assets/TheVerge/Core/Primitives/Direction.cs | TheVerge.Core | 1
+namespace-folder | Assets/TheVerge/Core/Primitives/Layer.cs | TheVerge.Core | 1
+namespace-folder | Assets/TheVerge/Core/Primitives/Point3D.cs | TheVerge.Core | 1
+namespace-folder | Assets/TheVerge/Core/Primitives/Serial.cs | TheVerge.Core | 1
+namespace-folder | Assets/TheVerge/Core/Primitives/SkillInfo.cs | TheVerge.Core | 1
+namespace-folder | Assets/TheVerge/Core/Primitives/SkillType.cs | TheVerge.Core | 1
+namespace-folder | Assets/TheVerge/Core/Simulators/LocalWorldSimulator.cs | TheVerge.Core | 1
+namespace-folder | Assets/TheVerge/Core/State/PlayerStatsModel.cs | TheVerge.Core | 1
+namespace-folder | Assets/TheVerge/Core/Threading/IMainThreadDispatcher.cs | TheVerge.Core | 1
+namespace-folder | Assets/TheVerge/Core/World/MinocMapSliceData.cs | TheVerge.Core | 1
+namespace-folder | Assets/TheVerge/Network/Compression/HuffmanCodec.cs | TheVerge.Network | 1
+namespace-folder | Assets/TheVerge/Network/Loopback/ModernUOLoopbackServer.cs | TheVerge.Network | 1
+namespace-folder | Assets/TheVerge/Network/Protocol/CharacterCreationPacketBuilder.cs | TheVerge.Network | 1
+namespace-folder | Assets/TheVerge/Network/Protocol/PacketLengthTable.cs | TheVerge.Network | 1
+namespace-folder | Assets/TheVerge/Presentation/Bootstrap/NetworkStatusHudPresenter.cs | TheVerge.Presentation | 1
+namespace-folder | Assets/TheVerge/Presentation/Bootstrap/PlayerStatsPresenter.cs | TheVerge.Presentation | 1
+namespace-folder | Assets/TheVerge/Presentation/Threading/MainThreadDispatcher.cs | TheVerge.Presentation | 1
+namespace-folder | Assets/TheVerge/Presentation/UI/Auth/AuthAndCharacterUiPresenter.cs | TheVerge.Presentation | 1
+namespace-folder | Assets/TheVerge/Presentation/UI/Auth/AuthUiTheme.cs | TheVerge.Presentation | 1
+namespace-folder | Assets/TheVerge/Presentation/UI/Auth/CharacterCreationSkillsPanel.cs | TheVerge.Presentation | 1
+namespace-folder | Assets/TheVerge/Presentation/UI/Auth/CharacterCreationView.cs | TheVerge.Presentation | 1
+namespace-folder | Assets/TheVerge/Presentation/UI/Auth/CharacterSelectView.cs | TheVerge.Presentation | 1
+namespace-folder | Assets/TheVerge/Presentation/UI/Auth/LoginView.cs | TheVerge.Presentation | 1
+namespace-folder | Assets/TheVerge/Presentation/UI/InGameEscapeMenuModal.cs | TheVerge.Presentation | 1
+namespace-folder | Assets/TheVerge/Presentation/UI/InactivityAfkController.cs | TheVerge.Presentation | 1
+nesting | Assets/TheVerge/Network/Compression/HuffmanCodec.cs | HuffmanCodec.HuffmanCodec | 4
+nesting | Assets/TheVerge/Network/Loopback/ModernUOLoopbackServer.cs | ModernUOLoopbackServer.HandleClientAsync | 6
+params | Assets/TheVerge/Network/Loopback/ModernUOLoopbackServer.cs | ModernUOLoopbackServer.SendMobileIncomingAsync | 8
+params | Assets/TheVerge/Network/Loopback/ModernUOLoopbackServer.cs | ModernUOLoopbackServer.SendWorldItemAsync | 7
+params | Assets/TheVerge/Presentation/UI/Auth/AuthUiTheme.cs | AuthUiTheme.CreatePanel | 8
+params | Assets/TheVerge/Presentation/UI/Auth/AuthUiTheme.cs | AuthUiTheme.CreateText | 7
+params | Assets/TheVerge/Presentation/UI/InGameEscapeMenuModal.cs | InGameEscapeMenuModal.CreateButton | 8
+params | Assets/TheVerge/Presentation/UI/InGameEscapeMenuModal.cs | InGameEscapeMenuModal.CreateText | 8
+types-per-file | Assets/TheVerge/Core/Adapters/AdapterModels.cs |  | 11
+types-per-file | Assets/TheVerge/Network/Protocol/PacketLengthTable.cs |  | 2
+unity-find | Assets/TheVerge/Presentation/UI/Auth/AuthAndCharacterUiPresenter.cs |  | 2

@@ -37,7 +37,7 @@ namespace TheVerge.Core
         public bool IsCriticallyOverloaded => MaxWeight > 0 && (Weight >= (ushort)(MaxWeight * 1.5f) || (Weight > MaxWeight && Stamina == 0));
         public float OverweightRatio => MaxWeight > 0 ? (float)Weight / MaxWeight : 1f;
 
-        public event Action<PlayerStatsModel> OnStatsChanged;
+        public event Action<PlayerStatsModel>? OnStatsChanged;
 
         public void ApplyFullStatus(PlayerStatusDto dto)
         {

@@ -1,3 +1,4 @@
+#nullable disable // долг прототипа: файл заменяется по docs/TECH-DEBT.md, разметку nullable не делаем
 using System;
 using System.Net;
 using System.Net.Sockets;

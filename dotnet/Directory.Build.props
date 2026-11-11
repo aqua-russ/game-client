@@ -1,0 +1,10 @@
+<Project>
+  <!--
+    Core, Network и Data лежат в одной папке dotnet/. Без раздельных obj/ и bin/ их restore и сборка
+    перетирают файлы друг друга, поэтому у каждого проекта своя подпапка.
+  -->
+  <PropertyGroup>
+    <BaseIntermediateOutputPath>$(MSBuildThisFileDirectory)obj/$(MSBuildProjectName)/</BaseIntermediateOutputPath>
+    <BaseOutputPath>$(MSBuildThisFileDirectory)bin/$(MSBuildProjectName)/</BaseOutputPath>
+  </PropertyGroup>
+</Project>

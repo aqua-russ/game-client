@@ -5,6 +5,7 @@
     "TheVerge.Core",
     "TheVerge.Network",
     "TheVerge.Presentation",
+    "TheVerge.Bootstrap",
     "Unity.TextMeshPro",
     "Unity.TextMeshPro.Editor"
   ],

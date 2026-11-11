@@ -1,9 +1,11 @@
+#nullable disable // долг прототипа: файл заменяется по docs/TECH-DEBT.md, разметку nullable не делаем
 using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using TheVerge.Core;
+using TheVerge.Core.Ports;
 using TheVerge.Network.Processors;
 
 namespace TheVerge.Network
@@ -15,6 +17,7 @@ namespace TheVerge.Network
         IInventoryAdapter,
         IGameplayActionsAdapter,
         IStatsAdapter,
+        INetworkDiagnostics,
         IDisposable
     {
         private readonly IMainThreadDispatcher _dispatcher;

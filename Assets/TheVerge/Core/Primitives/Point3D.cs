@@ -42,7 +42,7 @@ namespace TheVerge.Core
         }
 
         public bool Equals(Point3D other) => X == other.X && Y == other.Y && Z == other.Z;
-        public override bool Equals(object obj) => obj is Point3D other && Equals(other);
+        public override bool Equals(object? obj) => obj is Point3D other && Equals(other);
         public override int GetHashCode() => HashCode.Combine(X, Y, Z);
         public override string ToString() => $"({X}, {Y}, {Z})";
 
