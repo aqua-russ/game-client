@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Проверка «готово» (AGENTS.md §7) одной командой: сборка, тесты, архитектура, запуск бота.
+# Проверка «готово» (AGENTS.md §7) одной командой: матрица пакетов, сборка, тесты, архитектура, запуск бота.
 # Печатает «ОК» или «ОШИБКА: …». Ключ --unity дополнительно проверяет компиляцию в Unity (tools/check/unity.sh).
 # Подробные логи — в Logs/check/.
 set -u
@@ -23,7 +23,15 @@ if ! command -v python3 >/dev/null 2>&1; then
 fi
 export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1
 
-echo "1/4 Сборка dotnet…"
+echo "1/5 Матрица пакетов…"
+if ! tools/check/packets.sh > "$LOGS/packets.log" 2>&1; then
+  fail "матрица пакетов docs/protocol/packets.csv не прошла проверку."
+  grep -v "^ОК$" "$LOGS/packets.log"
+else
+  grep "Матрица пакетов" "$LOGS/packets.log"
+fi
+
+echo "2/5 Сборка dotnet…"
 if dotnet build "$SLN" --no-incremental -nologo -tl:off -clp:NoSummary -v:q > "$LOGS/build.log" 2>&1; then
   if ! python3 tools/check/dotnet_warnings.py "$LOGS/build.log"; then
     fail "появились новые предупреждения сборки (список выше). Исправьте код."
@@ -40,7 +48,7 @@ else
   exit 1
 fi
 
-echo "2/4 Тесты…"
+echo "3/5 Тесты…"
 if dotnet test "$SLN" --no-build -nologo -tl:off -v:q > "$LOGS/test.log" 2>&1; then
   grep -E "Passed!|Пройден" "$LOGS/test.log" | head -n 5
 else
@@ -48,7 +56,7 @@ else
   show_tail "$LOGS/test.log" 40
 fi
 
-echo "3/4 Архитектура…"
+echo "4/5 Архитектура…"
 if ! tools/check/architecture.sh > "$LOGS/architecture.log" 2>&1; then
   fail "нарушены правила архитектуры."
   grep -v "^ОК$" "$LOGS/architecture.log"
@@ -56,7 +64,7 @@ else
   tail -n 2 "$LOGS/architecture.log" | head -n 1
 fi
 
-echo "4/4 Запуск бота…"
+echo "5/5 Запуск бота…"
 if dotnet run --project dotnet/TheVerge.Bot --no-build > "$LOGS/bot.log" 2>&1 && grep -q "TheVerge.Bot: ОК" "$LOGS/bot.log"; then
   grep "TheVerge.Bot: ОК" "$LOGS/bot.log"
 else

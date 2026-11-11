@@ -1,0 +1,240 @@
+id,sub,dir,name,length,condition,server,priority,stage,status,source,note
+0x00,,c2s,CreateCharacterOld,104,до 7.0.16.0; наш клиент шлёт 0xF8,да,-,-,не используется,Projects/UOContent/Network/Packets/IncomingAccountPackets.cs#CreateCharacter,
+0x01,,c2s,Disconnect,5,,игнорирует,-,-,не используется,Projects/UOContent/Network/Packets/IncomingPlayerPackets.cs#Disconnect,сервер читает число и ничего не делает; выход — 0xD1
+0x02,,c2s,MoveRequest,7,,да,P0,3.5,нужно,Projects/UOContent/Network/Packets/IncomingMovementPackets.cs#MovementReq,
+0x03,,c2s,AsciiSpeech,var,,да,P2,4.3,нужно,Projects/UOContent/Network/Packets/IncomingMessagePackets.cs#AsciiSpeech,запасной вариант к 0xAD
+0x05,,c2s,AttackRequest,5,,да,P1,4.7,нужно,Projects/UOContent/Network/Packets/IncomingPlayerPackets.cs#AttackReq,
+0x06,,c2s,DoubleClick,5,,да,P1,2.9а,нужно,Projects/UOContent/Network/Packets/IncomingEntityPackets.cs#UseReq,
+0x07,,c2s,LiftRequest,7,,да,P1,5.1,нужно,Projects/UOContent/Network/Packets/IncomingItemPackets.cs#LiftReq,
+0x08,,c2s,DropRequest,15,6.0.1.7+ (ContainerGridLines): 15; раньше 14,да,P1,5.1,нужно,Projects/UOContent/Network/Packets/IncomingItemPackets.cs#DropReq,длину на 1 байт увеличивает ContainerGridPacketHandler
+0x09,,c2s,SingleClick,5,,да,P1,5.6,нужно,Projects/UOContent/Network/Packets/IncomingEntityPackets.cs#LookReq,
+0x0B,,s2c,Damage,7,5.0.0a+ (DamagePacket) вместо 0xBF 0x22; шлётся только при visibleDamage (в UOR по умолчанию выключено),настройка,P2,4.8,нужно,Projects/Server/Network/Packets/OutgoingDamagePackets.cs#SendDamage,
+0x11,,s2c,MobileStatus,var,свой персонаж — версия 3 (MobileStatusVersion эры UOR); чужой — краткий,да,P1,4.4,нужно,Projects/Server/Network/Packets/OutgoingMobilePackets.cs#SendMobileStatus,имя в UTF-8 (E1)
+0x12,,c2s,TextCommand,var,,да,P1,4.5,нужно,Projects/UOContent/Network/Packets/IncomingPlayerPackets.cs#TextCommand,подкоманда — 1 байт типа сразу после длины; дальше текст ASCII
+0x12,0x24,c2s,UseSkill,var,,да,P1,4.5,нужно,Projects/UOContent/Network/Packets/IncomingPlayerPackets.cs#TextCommand,текст — номер навыка
+0x12,0x27,c2s,CastSpellFromBook,var,,да,P2,7.6,нужно,Projects/UOContent/Network/Packets/IncomingPlayerPackets.cs#TextCommand,
+0x12,0x2F,c2s,OldScrollDoubleClick,var,,игнорирует,-,-,не используется,Projects/UOContent/Network/Packets/IncomingPlayerPackets.cs#TextCommand,старые свитки 0xEF3–0xEF9; наш клиент шлёт 0x06
+0x12,0x43,c2s,OpenSpellbook,var,,да,P2,7.6,нужно,Projects/UOContent/Network/Packets/IncomingPlayerPackets.cs#TextCommand,
+0x12,0x56,c2s,CastSpellFromMacro,var,,да,P2,7.6,нужно,Projects/UOContent/Network/Packets/IncomingPlayerPackets.cs#TextCommand,
+0x12,0x58,c2s,OpenDoor,var,,да,P2,5.5,нужно,Projects/UOContent/Network/Packets/IncomingPlayerPackets.cs#TextCommand,
+0x12,0xC7,c2s,AnimateEmote,var,,да,P3,7.10,нужно,Projects/UOContent/Network/Packets/IncomingPlayerPackets.cs#TextCommand,
+0x12,0xF4,c2s,InvokeVirtue,var,,да,P3,-,отложено,Projects/UOContent/Network/Packets/IncomingPlayerPackets.cs#TextCommand,добродетели; в плане Стадий 0–8 их нет
+0x13,,c2s,EquipRequest,10,,да,P1,5.1,нужно,Projects/UOContent/Network/Packets/IncomingItemPackets.cs#EquipReq,
+0x15,,s2c,FollowMessage,9,,нет,-,-,не используется,Projects/Server/Network/Packets/OutgoingMessagePackets.cs#SendFollowMessage,метод есть; вызовов на сервере нет
+0x17,,s2c,Healthbar,var,,да,P2,4.4,нужно,Projects/Server/Network/Packets/OutgoingMobilePackets.cs#CreateMobileHealthbar,цвет полоски: яд и неуязвимость
+0x1A,,s2c,WorldItemOld,var,до 7.0.0.0; любой версии — контейнеры-аддоны ML,да,P3,-,отложено,Projects/Server/Network/Packets/OutgoingItemPackets.cs#CreateWorldItem,AddonContainerComponent шлёт 0x1A и затем обычный 0xF3; в мире UOR таких предметов нет
+0x1B,,s2c,LoginConfirm,37,,да,P0,1.9,нужно,Projects/Server/Network/Packets/OutgoingAccountPackets.cs#SendLoginConfirmation,
+0x1C,,s2c,AsciiMessage,var,,да,P1,4.2,нужно,Projects/Server/Network/Packets/OutgoingMessagePackets.cs#CreateMessage,в UOR — имена по одиночному клику (asciiClickMessage); имя в UTF-8 (E1)
+0x1D,,s2c,RemoveEntity,5,,да,P0,2.9,нужно,Projects/Server/Network/Packets/OutgoingEntityPackets.cs#CreateRemoveEntity,
+0x20,,s2c,MobileUpdate,19,,да,P0,2.9,нужно,Projects/Server/Network/Packets/OutgoingMobilePackets.cs#SendMobileUpdate,
+0x21,,s2c,MoveReject,8,,да,P0,3.6,нужно,Projects/Server/Network/Packets/OutgoingMovementPackets.cs#SendMovementRej,
+0x22,,c2s,Resynchronize,3,,да,P0,3.6,нужно,Projects/UOContent/Network/Packets/IncomingPlayerPackets.cs#Resynchronize,не то же самое что подтверждение шага 0x22 от сервера
+0x22,,s2c,MoveAck,3,,да,P0,3.6,нужно,Projects/Server/Network/Packets/OutgoingMovementPackets.cs#SendMovementAck,
+0x23,,s2c,DragEffect,26,,да,P3,5.1,нужно,Projects/Server/Network/Packets/OutgoingPlayerPackets.cs#CreateDragEffect,
+0x24,,s2c,DisplayContainer,9,7.0.9.0+ (HighSeas): 9; раньше 7,да,P1,2.9а,нужно,Projects/Server/Network/Packets/OutgoingContainerPackets.cs#SendDisplayContainer,последние 2 байта — 0x007D; gump 0xFFFF — книга заклинаний; 0x0030 — окно покупки
+0x25,,s2c,ContainerItem,21,6.0.1.7+ (ContainerGridLines): 21; раньше 20,да,P1,2.9а,нужно,Projects/Server/Network/Packets/OutgoingContainerPackets.cs#SendContainerContentUpdate,
+0x27,,s2c,LiftReject,2,,да,P1,5.1,нужно,Projects/Server/Network/Packets/OutgoingPlayerPackets.cs#SendLiftReject,
+0x2C,,c2s,DeathStatusResponse,2,,игнорирует,-,-,не используется,Projects/UOContent/Network/Packets/IncomingPlayerPackets.cs#DeathStatusResponse,
+0x2C,,s2c,DeathStatus,2,,да,P1,4.9,нужно,Projects/Server/Network/Packets/OutgoingPlayerPackets.cs#SendDeathStatus,
+0x2D,,s2c,MobileAttributes,17,,да,P1,4.4,нужно,Projects/Server/Network/Packets/OutgoingMobilePackets.cs#CreateMobileAttributes,
+0x2E,,s2c,EquipUpdate,15,,да,P0,2.9,нужно,Projects/Server/Network/Packets/OutgoingEquipmentPackets.cs#SendEquipUpdate,волосы и борода — тоже 0x2E (OutgoingVirtualHairPackets)
+0x2F,,s2c,Swing,10,,да,P2,4.8,нужно,Projects/Server/Network/Packets/OutgoingCombatPackets.cs#SendSwing,
+0x34,,c2s,MobileQuery,10,,да,P1,4.4,нужно,Projects/UOContent/Network/Packets/IncomingPlayerPackets.cs#MobileQuery,тип 4 — статус; 5 — навыки
+0x38,,s2c,PathfindMessage,7,,нет,-,-,не используется,Projects/Server/Network/Packets/OutgoingPlayerPackets.cs#SendPathfindMessage,метод есть; вызовов на сервере нет
+0x3A,,c2s,SkillLockChange,var,,да,P2,4.5,нужно,Projects/UOContent/Network/Packets/IncomingPlayerPackets.cs#ChangeSkillLock,
+0x3A,,s2c,SkillsUpdate,var,,да,P1,4.5,нужно,Projects/Server/Network/Packets/OutgoingPlayerPackets.cs#SendSkillsUpdate,и изменение одного навыка (SendSkillChange)
+0x3B,,c2s,VendorBuyReply,var,,да,P2,7.2,нужно,Projects/UOContent/Network/Packets/IncomingVendorPackets.cs#VendorBuyReply,
+0x3B,,s2c,VendorClose,var,,да,P2,7.2,нужно,Projects/Server/Network/Packets/OutgoingVendorBuyPackets.cs#SendEndVendorBuy,и после продажи (SendEndVendorSell)
+0x3C,,s2c,ContainerContent,var,6.0.1.7+ (ContainerGridLines): 20 байт на предмет; раньше 19,да,P1,2.9а,нужно,Projects/Server/Network/Packets/OutgoingContainerPackets.cs#SendContainerContent,книга заклинаний в UOR — по предмету на заклинание (serial 0x7FFFFFFF − i; количество — номер заклинания); товары вендора; трупы; награды за голову
+0x4E,,s2c,PersonalLight,6,,да,P2,2.9,нужно,Projects/Server/Network/Packets/OutgoingLightPackets.cs#SendPersonalLightLevel,
+0x4F,,s2c,GlobalLight,2,,да,P2,2.9,нужно,Projects/Server/Network/Packets/OutgoingLightPackets.cs#SendGlobalLightLevel,
+0x51,,s2c,ShardStatsCompact,var,ответ на 0xF1 0xFE (UO Gateway),да,-,-,не используется,Projects/UOContent/Network/UOGateway.cs#SendCompactShardStats,приходит только в ответ на запрос; наш клиент его не шлёт
+0x53,,s2c,PopupMessage,2,,да,P1,1.11,нужно,Projects/Server/Network/Packets/OutgoingAccountPackets.cs#SendPopupMessage,отказ входа персонажа
+0x54,,s2c,PlaySound,12,,да,P2,2.9,нужно,Projects/Server/Network/Packets/OutgoingEffectPackets.cs#CreateSoundEffect,
+0x55,,s2c,LoginComplete,1,,да,P0,1.9,нужно,Projects/Server/Network/Packets/OutgoingAccountPackets.cs#SendLoginComplete,
+0x56,,c2s,MapPinCommand,11,,да,P3,6.7,нужно,Projects/UOContent/Items/Maps/MapItemPackets.cs#OnMapCommand,
+0x56,,s2c,MapPinCommand,11,,да,P3,6.7,нужно,Projects/UOContent/Items/Maps/MapItemPackets.cs#SendMapCommand,
+0x5B,,s2c,CurrentTime,4,,да,P2,2.9,нужно,Projects/Server/Network/Packets/OutgoingPlayerPackets.cs#SendCurrentTime,
+0x5D,,c2s,PlayCharacter,73,,да,P0,1.8,нужно,Projects/UOContent/Network/Packets/IncomingAccountPackets.cs#PlayCharacter,
+0x65,,s2c,Weather,4,,да,P2,2.9,нужно,Projects/Server/Network/Packets/OutgoingPlayerPackets.cs#SendWeather,
+0x66,,c2s,BookPagesChange,var,,да,P3,6.6,нужно,Projects/UOContent/Items/Books/BookPackets.cs#ContentChange,
+0x66,,s2c,BookPages,var,,да,P3,6.6,нужно,Projects/UOContent/Items/Books/BookPackets.cs#SendBookContent,
+0x6C,,c2s,TargetResponse,19,,да,P1,2.10а,нужно,Projects/UOContent/Network/Packets/IncomingTargetingPackets.cs#TargetResponse,
+0x6C,,s2c,TargetRequest,19,,да,P1,2.10а,нужно,Projects/Server/Network/Packets/OutgoingTargetPackets.cs#SendTargetReq,
+0x6D,,s2c,PlayMusic,3,,да,P2,2.9,нужно,Projects/Server/Network/Packets/OutgoingPlayerPackets.cs#SendPlayMusic,
+0x6E,,s2c,MobileAnimation,14,,да,P2,4.8,нужно,Projects/Server/Network/Packets/OutgoingMobilePackets.cs#CreateMobileAnimation,
+0x6F,,c2s,SecureTradeAction,var,,да,P2,7.3,нужно,Projects/UOContent/Network/Packets/IncomingMobilePackets.cs#SecureTrade,
+0x6F,,s2c,SecureTrade,var,7.0.45.65+ (NewSecureTrading): добавляются действия с золотом (UpdateLedger и UpdateGold),да,P2,7.3,нужно,Projects/Server/Network/Packets/OutgoingSecureTradePackets.cs#SendDisplaySecureTrade,имя в UTF-8 (E1)
+0x70,,s2c,ScreenEffect,28,,да,P3,4.8,нужно,Projects/Server/Network/Packets/OutgoingEffectPackets.cs#SendScreenEffect,сервер шлёт 0x70 только для экранных эффектов; остальные эффекты — 0xC0 и 0xC7
+0x71,,c2s,BulletinBoardRequest,var,,да,P3,6.8,нужно,Projects/UOContent/Items/Bulletin Boards/BulletinBoardPackets.cs#BBClientRequest,
+0x71,,s2c,BulletinBoard,var,,да,P3,6.8,нужно,Projects/UOContent/Items/Bulletin Boards/BulletinBoardPackets.cs#SendBBDisplayBoard,и доска наград за голову (BountyMessage)
+0x72,,c2s,WarModeRequest,5,,да,P1,4.7,нужно,Projects/UOContent/Network/Packets/IncomingPlayerPackets.cs#SetWarMode,
+0x72,,s2c,WarMode,5,,да,P1,4.7,нужно,Projects/Server/Network/Packets/OutgoingCombatPackets.cs#SendSetWarMode,
+0x73,,c2s,Ping,2,,да,P0,1.10,нужно,Projects/UOContent/Network/Packets/IncomingPlayerPackets.cs#PingReq,
+0x73,,s2c,PingAck,2,,да,P0,1.10,нужно,Projects/Server/Network/Packets/OutgoingPlayerPackets.cs#SendPingAck,
+0x74,,s2c,VendorBuyList,var,,да,P2,7.2,нужно,Projects/Server/Network/Packets/OutgoingVendorBuyPackets.cs#SendVendorBuyList,цены и названия; сами товары приходят в 0x3C
+0x75,,c2s,RenameRequest,35,,да,P3,7.8,нужно,Projects/UOContent/Network/Packets/IncomingMobilePackets.cs#RenameRequest,имя в UTF-8 (расширение E1)
+0x76,,s2c,ServerChange,16,,да,P1,2.9,нужно,Projects/Server/Network/Packets/OutgoingPlayerPackets.cs#SendServerChange,приходит при каждой смене карты
+0x77,,s2c,MobileMoving,17,,да,P0,2.9,нужно,Projects/Server/Network/Packets/OutgoingMobilePackets.cs#CreateMobileMoving,
+0x78,,s2c,MobileIncoming,var,7.0.33.1+ (NewMobileIncoming): новый формат,да,P0,2.9,нужно,Projects/Server/Network/Packets/OutgoingMobilePackets.cs#SendMobileIncoming,
+0x7B,,s2c,Sequence,2,,нет,-,-,не используется,Projects/Server/Network/Packets/OutgoingPlayerPackets.cs#SendSequence,метод есть; вызовов на сервере нет
+0x7C,,s2c,Menu,var,,да,P1,6.4,нужно,Projects/Server/Network/Packets/OutgoingMenuPackets.cs#SendDisplayItemListMenu,в UOR через меню идёт крафт; строки — длина в байтах (E1)
+0x7D,,c2s,MenuResponse,13,,да,P1,6.4,нужно,Projects/UOContent/Network/Packets/IncomingPlayerPackets.cs#MenuResponse,в UOR через меню идёт крафт
+0x80,,c2s,AccountLogin,62,,да,P0,1.5,нужно,Projects/UOContent/Network/Packets/IncomingAccountPackets.cs#AccountLogin,
+0x81,,s2c,ChangeCharacter,var,,нет,-,-,не используется,Projects/Server/Network/Packets/OutgoingAccountPackets.cs#SendChangeCharacter,метод есть; вызовов на сервере нет
+0x82,,s2c,LoginRejected,2,,да,P0,1.11,нужно,Projects/Server/Network/Packets/OutgoingAccountPackets.cs#SendAccountLoginRejected,
+0x83,,c2s,DeleteCharacter,39,,да,P1,1.8,нужно,Projects/UOContent/Network/Packets/IncomingAccountPackets.cs#DeleteCharacter,
+0x85,,s2c,DeleteResult,2,,да,P1,1.8,нужно,Projects/Server/Network/Packets/OutgoingAccountPackets.cs#SendCharacterDeleteResult,отказ в удалении персонажа
+0x86,,s2c,CharacterListUpdate,var,,да,P1,1.8,нужно,Projects/Server/Network/Packets/OutgoingAccountPackets.cs#SendCharacterListUpdate,имена в UTF-8 (E1)
+0x88,,s2c,Paperdoll,66,,да,P2,5.5,нужно,Projects/Server/Network/Packets/OutgoingPlayerPackets.cs#SendDisplayPaperdoll,в ответ на двойной клик по себе или по мобу
+0x89,,s2c,CorpseEquipment,var,,да,P2,4.9,нужно,Projects/UOContent/Items/Misc/Corpses/CorpsePackets.cs#SendCorpseEquip,
+0x8B,,s2c,SignGump,var,,нет,-,-,не используется,Projects/UOContent/Gumps/Base/OutgoingGumpPackets.cs#SendDisplaySignGump,метод есть; вызовов на сервере нет
+0x8C,,s2c,ServerRedirect,11,,да,P0,1.6,нужно,Projects/Server/Network/Packets/OutgoingAccountPackets.cs#SendPlayServerAck,адрес игрового сервера и ключ
+0x90,,s2c,MapDetailsOld,19,до 7.0.13.0; нашей версии сервер шлёт 0xF5,нет,-,-,не используется,Projects/UOContent/Items/Maps/MapItemPackets.cs#SendMapDetails,
+0x91,,c2s,GameLogin,65,,да,P0,1.7,нужно,Projects/UOContent/Network/Packets/IncomingAccountPackets.cs#GameLogin,после него сервер включает сжатие
+0x93,,c2s,BookHeaderOld,99,,да,-,-,не используется,Projects/UOContent/Items/Books/BookPackets.cs#OldHeaderChange,старый формат; наш клиент шлёт 0xD4
+0x95,,c2s,HuePickerResponse,9,,да,P3,5.8,нужно,Projects/UOContent/Network/Packets/IncomingPlayerPackets.cs#HuePickerResponse,
+0x95,,s2c,HuePicker,9,,да,P3,5.8,нужно,Projects/Server/Network/Packets/OutgoingPlayerPackets.cs#SendDisplayHuePicker,
+0x97,,s2c,MovePlayer,2,,нет,-,-,не используется,Projects/Server/Network/Packets/OutgoingMovementPackets.cs#SendMovePlayer,метод есть; вызовов на сервере нет
+0x98,,c2s,MobileNameRequest,var,,да,P3,7.8,нужно,Projects/UOContent/Network/Packets/IncomingMobilePackets.cs#MobileNameRequest,
+0x98,,s2c,MobileName,var,,да,P3,7.8,нужно,Projects/Server/Network/Packets/OutgoingMobilePackets.cs#SendMobileName,имя в UTF-8 (E1)
+0x99,,s2c,MultiTargetRequest,30,7.0.9.0+ (HighSeas): 30; раньше 26,да,P2,8.1,нужно,Projects/Server/Network/Packets/OutgoingTargetPackets.cs#SendMultiTargetReq,
+0x9A,,c2s,AsciiPromptResponse,var,,да,-,-,не используется,Projects/UOContent/Network/Packets/IncomingPlayerPackets.cs#AsciiPromptResponse,сервер шлёт только запрос 0xC2; отвечаем 0xC2
+0x9B,,c2s,HelpRequest,258,,да,P3,6.9,нужно,Projects/UOContent/Network/Packets/IncomingPlayerPackets.cs#HelpRequest,
+0x9E,,s2c,VendorSellList,var,,да,P2,7.2,нужно,Projects/Server/Network/Packets/OutgoingVendorSellPackets.cs#SendVendorSellList,названия — длина в байтах (E1)
+0x9F,,c2s,VendorSellReply,var,,да,P2,7.2,нужно,Projects/UOContent/Network/Packets/IncomingVendorPackets.cs#VendorSellReply,
+0xA0,,c2s,SelectServer,3,,да,P0,1.6,нужно,Projects/UOContent/Network/Packets/IncomingAccountPackets.cs#PlayServer,
+0xA1,,s2c,MobileHits,9,,да,P1,4.4,нужно,Projects/Server/Network/Packets/OutgoingMobilePackets.cs#CreateMobileHits,
+0xA2,,s2c,MobileMana,9,,да,P1,4.4,нужно,Projects/Server/Network/Packets/OutgoingMobilePackets.cs#CreateMobileMana,
+0xA3,,s2c,MobileStamina,9,,да,P1,4.4,нужно,Projects/Server/Network/Packets/OutgoingMobilePackets.cs#CreateMobileStam,
+0xA4,,c2s,SystemInfo,149,,игнорирует,-,-,не используется,Projects/UOContent/Network/Packets/IncomingPlayerPackets.cs#SystemInfo,
+0xA5,,s2c,LaunchBrowser,var,,да,P3,-,отложено,Projects/Server/Network/Packets/OutgoingPlayerPackets.cs#SendLaunchBrowser,открыть ссылку в браузере; в плане Стадий 0–8 нет
+0xA6,,s2c,TipWindow,var,,нет,-,-,не используется,Projects/Server/Network/Packets/OutgoingPlayerPackets.cs#SendScrollMessage,метод есть; вызовов на сервере нет
+0xA7,,c2s,TipWindowRequest,4,,игнорирует,-,-,не используется,Projects/UOContent/Network/Packets/IncomingPlayerPackets.cs#RequestScrollWindow,окна подсказок 0xA6 сервер не шлёт
+0xA8,,s2c,ServerList,var,,да,P0,1.6,нужно,Projects/Server/Network/Packets/OutgoingAccountPackets.cs#SendAccountLoginAck,
+0xA9,,s2c,CharacterList,var,7.0.13.0+ (NewCharacterList): новый формат городов,да,P0,1.8,нужно,Projects/Server/Network/Packets/OutgoingAccountPackets.cs#SendCharacterList,имена в UTF-8 (E1)
+0xAA,,s2c,ChangeCombatant,5,,да,P1,4.7,нужно,Projects/Server/Network/Packets/OutgoingCombatPackets.cs#SendChangeCombatant,
+0xAD,,c2s,UnicodeSpeech,var,,да,P1,2.10,нужно,Projects/UOContent/Network/Packets/IncomingMessagePackets.cs#UnicodeSpeech,лимит для игроков — TARGET §3
+0xAE,,s2c,UnicodeMessage,var,,да,P1,4.2,нужно,Projects/Server/Network/Packets/OutgoingMessagePackets.cs#CreateMessage,имя в UTF-8 (E1)
+0xAF,,s2c,DeathAnimation,13,,да,P1,4.9,нужно,Projects/Server/Network/Packets/OutgoingMobilePackets.cs#CreateDeathAnimation,
+0xB1,,c2s,GumpResponse,var,,да,P1,6.2,нужно,Projects/UOContent/Gumps/Base/GumpSystem.cs#DisplayGumpResponse,
+0xB2,,s2c,ChatMessage,var,chat.enabled (по умолчанию выключен),настройка,P3,-,отложено,Projects/UOContent/Engines/Chat/ChatPackets.cs#SendChatMessage,
+0xB3,,c2s,ChatAction,var,chat.enabled (по умолчанию выключен),настройка,P3,-,отложено,Projects/UOContent/Engines/Chat/ChatPackets.cs#ChatAction,
+0xB5,,c2s,OpenChatWindow,64,chat.enabled (по умолчанию выключен),настройка,P3,-,отложено,Projects/UOContent/Engines/Chat/ChatPackets.cs#OpenChatWindowRequest,
+0xB6,,c2s,ObjectHelpRequest,9,,да,P3,5.5,нужно,Projects/UOContent/Network/Packets/IncomingEntityPackets.cs#ObjectHelpRequest,
+0xB7,,s2c,HelpResponse,var,,нет,-,-,не используется,Projects/Server/Network/Packets/OutgoingMessagePackets.cs#SendHelpResponse,метод есть; вызовов на сервере нет
+0xB8,,c2s,ProfileRequest,var,,да,P3,6.9,нужно,Projects/UOContent/Network/Packets/IncomingMobilePackets.cs#ProfileReq,
+0xB8,,s2c,Profile,var,,да,P3,6.9,нужно,Projects/Server/Network/Packets/OutgoingPlayerPackets.cs#SendDisplayProfile,
+0xB9,,s2c,SupportedFeatures,5,6.0.14.2+ (ExtendedSupportedFeatures): 5; раньше 3,да,P0,1.8,нужно,Projects/Server/Network/Packets/OutgoingAccountPackets.cs#SendSupportedFeature,
+0xBA,,s2c,QuestArrow,10,7.0.9.0+ (HighSeas): 10; раньше 6,да,P3,7.4,нужно,Projects/UOContent/Skills/Tracking/OutgoingArrowPackets.cs#SendArrow,стрелка навыка выслеживания
+0xBB,,c2s,UltimaMessenger,9,,игнорирует,-,-,не используется,Projects/UOContent/Network/Packets/IncomingAccountPackets.cs#UltimaMessenger,
+0xBC,,s2c,SeasonChange,3,,да,P2,2.9,нужно,Projects/Server/Network/Packets/OutgoingPlayerPackets.cs#SendSeasonChange,
+0xBD,,c2s,ClientVersion,var,,да,P0,1.10,нужно,Projects/UOContent/Network/Packets/IncomingAccountPackets.cs#ClientVersion,ответ на запрос 0xBD; по нему сервер меряет RTT
+0xBD,,s2c,ClientVersionRequest,var,,да,P0,1.10,нужно,Projects/Server/Network/Packets/OutgoingAccountPackets.cs#SendClientVersionRequest,приходит в любой момент (во время ходьбы — для замера RTT); отвечать сразу
+0xBE,,c2s,AssistantVersion,var,assistants.enableNegotiation (по умолчанию выключено),настройка,-,-,не используется,Projects/UOContent/Assistants/AssistantHandler.cs#AssistVersion,
+0xBE,,s2c,AssistantVersionRequest,var,assistants.enableNegotiation (по умолчанию выключено),настройка,-,-,не используется,Projects/UOContent/Assistants/AssistantHandler.cs#SendAssistVersionReq,
+0xBF,,c2s,ExtendedCommand,var,,да,P1,1.9,нужно,Projects/UOContent/Network/Packets/IncomingExtendedCommandPackets.cs#ExtendedCommand,подкоманда — 2 байта сразу после длины
+0xBF,0x05,c2s,ScreenSize,var,,игнорирует,-,-,не используется,Projects/UOContent/Network/Packets/IncomingExtendedCommandPackets.cs#ScreenSize,после задачи 0.6 сверить с ClassicUO
+0xBF,0x06,c2s,PartyCommand,var,,да,P2,7.4,нужно,Projects/UOContent/Network/Packets/IncomingExtendedCommandPackets.cs#PartyMessage,
+0xBF,0x07,c2s,QuestArrowClick,var,,да,P3,7.4,нужно,Projects/UOContent/Skills/Tracking/Tracking.cs#QuestArrow,
+0xBF,0x09,c2s,DisarmRequest,var,,да,P2,7.7,нужно,Projects/UOContent/Network/Packets/IncomingExtendedCommandPackets.cs#DisarmRequest,
+0xBF,0x0A,c2s,StunRequest,var,,да,P2,7.7,нужно,Projects/UOContent/Network/Packets/IncomingExtendedCommandPackets.cs#StunRequest,
+0xBF,0x0B,c2s,Language,var,,да,P1,1.9,нужно,Projects/UOContent/Network/Packets/IncomingExtendedCommandPackets.cs#Language,
+0xBF,0x0C,c2s,CloseStatus,var,,да,P3,4.4,нужно,Projects/UOContent/Network/Packets/IncomingExtendedCommandPackets.cs#CloseStatus,
+0xBF,0x0E,c2s,Animate,var,,да,P3,7.10,нужно,Projects/UOContent/Network/Packets/IncomingExtendedCommandPackets.cs#Animate,
+0xBF,0x0F,c2s,Unknown0F,var,,игнорирует,-,-,не используется,Projects/UOContent/Network/Packets/IncomingExtendedCommandPackets.cs#Empty,
+0xBF,0x10,c2s,QueryProperties,var,opl.enable (в UOR выключено: тултипов нет),настройка,-,-,не используется,Projects/UOContent/Network/Packets/IncomingExtendedCommandPackets.cs#QueryProperties,
+0xBF,0x13,c2s,ContextMenuRequest,var,,да,P2,7.1,нужно,Projects/UOContent/Context Menus/ContextMenuSystem.cs#ContextMenuRequest,
+0xBF,0x15,c2s,ContextMenuResponse,var,,да,P2,7.1,нужно,Projects/UOContent/Context Menus/ContextMenuSystem.cs#ContextMenuResponse,
+0xBF,0x1A,c2s,StatLockChange,var,,да,P3,4.5,нужно,Projects/UOContent/Network/Packets/IncomingExtendedCommandPackets.cs#StatLockChange,
+0xBF,0x1C,c2s,CastSpell,var,,да,P2,7.6,нужно,Projects/UOContent/Network/Packets/IncomingExtendedCommandPackets.cs#CastSpell,
+0xBF,0x1E,c2s,HouseDesignQuery,var,дома-конструкторы AoS,да,-,-,не используется,Projects/UOContent/Multis/Houses/HouseFoundation.cs#QueryDesignDetails,
+0xBF,0x24,c2s,Unknown24,var,,игнорирует,-,-,не используется,Projects/UOContent/Network/Packets/IncomingExtendedCommandPackets.cs#UnhandledBF,
+0xBF,0x2A,c2s,RaceChangeReply,var,смена расы — эра ML и новее,да,-,-,не используется,Projects/UOContent/Engines/ML Quests/Gumps/RaceChangeGump.cs#RaceChangeReply,
+0xBF,0x2C,c2s,BandageTarget,var,,да,P1,4.6,нужно,Projects/UOContent/Network/Packets/IncomingExtendedCommandPackets.cs#BandageTarget,
+0xBF,0x2D,c2s,TargetedSpell,var,,да,P2,4.6,нужно,Projects/UOContent/Network/Packets/IncomingExtendedCommandPackets.cs#TargetedSpell,
+0xBF,0x2E,c2s,TargetedSkill,var,,да,P2,4.6,нужно,Projects/UOContent/Network/Packets/IncomingExtendedCommandPackets.cs#TargetedSkillUse,
+0xBF,0x30,c2s,TargetByResource,var,,да,P3,4.6,нужно,Projects/UOContent/Network/Packets/IncomingExtendedCommandPackets.cs#TargetByResourceMacro,
+0xBF,0x32,c2s,ToggleFlying,var,полёт гаргулий — эра SA,да,-,-,не используется,Projects/UOContent/Network/Packets/IncomingExtendedCommandPackets.cs#ToggleFlying,
+0xBF,,s2c,ExtendedCommand,var,,да,P0,1.2,нужно,-,подкоманда — 2 байта сразу после длины
+0xBF,0x04,s2c,CloseGump,var,,да,P1,6.3,нужно,Projects/UOContent/Gumps/Base/OutgoingGumpPackets.cs#SendCloseGump,
+0xBF,0x06,s2c,Party,var,,да,P2,7.4,нужно,Projects/UOContent/Engines/Party/PartyPackets.cs#CreatePartyMemberList,список; удаление; сообщения; приглашение
+0xBF,0x08,s2c,MapChange,var,,да,P0,2.9,нужно,Projects/Server/Network/Packets/OutgoingMapPackets.cs#SendMapChange,приходит и при входе в мир: номер карты есть только здесь
+0xBF,0x10,s2c,EquipmentInfo,var,в UOR — одиночный клик по музыкальному инструменту; оружие и броня — с UOTD,да,P2,5.6,нужно,Projects/Server/Network/Packets/OutgoingEquipmentPackets.cs#SendDisplayEquipmentInfo,BaseInstrument.OnSingleClick без проверки эры; имя мастера — длина в байтах (E1)
+0xBF,0x14,s2c,ContextMenu,var,,да,P2,7.1,нужно,Projects/UOContent/Context Menus/ContextMenuSystem.cs#SendDisplayContextMenu,версии 1 и 2
+0xBF,0x17,s2c,HelpTopic,var,,да,P3,-,отложено,Projects/UOContent/Engines/Help/HelpTopic.cs#SendDisplayHelpTopic,гампы растений и квеста Хейвена
+0xBF,0x18,s2c,MapPatches,var,,да,P2,2.9,нужно,Projects/Server/Network/Packets/OutgoingMapPackets.cs#SendMapPatches,
+0xBF,0x19,s2c,ExtendedStats,var,,да,P2,4.4,нужно,Projects/Server/Network/Packets/OutgoingMobilePackets.cs#SendBondedStatus,команда 0 — привязанный питомец; 2 — замки статов (SendStatLockInfo); 5 — анимация статуи
+0xBF,0x1B,s2c,NewSpellbookContent,var,Core.AOS,нет,-,-,не используется,Projects/Server/Network/Packets/OutgoingContainerPackets.cs#SendNewSpellbookContent,в UOR книга приходит обычным 0x3C
+0xBF,0x1D,s2c,HouseDesignState,var,дома-конструкторы AoS,нет,-,-,не используется,Projects/UOContent/Multis/Houses/HousePackets.cs#SendDesignStateGeneral,
+0xBF,0x20,s2c,HouseCustomization,var,дома-конструкторы AoS,нет,-,-,не используется,Projects/UOContent/Multis/Houses/HousePackets.cs#SendBeginHouseCustomization,
+0xBF,0x21,s2c,ClearWeaponAbility,var,спецприёмы оружия AoS,нет,-,-,не используется,Projects/UOContent/Items/Weapons/Abilities/WeaponAbilityPackets.cs#SendClearWeaponAbility,
+0xBF,0x22,s2c,DamageOld,var,до 5.0.0a; нашей версии — 0x0B,нет,-,-,не используется,Projects/Server/Network/Packets/OutgoingDamagePackets.cs#SendDamage,
+0xBF,0x25,s2c,ToggleSpecialAbility,var,бусидо и ниндзюцу — эра SE,нет,-,-,не используется,Projects/UOContent/Items/Weapons/Abilities/WeaponAbilityPackets.cs#SendToggleSpecialAbility,
+0xBF,0x26,s2c,SpeedControl,var,,да,P1,3.7,нужно,Projects/Server/Network/Packets/OutgoingMovementPackets.cs#SendSpeedControl,
+0xBF,0x2A,s2c,RaceChange,var,смена расы — эра ML и новее,нет,-,-,не используется,Projects/UOContent/Engines/ML Quests/MLQuestPackets.cs#SendRaceChanger,
+0xC0,,s2c,HuedEffect,36,,да,P2,4.8,нужно,Projects/Server/Network/Packets/OutgoingEffectPackets.cs#CreateHuedEffect,
+0xC1,,s2c,LocalizedMessage,var,,да,P1,4.2,нужно,Projects/Server/Network/Packets/OutgoingMessagePackets.cs#CreateMessageLocalized,имя в UTF-8 (E1)
+0xC2,,c2s,UnicodePromptResponse,var,,да,P2,6.5,нужно,Projects/UOContent/Network/Packets/IncomingPlayerPackets.cs#UnicodePromptResponse,
+0xC2,,s2c,UnicodePrompt,var,,да,P2,6.5,нужно,Projects/Server/Network/Packets/OutgoingMessagePackets.cs#SendPrompt,единственный запрос ввода от сервера (0x9A сервер не шлёт)
+0xC6,,s2c,InvalidMap,1,,нет,-,-,не используется,Projects/Server/Network/Packets/OutgoingMapPackets.cs#SendInvalidMap,метод есть; вызовов на сервере нет
+0xC7,,s2c,ParticleEffect,49,,да,P2,4.8,нужно,Projects/Server/Network/Packets/OutgoingEffectPackets.cs#CreateParticleEffect,
+0xC8,,c2s,ViewRange,2,,да,P1,1.9,нужно,Projects/UOContent/Network/Packets/IncomingPlayerPackets.cs#SetUpdateRange,запрошенное значение сервер игнорирует и отвечает 0xC8 с дальностью 18
+0xC8,,s2c,ViewRange,2,,да,P1,1.9,нужно,Projects/Server/Network/Packets/OutgoingPlayerPackets.cs#SendChangeUpdateRange,ответ на 0xC8 клиента; всегда 18
+0xCC,,s2c,LocalizedAffixMessage,var,,да,P1,4.2,нужно,Projects/Server/Network/Packets/OutgoingMessagePackets.cs#CreateMessageLocalizedAffix,имя в UTF-8 (E1)
+0xD0,,c2s,ConfigurationFile,var,,игнорирует,-,-,не используется,Projects/UOContent/Network/Packets/IncomingPlayerPackets.cs#ConfigurationFile,
+0xD1,,c2s,Logout,2,,да,P0,1.10,нужно,Projects/UOContent/Network/Packets/IncomingPlayerPackets.cs#LogoutReq,сервер отвечает 0xD1; после ответа клиент закрывает соединение
+0xD1,,s2c,LogoutAck,2,,да,P0,1.10,нужно,Projects/Server/Network/Packets/OutgoingPlayerPackets.cs#SendLogoutAck,
+0xD4,,c2s,BookHeaderChange,var,,да,P3,6.6,нужно,Projects/UOContent/Items/Books/BookPackets.cs#HeaderChange,
+0xD4,,s2c,BookHeader,var,,да,P3,6.6,нужно,Projects/UOContent/Items/Books/BookPackets.cs#SendBookCover,единственный заголовок книги от сервера (0x93 сервер не шлёт)
+0xD6,,c2s,BatchQueryProperties,var,opl.enable (в UOR выключено),настройка,-,-,не используется,Projects/UOContent/Network/Packets/IncomingEntityPackets.cs#BatchQueryProperties,
+0xD6,,s2c,PropertyList,var,opl.enable (в UOR выключено: тултипов нет),настройка,-,-,не используется,Projects/Server/PropertyList/ObjectPropertyList.cs,
+0xD7,,c2s,EncodedCommand,var,,да,-,-,не используется,Projects/UOContent/Network/Packets/IncomingPlayerPackets.cs#EncodedCommand,подкоманда — 2 байта после serial (4 байта); все подкоманды не нашей эры
+0xD7,0x02,c2s,DesignerBackup,var,дома-конструкторы AoS,да,-,-,не используется,Projects/UOContent/Multis/Houses/HouseFoundation.cs#Designer_Backup,
+0xD7,0x03,c2s,DesignerRestore,var,дома-конструкторы AoS,да,-,-,не используется,Projects/UOContent/Multis/Houses/HouseFoundation.cs#Designer_Restore,
+0xD7,0x04,c2s,DesignerCommit,var,дома-конструкторы AoS,да,-,-,не используется,Projects/UOContent/Multis/Houses/HouseFoundation.cs#Designer_Commit,
+0xD7,0x05,c2s,DesignerDelete,var,дома-конструкторы AoS,да,-,-,не используется,Projects/UOContent/Multis/Houses/HouseFoundation.cs#Designer_Delete,
+0xD7,0x06,c2s,DesignerBuild,var,дома-конструкторы AoS,да,-,-,не используется,Projects/UOContent/Multis/Houses/HouseFoundation.cs#Designer_Build,
+0xD7,0x0C,c2s,DesignerClose,var,дома-конструкторы AoS,да,-,-,не используется,Projects/UOContent/Multis/Houses/HouseFoundation.cs#Designer_Close,
+0xD7,0x0D,c2s,DesignerStairs,var,дома-конструкторы AoS,да,-,-,не используется,Projects/UOContent/Multis/Houses/HouseFoundation.cs#Designer_Stairs,
+0xD7,0x0E,c2s,DesignerSync,var,дома-конструкторы AoS,да,-,-,не используется,Projects/UOContent/Multis/Houses/HouseFoundation.cs#Designer_Sync,
+0xD7,0x10,c2s,DesignerClear,var,дома-конструкторы AoS,да,-,-,не используется,Projects/UOContent/Multis/Houses/HouseFoundation.cs#Designer_Clear,
+0xD7,0x12,c2s,DesignerLevel,var,дома-конструкторы AoS,да,-,-,не используется,Projects/UOContent/Multis/Houses/HouseFoundation.cs#Designer_Level,
+0xD7,0x13,c2s,DesignerRoof,var,дома-конструкторы AoS,да,-,-,не используется,Projects/UOContent/Multis/Houses/HouseFoundation.cs#Designer_Roof,
+0xD7,0x14,c2s,DesignerRoofDelete,var,дома-конструкторы AoS,да,-,-,не используется,Projects/UOContent/Multis/Houses/HouseFoundation.cs#Designer_RoofDelete,
+0xD7,0x19,c2s,SetWeaponAbility,var,спецприёмы оружия AoS,да,-,-,не используется,Projects/UOContent/Items/Weapons/Abilities/WeaponAbilityPackets.cs#SetAbility,
+0xD7,0x1A,c2s,DesignerRevert,var,дома-конструкторы AoS,да,-,-,не используется,Projects/UOContent/Multis/Houses/HouseFoundation.cs#Designer_Revert,
+0xD7,0x28,c2s,GuildButton,var,новая система гильдий — эра SE,да,-,-,не используется,Projects/UOContent/Network/Packets/IncomingPlayerPackets.cs#GuildGumpRequest,
+0xD7,0x32,c2s,QuestButton,var,квесты ML (questSystem.enableMLQuests выключено),да,-,-,не используется,Projects/UOContent/Network/Packets/IncomingPlayerPackets.cs#QuestGumpRequest,
+0xD8,,s2c,HouseDesignDetailed,var,дома-конструкторы AoS,нет,-,-,не используется,Projects/UOContent/Multis/Houses/HousePackets.cs#CreateHouseDesignStateDetailed,
+0xD9,,c2s,HardwareInfo,268,,да,-,-,не используется,Projects/UOContent/Misc/HardwareInfo.cs#OnReceive,сведения о компьютере; клиенту не нужно
+0xDA,,c2s,MahjongAction,var,,да,P3,6.10,нужно,Projects/UOContent/Items/Games/Mahjong/MahjongPackets.cs#OnPacket,
+0xDA,,s2c,Mahjong,var,,да,P3,6.10,нужно,Projects/UOContent/Items/Games/Mahjong/MahjongPackets.cs#SendMahjongJoinGame,имена игроков в UTF-8 (E1)
+0xDC,,s2c,PropertyListHash,9,opl.enable (в UOR выключено),настройка,-,-,не используется,Projects/Server/Network/Packets/OutgoingEntityPackets.cs#CreateOPLInfo,
+0xDD,,s2c,CompressedGump,var,,да,P1,6.1,нужно,Projects/UOContent/Gumps/Base/BaseGump.cs#SendTo,разметку пишут DynamicGump; StaticGump и Legacy/Gump; несжатый 0xB0 сервер не шлёт
+0xDF,,s2c,BuffIcon,var,buffIcons.enable (в UOR выключено),настройка,P3,-,отложено,Projects/UOContent/Engines/BuffIcons/BuffIconPackets.cs#SendAddBuffPacket,
+0xE1,,c2s,ClientType,var,Enhanced Client,да,-,-,не используется,Projects/UOContent/Network/Packets/IncomingAccountPackets.cs#ClientType,
+0xE2,,s2c,NewMobileAnimation,10,,нет,-,-,не используется,Projects/Server/Network/Packets/OutgoingMobilePackets.cs#SendNewMobileAnimation,метод есть; вызовов на сервере нет
+0xEC,,c2s,EquipMacro,var,Enhanced Client,да,-,-,не используется,Projects/UOContent/Network/Packets/IncomingItemPackets.cs#EquipMacro,
+0xED,,c2s,UnequipMacro,var,Enhanced Client,да,-,-,не используется,Projects/UOContent/Network/Packets/IncomingItemPackets.cs#UnequipMacro,
+0xEF,,c2s,LoginSeed,21,,да,P0,1.5,нужно,Projects/UOContent/Network/Packets/IncomingAccountPackets.cs#LoginServerSeed,seed и версия клиента — TARGET §1
+0xF0,,c2s,AssistantProtocol,var,,да,P2,7.4,нужно,Projects/UOContent/Assistants/AssistantProtocol.cs#Configure,протокол ассистентов; подкоманда — 1 байт после длины; «новое движение» 0xF0 на сервере закомментировано
+0xF0,0x00,c2s,QueryPartyLocations,var,,да,P2,7.4,нужно,Projects/UOContent/Network/MapUO.cs#QueryPartyMemberLocations,ответ сервера — 0xF0 0x01
+0xF0,0x01,c2s,QueryGuildLocations,var,,да,P3,7.4,нужно,Projects/UOContent/Network/MapUO.cs#QueryGuildMemberLocations,ответ сервера — 0xF0 0x02
+0xF0,0xFF,c2s,AssistantHandshakeReply,var,assistants.enableNegotiation (по умолчанию выключено),настройка,-,-,не используется,Projects/UOContent/Assistants/AssistantHandler.cs#HandshakeResponse,
+0xF0,,s2c,AssistantProtocol,var,,да,P2,7.4,нужно,-,подкоманда — 1 байт после длины
+0xF0,0x01,s2c,PartyLocations,var,,да,P2,7.4,нужно,Projects/UOContent/Network/MapUO.cs#SendPartyMemberLocations,ответ на 0xF0 0x00
+0xF0,0x02,s2c,GuildLocations,var,,да,P3,7.4,нужно,Projects/UOContent/Network/MapUO.cs#SendGuildMemberLocations,ответ на 0xF0 0x01
+0xF0,0xFE,s2c,AssistantHandshake,var,assistants.enableNegotiation (по умолчанию выключено),настройка,-,-,не используется,Projects/UOContent/Assistants/AssistantHandler.cs#SendAssistHandshake,
+0xF1,,c2s,FreeshardProtocol,var,,да,-,-,не используется,Projects/UOContent/Network/FreeshardProtocol.cs#Configure,UO Gateway: статистика шарда; «синхронизация времени» 0xF1 на сервере закомментирована
+0xF1,0xFE,c2s,QueryShardStatsCompact,var,uogateway.enabled,да,-,-,не используется,Projects/UOContent/Network/UOGateway.cs#QueryCompactShardStats,ответ — 0x51
+0xF1,0xFF,c2s,QueryShardStatsExtended,var,uogateway.enabled,да,-,-,не используется,Projects/UOContent/Network/UOGateway.cs#QueryExtendedShardStats,
+0xF2,,s2c,TimeSyncResponse,25,,нет,-,-,не используется,Projects/Server/Network/Packets/OutgoingMovementPackets.cs#SendTimeSyncResponse,ответ на синхронизацию времени 0xF1; её приём на сервере закомментирован
+0xF3,,s2c,WorldObject,26,7.0.0.0+ (StygianAbyss) вместо 0x1A; 7.0.9.0+ (HighSeas): 26; раньше 24,да,P0,2.9,нужно,Projects/Server/Network/Packets/OutgoingEntityPackets.cs#CreateWorldEntity,
+0xF4,,c2s,CrashReport,var,,да,-,-,не используется,Projects/UOContent/Network/Packets/IncomingPlayerPackets.cs#CrashReport,
+0xF5,,s2c,MapDetails,21,7.0.13.0+ (NewCharacterList) вместо 0x90,да,P3,6.7,нужно,Projects/UOContent/Items/Maps/MapItemPackets.cs#SendMapDetails,
+0xF6,,s2c,BoatMove,var,Core.HS,нет,-,-,не используется,Projects/UOContent/Multis/Boats/BoatPackets.cs#CreateMoveBoatHS,в UOR корабль движется обычными обновлениями предметов и мобов
+0xF7,,s2c,PacketContainer,var,,нет,-,-,не используется,Projects/Server/Network/Packets/PacketContainerBuilder.cs,собирает только EntityPackets.SendBatchEntities; её никто не вызывает
+0xF8,,c2s,CreateCharacter,106,7.0.16.0+ вместо 0x00,да,P1,1.8,нужно,Projects/UOContent/Network/Packets/IncomingAccountPackets.cs#CreateCharacter,правила — TARGET §4; имя в UTF-8 (E1)
+0xFA,,c2s,UltimaStoreOpen,1,,да,-,-,не используется,Projects/UOContent/Engines/UltimaStore/UltimaStorePackets.cs#UltimaStoreOpenRequest,сервер отвечает сообщением что магазина нет
+0xFB,,c2s,PublicHouseContent,2,,игнорирует,-,-,не используется,Projects/UOContent/Network/Packets/IncomingHousePackets.cs#ShowPublicHouseContent,
