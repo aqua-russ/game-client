@@ -14,6 +14,7 @@
 | Что готово, текущий фокус, хроника | `PROGRESS.md` | — |
 | Где что лежит на сервере (пакеты, настройки, эра, данные) | `docs/SERVER-MAP.md` | — |
 | Список технического долга прототипа | `docs/TECH-DEBT.md` | — |
+| Эталонный клиент ClassicUO: роль, запись трафика, сравнение | `docs/REFERENCE-CLIENT.md` | — |
 | План стадий 0–9, задачи и критерии | `docs/PLAN.md` | — |
 | Версия клиента, эра, пакеты для этой версии, лимиты, профиль стенда | `docs/TARGET.md` | — |
 | Список пакетов: id, длина, направление, стадия, статус | `docs/protocol/packets.csv` → генерирует `PacketTable.g.cs` | задача Стадии 0 |
@@ -81,7 +82,7 @@
 The Verge/                         ← корень репо = Unity-проект
 ├── AGENTS.md · CLAUDE.md · README.md · PROGRESS.md · CONTROLS.md
 ├── docs/            PLAN.md · TARGET.md · SERVER-MAP.md · TECH-DEBT.md · protocol/ · adr/ · server-patches.md · archive/
-├── golden/          эталонные логи трафика ClassicUO (Стадия 0) — только чтение
+├── golden/          эталонные логи трафика ClassicUO (`docs/REFERENCE-CLIENT.md`) — только чтение
 ├── tools/
 │   ├── gen/         генератор PacketTable из packets.csv
 │   └── check/       скрипты проверки: all.sh (всё разом), architecture.sh, отдельные проверки задач (§9)
