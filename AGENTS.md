@@ -22,6 +22,7 @@
 | Управление и интерактив | `CONTROLS.md` | — |
 | Что поставить и как запускать проверки (Mac, среда агента) | `docs/DEV-ENV.md` | — |
 | Все правки сервера ModernUO | `docs/server-patches.md` | — |
+| Лицензии: ModernUO, ClassicUO, файлы данных UO, пакеты NuGet — что можно брать | `docs/LICENSES.md` | — |
 | Решения и их причины | `docs/adr/NNNN-название.md` | новое решение — новый ADR |
 | Как пишем код: сначала тест, потом реализация | [ADR 0010](docs/adr/0010-test-first-development.md), §6 этого файла | — |
 | Правила кода сервера | `../../server/ModernUO/CLAUDE.md` + `dev-docs/` | — |
