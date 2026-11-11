@@ -2,4 +2,3 @@
 # Проверка не ругается на эти строки, пока значение не растёт. Новые строки — только с согласия
 # пользователя (AGENTS.md §8). Исправил — запусти tools/check/architecture.sh --shrink-baseline.
 
-namespace-folder | Assets/TheVerge/Core/Movement/MovementSequenceQueue.cs | TheVerge.Core | 1

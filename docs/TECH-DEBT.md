@@ -8,7 +8,7 @@
 
 Решение по каждому файлу `Assets/TheVerge` принято в задаче 0.9 — [ADR 0011](adr/0011-prototype-audit.md): там таблица, какой файл удаляется, какой доводится через тесты и какой остаётся как есть. Прежнее правило «новый код пишется рядом, старые файлы удаляются, когда их заменят» этим ADR отменено.
 
-Аудит идёт частями (по слоям, каждая часть — отдельный коммит). Сделанная часть отмечается ✅.
+Аудит шёл частями (по слоям, каждая часть — отдельный коммит). **Все части сделаны 11 ноября 2026**: из 54 файлов удалён 41, 6 доведены через тесты по серверу, `GameBootstrap` упрощён; добавлены `HuffmanTree`, `PendingStep` (вынесены в свои файлы) и метка `PresentationAssembly`. Долга прототипа в коде больше нет. Осталось одно: компиляция Unity на Mac (`tools/check/all.sh --unity`).
 
 | Часть (ADR 0011) | Что | Статус |
 |---|---|---|
@@ -16,7 +16,7 @@
 | 2. Network | удалить `ModernUONetworkAdapter`, `Processors/*` (7), `ModernUOLoopbackServer`, `PacketLengthTable`, `CharacterCreationPacketBuilder` | ✅ |
 | 3. Network/Compression | `HuffmanCodec` → `HuffmanDecoder` через тесты (эталон сервера, переполнение буфера) | ✅ |
 | 4. Core | удалить фасады `Adapters/*`, симулятор, кусок карты Минока, навыки GDD, модель статов, диспетчер, `CoordinateMapper`, `INetworkDiagnostics`; базовые типы — тесты по серверу и папка `Core/Primitives` | ✅ |
-| 5. Core/Movement | `MovementSequenceQueue` через тесты по серверу | ⬜ |
+| 5. Core/Movement | `MovementSequenceQueue` через тесты по серверу | ✅ |
 
 ## 2. Настройки Unity-проекта
 
@@ -45,5 +45,5 @@
 
 | Файл | Что внутри | Как уменьшать |
 |---|---|---|
-| `tools/check/architecture-baseline.txt` | нарушения правил размеров и именования в коде прототипа: было 75, после частей 1–4 аудита — 1 (namespace у `MovementSequenceQueue`) | исправил или удалил файл → `tools/check/architecture.sh --shrink-baseline` |
-| `tools/check/dotnet-warnings-baseline.txt` | было 8 предупреждений CS0067 в коде прототипа; после части 4 аудита — пусто | исчезают вместе с файлами; строку убрать руками |
+| `tools/check/architecture-baseline.txt` | нарушения правил размеров и именования: было 75 (прототип), после аудита 0.9 — **пусто** | исправил или удалил файл → `tools/check/architecture.sh --shrink-baseline`; новые строки — только с согласия пользователя |
+| `tools/check/dotnet-warnings-baseline.txt` | было 8 предупреждений CS0067 (прототип); после аудита 0.9 — **пусто** | исчезают вместе с файлами; строку убрать руками |

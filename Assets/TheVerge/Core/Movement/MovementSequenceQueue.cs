@@ -1,37 +1,27 @@
 using System.Collections.Generic;
 using TheVerge.Core.Primitives;
+using TheVerge.Core.Session;
 
-namespace TheVerge.Core
+namespace TheVerge.Core.Movement
 {
     /// <summary>
-    /// Очередь порядковых номеров шагов (Sequence 0..255) протокола UO.
-    /// Защищает от десинхронизации и античита (Fastwalk).
+    /// Номера шагов и очередь шагов, ждущих ответа сервера (PLAN Стадия 3, пп. 5–6). Правила номеров —
+    /// Projects/Server/Network/MovementThrottle.cs: первый шаг после входа или отказа — 0, дальше 1–255 по кругу
+    /// без 0; отказ 0x21 сбрасывает очередь и номер. Сервер выполняет шаги по очереди и подтверждает (0x22) каждый
+    /// в том же порядке (Projects/Server/Mobiles/Mobile.cs, Move), поэтому подтверждение относится к самому старому
+    /// ждущему шагу, а другой номер — рассинхрон: очередь не трогаем, решение (ресинхронизация) — за вызывающим.
     /// </summary>
     public sealed class MovementSequenceQueue
     {
-        private const int MaxPendingSteps = 5;
-        private readonly Queue<PendingStep> _pendingSteps = new Queue<PendingStep>(MaxPendingSteps);
-        private byte _nextSequence = 0;
-
-        public readonly struct PendingStep
-        {
-            public byte Sequence { get; }
-            public Direction Direction { get; }
-            public Point3D TargetPosition { get; }
-
-            public PendingStep(byte sequence, Direction direction, Point3D targetPosition)
-            {
-                Sequence = sequence;
-                Direction = direction;
-                TargetPosition = targetPosition;
-            }
-        }
+        private readonly Queue<PendingStep> _pendingSteps = new Queue<PendingStep>(ServerLimits.MaxUnacknowledgedSteps);
+        private byte _nextSequence = ServerLimits.FirstMoveSequence;
 
         public int PendingCount => _pendingSteps.Count;
-        public bool CanRequestStep => _pendingSteps.Count < MaxPendingSteps;
+        public bool CanRequestStep => _pendingSteps.Count < ServerLimits.MaxUnacknowledgedSteps;
 
         /// <summary>
-        /// Выделяет следующий номер шага (Sequence 0..255) и регистрирует неподтверждённый шаг.
+        /// Даёт следующий номер и запоминает шаг как неподтверждённый. Если без ответа уже висит предельное число
+        /// шагов (ServerLimits.MaxUnacknowledgedSteps), шаг не ставится и номер не расходуется.
         /// </summary>
         public bool TryEnqueueStep(Direction direction, Point3D targetPosition, out byte sequence)
         {
@@ -42,47 +32,35 @@ namespace TheVerge.Core
             }
 
             sequence = _nextSequence;
-
-            // Первый шаг после входа или сброса имеет номер 0, далее 1..255 и после 255 снова 1
-            if (_nextSequence == 255)
-            {
-                _nextSequence = 1;
-            }
-            else
-            {
-                _nextSequence++;
-            }
-
+            _nextSequence = sequence == ServerLimits.MaxMoveSequence
+                ? ServerLimits.WrappedMoveSequence
+                : (byte)(sequence + 1);
             _pendingSteps.Enqueue(new PendingStep(sequence, direction, targetPosition));
             return true;
         }
 
         /// <summary>
-        /// Подтверждает шаг по пришедшему от сервера номеру Sequence (пакет 0x22 Move Ack).
+        /// Подтверждение 0x22: снимает самый старый ждущий шаг, если номер совпал. Иначе — false, очередь цела.
         /// </summary>
         public bool ConfirmStep(byte sequence, out PendingStep confirmedStep)
         {
-            while (_pendingSteps.Count > 0)
+            if (_pendingSteps.Count == 0 || _pendingSteps.Peek().Sequence != sequence)
             {
-                var step = _pendingSteps.Dequeue();
-                if (step.Sequence == sequence)
-                {
-                    confirmedStep = step;
-                    return true;
-                }
+                confirmedStep = default;
+                return false;
             }
 
-            confirmedStep = default;
-            return false;
+            confirmedStep = _pendingSteps.Dequeue();
+            return true;
         }
 
         /// <summary>
-        /// Сбрасывает очередь при отказе сервера (пакет 0x21 Move Reject) или ресинхронизации.
+        /// Отказ сервера 0x21 или ресинхронизация: очередь пуста, следующий шаг снова с номером 0.
         /// </summary>
         public void Reset()
         {
             _pendingSteps.Clear();
-            _nextSequence = 0;
+            _nextSequence = ServerLimits.FirstMoveSequence;
         }
     }
 }
