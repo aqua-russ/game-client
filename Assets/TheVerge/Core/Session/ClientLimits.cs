@@ -12,5 +12,11 @@ namespace TheVerge.Core.Session
         /// длина). Если длина известна, в дамп идёт весь пакет.
         /// </summary>
         public const int ErrorDumpBytes = 256;
+
+        /// <summary>
+        /// Предел очереди целых пакетов от сокета к главному потоку, байт. Как network.sendBufferMaxSize сервера
+        /// (NetState.Network.cs): полная очередь останавливает чтение сокета, и сервер сам отключает клиента.
+        /// </summary>
+        public const int InboundQueueBytes = 2 * 1024 * 1024;
     }
 }
