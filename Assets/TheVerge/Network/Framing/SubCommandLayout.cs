@@ -1,3 +1,6 @@
+using System;
+using System.Buffers.Binary;
+
 namespace TheVerge.Network.Framing
 {
     /// <summary>
@@ -20,5 +23,12 @@ namespace TheVerge.Network.Framing
 
         /// <summary>Пакет должен быть не короче этого, чтобы в нём уместилась подкоманда.</summary>
         public int MinPacketLength => Offset + Size;
+
+        /// <summary>Подкоманда из пакета; 2 байта — big-endian. Пакет должен быть не короче <see cref="MinPacketLength"/>.</summary>
+        public ushort Read(ReadOnlySpan<byte> packet)
+        {
+            var field = packet.Slice(Offset, Size);
+            return Size == 1 ? field[0] : BinaryPrimitives.ReadUInt16BigEndian(field);
+        }
     }
 }

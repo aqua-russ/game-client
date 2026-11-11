@@ -139,8 +139,7 @@ namespace TheVerge.Network.Framing
                 return FrameStatus.Packet;
             }
 
-            var field = packet.Slice(layout.Offset, layout.Size);
-            var subCommand = layout.Size == 1 ? field[0] : BinaryPrimitives.ReadUInt16BigEndian(field);
+            var subCommand = layout.Read(packet);
             if (PacketTable.Get(_direction, packet[0], subCommand).IsKnown)
             {
                 return FrameStatus.Packet;

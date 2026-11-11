@@ -10,11 +10,14 @@ namespace TheVerge.Network.Framing
         /// <summary>Пакет переменной длины: после номера идут 2 байта длины всего пакета.</summary>
         internal const int VariableLength = -1;
 
+        /// <summary>Номер пакета — первый байт.</summary>
+        public const int IdLength = 1;
+
         /// <summary>
         /// Где у пакета переменной длины поле длины: сразу после номера, 2 байта big-endian, длина всего пакета
         /// (Projects/Server/Network/PacketUtilities.cs, WritePacketLength).
         /// </summary>
-        public const int LengthOffset = 1;
+        public const int LengthOffset = IdLength;
 
         /// <summary>Заголовок пакета переменной длины: номер и длина. Короче сервер и сам считает ошибкой (NetState.cs, HandlePacket).</summary>
         public const int VariableHeaderLength = 3;
