@@ -104,11 +104,12 @@ The Verge/                         ← корень репо = Unity-проек�
     │   ├── Movement/      очередь шагов, предсказание, проверка проходимости
     │   ├── <Domain>/      Combat, Items, Gumps, Chat, Skills … — по стадиям плана
     │   ├── Commands/      команды игрока по доменам (MovementCommands, CombatCommands …) — намерения игрока
-    │   └── Ports/         интерфейсы наружу: I<Domain>Sender (отправка), IMapData/ITileData/… (данные), IClock, ILog
+    │   └── Ports/         интерфейсы наружу: I<Domain>Sender (отправка), IMapData/ITileData/… (данные), IClock, ILog, INetworkSession
     ├── Network/
     │   ├── Transport/     IConnection, TcpConnection (фоновый поток)
     │   ├── Framing/       PacketFramer, PacketTable.g.cs (генерируется, руками не править)
     │   ├── Compression/   HuffmanDecoder
+    │   ├── Session/       NetworkSession (порт INetworkSession), PacketDispatcher (разбор по id), OutgoingBuffer
     │   ├── IO/            PacketReader, PacketWriter (ref struct, big-endian)
     │   └── Packets/<Domain>/   входящие *Handler, исходящие *Packet и <Domain>Sender (реализация порта)
     ├── Data/              Files/ (MUL, UOP) · Map/ · Tiles/ · Multis/ · Text/ (cliloc, speech, skills)
@@ -127,7 +128,7 @@ The Verge/                         ← корень репо = Unity-проек�
 
 **Входящее:**
 1. `TcpConnection` (фоновый поток): читает байты → Huffman → `PacketFramer` режет по `PacketTable` → кладёт целый пакет (буфер из пула) в очередь. **Больше фоновый поток ничего не делает.**
-2. `GameClient.Tick(now)` (главный поток Unity или цикл бота): забирает пакеты из очереди **с бюджетом времени на кадр** и вызывает обработчик по id.
+2. `GameClient.Tick(now)` (главный поток Unity или цикл бота): через порт `INetworkSession` забирает пакеты из очереди **с бюджетом времени на кадр**; обработчик по id вызывает `PacketDispatcher` в Network — Core номеров пакетов не знает ([ADR 0013](docs/adr/0013-network-core.md)).
 3. `*Handler` читает поля через `PacketReader` и вызывает метод **доменного состояния** в Core (`world.UpdateMobile(...)`).
 4. Состояние меняется и поднимает **типизированное C#-событие** (`MobileUpdated`).
 5. Presenter, подписанный на событие, обновляет View.

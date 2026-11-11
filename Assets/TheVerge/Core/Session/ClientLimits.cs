@@ -21,5 +21,11 @@ namespace TheVerge.Core.Session
 
         /// <summary>Сколько ждать ответа сервера на подключение, мс.</summary>
         public const int ConnectTimeoutMs = 10000;
+
+        /// <summary>
+        /// Сколько мс за тик разбирать пришедшие пакеты (из 16,7 мс кадра при 60 FPS). Не меньше одного пакета за тик:
+        /// очередь движется, даже если один пакет обрабатывается дольше бюджета.
+        /// </summary>
+        public const int TickBudgetMs = 5;
     }
 }
