@@ -10,6 +10,21 @@ namespace TheVerge.Network.Framing
         /// <summary>Пакет переменной длины: после номера идут 2 байта длины всего пакета.</summary>
         internal const int VariableLength = -1;
 
+        /// <summary>
+        /// Где у пакета переменной длины поле длины: сразу после номера, 2 байта big-endian, длина всего пакета
+        /// (Projects/Server/Network/PacketUtilities.cs, WritePacketLength).
+        /// </summary>
+        public const int LengthOffset = 1;
+
+        /// <summary>Заголовок пакета переменной длины: номер и длина. Короче сервер и сам считает ошибкой (NetState.cs, HandlePacket).</summary>
+        public const int VariableHeaderLength = 3;
+
+        /// <summary>
+        /// Самый длинный пакет: столько вмещает поле длины в 2 байта. Отдельного предела у сервера нет
+        /// (ADR 0013, docs/TARGET.md §3.1).
+        /// </summary>
+        public const int MaxLength = ushort.MaxValue;
+
         private readonly int _length;
         private readonly string? _name;
 

@@ -36,6 +36,10 @@ namespace TheVerge.Network.Framing
         /// </summary>
         public static PacketInfo Get(PacketDirection direction, byte id, ushort subCommand) =>
             direction == PacketDirection.ServerToClient ? FromServer(id, subCommand) : FromClient(id, subCommand);
+
+        /// <summary>Где у пакета подкоманда; у пакета без подкоманд — значение по умолчанию (подкоманды нет).</summary>
+        public static SubCommandLayout GetSubCommandLayout(PacketDirection direction, byte id) =>
+            direction == PacketDirection.ServerToClient ? ServerSubCommandLayout(id) : ClientSubCommandLayout(id);
 """
 
 _FOOTER = """
@@ -45,6 +49,36 @@ _FOOTER = """
     }
 }
 """
+
+
+# Где подкоманда у пакетов с подкомандами: (смещение от начала пакета, размер в байтах). В CSV этого столбца нет —
+# правило описано в docs/protocol/packets.md («Что в матрице») и сверено с сервером:
+#   0xBF — 2 байта сразу после длины: IncomingExtendedCommandPackets.cs, ExtendedCommand (ReadUInt16);
+#   0xD7 — 2 байта после serial: IncomingPlayerPackets.cs, EncodedCommand (ReadUInt32, ReadUInt16);
+#   0x12 — 1 байт после длины: IncomingPlayerPackets.cs, TextCommand (ReadByte);
+#   0xF0, 0xF1 — 1 байт после длины: UOContent/Network/ProtocolExtensions.cs (ReadByte), MapUO.cs.
+SUBCOMMAND_LAYOUTS = {
+    "0xBF": (3, 2),
+    "0xD7": (7, 2),
+    "0x12": (3, 1),
+    "0xF0": (3, 1),
+    "0xF1": (3, 1),
+}
+
+
+def _layout_method(name, rows):
+    """Раскладка подкоманды для номеров, у которых в матрице есть подкоманды (в этом направлении)."""
+    ids = sorted({r["id"] for r in rows if r["sub"]}, key=lambda i: int(i, 16))
+    lines = ["", "        private static SubCommandLayout %s(byte id) => id switch" % name, "        {"]
+    for packet_id in ids:
+        if packet_id not in SUBCOMMAND_LAYOUTS:
+            raise ValueError("у пакета %s есть подкоманды, но нет раскладки в SUBCOMMAND_LAYOUTS "
+                             "(tools/gen/packet_table.py)" % packet_id)
+        offset, size = SUBCOMMAND_LAYOUTS[packet_id]
+        lines.append("            %s => new SubCommandLayout(%d, %d)," % (packet_id, offset, size))
+    lines.append("            _ => default,")
+    lines.append("        };")
+    return lines
 
 
 def _value(row):
@@ -77,6 +111,8 @@ def render(rows):
         own = [r for r in rows if r["dir"] == direction]
         lines += _method(name, [r for r in own if not r["sub"]], with_sub=False)
         lines += _method(name, [r for r in own if r["sub"]], with_sub=True)
+    for direction, name in (("s2c", "ServerSubCommandLayout"), ("c2s", "ClientSubCommandLayout")):
+        lines += _layout_method(name, [r for r in rows if r["dir"] == direction])
     return "\n".join(lines) + "\n" + _FOOTER
 
 
@@ -90,7 +126,11 @@ def main(argv):
             print("ОШИБКА: " + e)
         print("ОШИБКА: таблица не построена — сначала исправьте docs/protocol/packets.csv.")
         return 1
-    fresh = render(packets_csv.read_rows(text))
+    try:
+        fresh = render(packets_csv.read_rows(text))
+    except ValueError as e:
+        print("ОШИБКА: " + str(e))
+        return 1
     if "--check" in argv:
         current = open(OUTPUT, encoding="utf-8").read() if os.path.isfile(OUTPUT) else ""
         if current != fresh:

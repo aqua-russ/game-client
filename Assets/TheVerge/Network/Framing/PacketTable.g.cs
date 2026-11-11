@@ -19,6 +19,10 @@ namespace TheVerge.Network.Framing
         public static PacketInfo Get(PacketDirection direction, byte id, ushort subCommand) =>
             direction == PacketDirection.ServerToClient ? FromServer(id, subCommand) : FromClient(id, subCommand);
 
+        /// <summary>Где у пакета подкоманда; у пакета без подкоманд — значение по умолчанию (подкоманды нет).</summary>
+        public static SubCommandLayout GetSubCommandLayout(PacketDirection direction, byte id) =>
+            direction == PacketDirection.ServerToClient ? ServerSubCommandLayout(id) : ClientSubCommandLayout(id);
+
         private static PacketInfo FromServer(byte id) => id switch
         {
             0x0B => Fixed(7, "Damage"),
@@ -275,6 +279,23 @@ namespace TheVerge.Network.Framing
             (0xF0, 0xFF) => Variable("AssistantHandshakeReply"), // не используется
             (0xF1, 0xFE) => Variable("QueryShardStatsCompact"), // не используется
             (0xF1, 0xFF) => Variable("QueryShardStatsExtended"), // не используется
+            _ => default,
+        };
+
+        private static SubCommandLayout ServerSubCommandLayout(byte id) => id switch
+        {
+            0xBF => new SubCommandLayout(3, 2),
+            0xF0 => new SubCommandLayout(3, 1),
+            _ => default,
+        };
+
+        private static SubCommandLayout ClientSubCommandLayout(byte id) => id switch
+        {
+            0x12 => new SubCommandLayout(3, 1),
+            0xBF => new SubCommandLayout(3, 2),
+            0xD7 => new SubCommandLayout(7, 2),
+            0xF0 => new SubCommandLayout(3, 1),
+            0xF1 => new SubCommandLayout(3, 1),
             _ => default,
         };
 
