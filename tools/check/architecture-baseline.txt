@@ -6,8 +6,6 @@ ctor-params | Assets/TheVerge/Core/Adapters/AdapterModels.cs | MobileStateDto.Mo
 ctor-params | Assets/TheVerge/Core/Adapters/AdapterModels.cs | PlayerStatusDto.PlayerStatusDto | 15
 ctor-params | Assets/TheVerge/Core/Adapters/CharacterCreationArgsDto.cs | CharacterCreationArgsDto.CharacterCreationArgsDto | 14
 file-lines | Assets/TheVerge/Core/Simulators/LocalWorldSimulator.cs |  | 688
-file-lines | Assets/TheVerge/Network/Loopback/ModernUOLoopbackServer.cs |  | 646
-file-lines | Assets/TheVerge/Network/ModernUONetworkAdapter.cs |  | 483
 file-name | Assets/TheVerge/Core/Adapters/AdapterModels.cs | AdapterModels | 1
 interface-members | Assets/TheVerge/Core/Adapters/IGameplayActionsAdapter.cs | IGameplayActionsAdapter | 21
 interface-members | Assets/TheVerge/Core/Adapters/IInventoryAdapter.cs | IInventoryAdapter | 15
@@ -16,10 +14,6 @@ method-lines | Assets/TheVerge/Core/Simulators/LocalWorldSimulator.cs | LocalWor
 method-lines | Assets/TheVerge/Core/Simulators/LocalWorldSimulator.cs | LocalWorldSimulator.RequestHotbarAbility | 51
 method-lines | Assets/TheVerge/Core/Simulators/LocalWorldSimulator.cs | LocalWorldSimulator.SpawnDefaultWorld | 65
 method-lines | Assets/TheVerge/Core/Simulators/LocalWorldSimulator.cs | LocalWorldSimulator.TryRequestMove | 89
-method-lines | Assets/TheVerge/Network/Loopback/ModernUOLoopbackServer.cs | ModernUOLoopbackServer.HandleClientAsync | 418
-method-lines | Assets/TheVerge/Network/ModernUONetworkAdapter.cs | ModernUONetworkAdapter.ParsePacket | 61
-method-lines | Assets/TheVerge/Network/ModernUONetworkAdapter.cs | ModernUONetworkAdapter.WireProcessorEvents | 57
-method-lines | Assets/TheVerge/Network/Protocol/PacketLengthTable.cs | PacketLengthTable.PacketLengthTable | 100
 namespace-folder | Assets/TheVerge/Core/Adapters/AdapterModels.cs | TheVerge.Core | 1
 namespace-folder | Assets/TheVerge/Core/Adapters/CharacterCreationArgsDto.cs | TheVerge.Core | 1
 namespace-folder | Assets/TheVerge/Core/Adapters/CharacterListDto.cs | TheVerge.Core | 1
@@ -44,12 +38,5 @@ namespace-folder | Assets/TheVerge/Core/State/PlayerStatsModel.cs | TheVerge.Cor
 namespace-folder | Assets/TheVerge/Core/Threading/IMainThreadDispatcher.cs | TheVerge.Core | 1
 namespace-folder | Assets/TheVerge/Core/World/MinocMapSliceData.cs | TheVerge.Core | 1
 namespace-folder | Assets/TheVerge/Network/Compression/HuffmanCodec.cs | TheVerge.Network | 1
-namespace-folder | Assets/TheVerge/Network/Loopback/ModernUOLoopbackServer.cs | TheVerge.Network | 1
-namespace-folder | Assets/TheVerge/Network/Protocol/CharacterCreationPacketBuilder.cs | TheVerge.Network | 1
-namespace-folder | Assets/TheVerge/Network/Protocol/PacketLengthTable.cs | TheVerge.Network | 1
 nesting | Assets/TheVerge/Network/Compression/HuffmanCodec.cs | HuffmanCodec.HuffmanCodec | 4
-nesting | Assets/TheVerge/Network/Loopback/ModernUOLoopbackServer.cs | ModernUOLoopbackServer.HandleClientAsync | 6
-params | Assets/TheVerge/Network/Loopback/ModernUOLoopbackServer.cs | ModernUOLoopbackServer.SendMobileIncomingAsync | 8
-params | Assets/TheVerge/Network/Loopback/ModernUOLoopbackServer.cs | ModernUOLoopbackServer.SendWorldItemAsync | 7
 types-per-file | Assets/TheVerge/Core/Adapters/AdapterModels.cs |  | 11
-types-per-file | Assets/TheVerge/Network/Protocol/PacketLengthTable.cs |  | 2

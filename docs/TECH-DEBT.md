@@ -13,7 +13,7 @@
 | Часть (ADR 0011) | Что | Статус |
 |---|---|---|
 | 1. Presentation, Bootstrap, Editor | удалить старый UI на uGUI (окна входа, окно сети, меню Esc, AFK), диспетчер главного потока; упростить `GameBootstrap`; метка `PresentationAssembly`; `.asmdef` без uGUI и TextMeshPro | ✅ |
-| 2. Network | удалить `ModernUONetworkAdapter`, `Processors/*` (7), `ModernUOLoopbackServer`, `PacketLengthTable`, `CharacterCreationPacketBuilder` | ⬜ |
+| 2. Network | удалить `ModernUONetworkAdapter`, `Processors/*` (7), `ModernUOLoopbackServer`, `PacketLengthTable`, `CharacterCreationPacketBuilder` | ✅ |
 | 3. Network/Compression | `HuffmanCodec` → `HuffmanDecoder` через тесты (эталон сервера, переполнение буфера) | ⬜ |
 | 4. Core | удалить фасады `Adapters/*`, симулятор, кусок карты Минока, навыки GDD, модель статов, диспетчер, `CoordinateMapper`, `INetworkDiagnostics`; базовые типы — тесты по серверу и папка `Core/Primitives` | ⬜ |
 | 5. Core/Movement | `MovementSequenceQueue` через тесты по серверу | ⬜ |
@@ -31,7 +31,7 @@
 
 | Что | Где | Что сделать | Когда |
 |---|---|---|---|
-| Песочница Минока и команды `[minoc:` | `Custom/MinocSandboxInitializer.cs` + перехваты в `IncomingAccountPackets`, `IncomingMessagePackets`, `IncomingEntityPackets` | удалить целиком | после Стадий 4–7 |
+| Песочница Минока и команды `[minoc:` (клиент их больше не шлёт: старая сеть удалена в 0.9) | `Custom/MinocSandboxInitializer.cs` + перехваты в `IncomingAccountPackets`, `IncomingMessagePackets`, `IncomingEntityPackets` | удалить целиком | после Стадий 4–7 |
 | Подгонка разбора 0xBD под ошибку старого клиента (пропуск нулей, подстановка версии) | `IncomingAccountPackets.cs` | вернуть оригинал | когда новый клиент пройдёт тест на 0xBD (Стадия 1) |
 | Нет комментариев `// THE VERGE:` в ранних правках движка | `SpanWriter.cs`, `OutgoingAccountPackets.cs`, `OutgoingMobilePackets.cs` | добавить комментарии | при следующей правке сервера |
 | Снята проверка запрещённых слов в именах | `Misc/NameVerification.cs` | вернуть (с поддержкой кириллицы) | перед открытым тестом |
@@ -45,5 +45,5 @@
 
 | Файл | Что внутри | Как уменьшать |
 |---|---|---|
-| `tools/check/architecture-baseline.txt` | нарушения правил размеров и именования в коде прототипа: было 75, после части 1 аудита — 51 | исправил или удалил файл → `tools/check/architecture.sh --shrink-baseline` |
-| `tools/check/dotnet-warnings-baseline.txt` | 8 предупреждений CS0067 (неиспользуемые события) в `LocalWorldSimulator`, `InventoryPacketProcessor`, `LoginPacketProcessor` | исчезают вместе с файлами; строку убрать руками |
+| `tools/check/architecture-baseline.txt` | нарушения правил размеров и именования в коде прототипа: было 75, после частей 1–2 аудита — 38 | исправил или удалил файл → `tools/check/architecture.sh --shrink-baseline` |
+| `tools/check/dotnet-warnings-baseline.txt` | предупреждения CS0067 (неиспользуемые события): было 8, осталось 6 — все в `LocalWorldSimulator` (удаляется в части 4 аудита) | исчезают вместе с файлами; строку убрать руками |
