@@ -5,8 +5,8 @@ using TheVerge.Network.Framing;
 namespace TheVerge.Network.Transport
 {
     /// <summary>
-    /// Элемент очереди от фонового потока сокета к главному (AGENTS.md §2.3): целый пакет в буфере из пула, ошибка
-    /// нарезки или закрытие соединения. Буфер пакета после обработки возвращается в пул через <see cref="Release"/>.
+    /// Элемент очереди от фонового потока сокета к главному (AGENTS.md §2.3): подключение, целый пакет в буфере из пула,
+    /// ошибка нарезки или закрытие соединения. Буфер пакета после обработки возвращается в пул через <see cref="Release"/>.
     /// </summary>
     public readonly struct InboundEvent
     {
@@ -14,13 +14,15 @@ namespace TheVerge.Network.Transport
         private readonly ArrayPool<byte>? _pool;
         private readonly string? _reason;
 
-        private InboundEvent(InboundKind kind, byte[]? buffer, int length, ArrayPool<byte>? pool, FramingError error, string? reason)
+        private InboundEvent(InboundKind kind, byte[]? buffer, int length, ArrayPool<byte>? pool, FramingError error,
+            ConnectionCloseReason closeReason, string? reason)
         {
             Kind = kind;
             _buffer = buffer;
             Length = length;
             _pool = pool;
             Error = error;
+            CloseReason = closeReason;
             _reason = reason;
         }
 
@@ -34,17 +36,23 @@ namespace TheVerge.Network.Transport
 
         public FramingError Error { get; }
 
-        /// <summary>Почему закрыто соединение (для лога).</summary>
+        /// <summary>Почему закрыто соединение; None у остальных событий.</summary>
+        public ConnectionCloseReason CloseReason { get; }
+
+        /// <summary>Подробности закрытия для лога (текст ошибки сокета).</summary>
         public string Reason => _reason ?? string.Empty;
 
         public static InboundEvent FromPacket(byte[] buffer, int length, ArrayPool<byte> pool) =>
-            new InboundEvent(InboundKind.Packet, buffer, length, pool, default, null);
+            new InboundEvent(InboundKind.Packet, buffer, length, pool, default, ConnectionCloseReason.None, null);
 
         public static InboundEvent FramingFailed(FramingError error) =>
-            new InboundEvent(InboundKind.FramingFailed, null, 0, null, error, null);
+            new InboundEvent(InboundKind.FramingFailed, null, 0, null, error, ConnectionCloseReason.None, null);
 
-        public static InboundEvent Closed(string reason) =>
-            new InboundEvent(InboundKind.Closed, null, 0, null, default, reason);
+        public static InboundEvent Connected() =>
+            new InboundEvent(InboundKind.Connected, null, 0, null, default, ConnectionCloseReason.None, null);
+
+        public static InboundEvent Closed(ConnectionCloseReason reason, string detail) =>
+            new InboundEvent(InboundKind.Closed, null, 0, null, default, reason, detail);
 
         /// <summary>Вернуть буфер пакета в пул. Вызывается ровно один раз, после обработки пакета.</summary>
         public void Release()

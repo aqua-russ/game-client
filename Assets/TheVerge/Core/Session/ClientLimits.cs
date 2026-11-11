@@ -18,5 +18,8 @@ namespace TheVerge.Core.Session
         /// (NetState.Network.cs): полная очередь останавливает чтение сокета, и сервер сам отключает клиента.
         /// </summary>
         public const int InboundQueueBytes = 2 * 1024 * 1024;
+
+        /// <summary>Сколько ждать ответа сервера на подключение, мс.</summary>
+        public const int ConnectTimeoutMs = 10000;
     }
 }

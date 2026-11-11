@@ -9,7 +9,10 @@ namespace TheVerge.Network.Transport
         /// <summary>Поток нельзя резать дальше: нужен дисконнект с дампом (AGENTS.md §3.5).</summary>
         FramingFailed = 1,
 
-        /// <summary>Соединение закрыто: сервером, ошибкой сокета или самим клиентом.</summary>
+        /// <summary>Соединение закрыто: сервером, ошибкой, таймаутом или отменой (причина — InboundEvent.CloseReason).</summary>
         Closed = 2,
+
+        /// <summary>Подключение установлено: можно отправлять.</summary>
+        Connected = 3,
     }
 }

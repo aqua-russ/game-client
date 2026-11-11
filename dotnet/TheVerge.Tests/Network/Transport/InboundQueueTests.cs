@@ -86,7 +86,7 @@ namespace TheVerge.Tests.Network.Transport
             var pool = new CountingArrayPool();
             var queue = new InboundQueue(100);
             queue.Enqueue(InboundEvent.FromPacket(pool.Rent(3), 3, pool));
-            queue.Enqueue(InboundEvent.Closed("тест"));
+            queue.Enqueue(InboundEvent.Closed(ConnectionCloseReason.ServerClosed, "тест"));
             queue.Enqueue(InboundEvent.FromPacket(pool.Rent(2), 2, pool));
 
             queue.Clear();
