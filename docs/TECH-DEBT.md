@@ -6,26 +6,17 @@
 
 ## 1. Что делаем с кодом прототипа
 
-Код в `Assets/TheVerge` (~7 100 строк) написан до плана и архитектуры: работает, но устроен иначе (фасады-адаптеры, симулятор мира, UI из C#). **Решение:** новый код Стадий 1–8 пишется рядом по правилам `AGENTS.md`, а старые файлы удаляются, когда новый код их заменяет. Старое не расширяется и не переделывается «по чуть-чуть». Пока замены нет, прототип продолжает работать как есть.
+Решение по каждому файлу `Assets/TheVerge` принято в задаче 0.9 — [ADR 0011](adr/0011-prototype-audit.md): там таблица, какой файл удаляется, какой доводится через тесты и какой остаётся как есть. Прежнее правило «новый код пишется рядом, старые файлы удаляются, когда их заменят» этим ADR отменено.
 
-| Старый файл (строк) | Что не так | Чем заменяется | Когда |
-|---|---|---|---|
-| `Network/ModernUONetworkAdapter.cs` (480) | сокет, сессия, разбор и фасады в одном классе; шлёт речевые команды `[minoc:` | `TcpConnection`, `PacketFramer`, `GameClient`, обработчики и `*Sender` по доменам | Стадия 1 |
-| `Network/Processors/*` (7 файлов) | разбор пакетов в DTO для фасадов | `*Handler` в `Network/Packets/<Domain>/` | Стадии 1–5 |
-| `Network/Protocol/PacketLengthTable.cs` (218) | таблица длин руками | `PacketTable.g.cs` из `packets.csv` | задача 0.5 |
-| `Network/Compression/HuffmanCodec.cs` (222) | годится как основа, но без тестов нарезки | `HuffmanDecoder` с тестами из плана | Стадия 1 |
-| `Network/Loopback/ModernUOLoopbackServer.cs` (645) | свой «сервер» в клиенте дублирует логику ModernUO | фейковый сервер, проигрывающий golden-логи, в `dotnet/TheVerge.Tests` | Стадия 1 |
-| `Core/Simulators/LocalWorldSimulator.cs` (687) | симулятор мира на клиенте, противоречит авторитету сервера | не нужен: тесты на golden-логах и фейковом сервере | Стадия 1 |
-| `Core/Adapters/I*Adapter.cs` (6 интерфейсов) | «божественные» интерфейсы, выдуманные команды (`RequestCraftItem`, `RequestMineAt`) | доменные состояния, команды и порты (`AGENTS.md` §2.3) | Стадии 1–7 |
-| `Core/Adapters/AdapterModels.cs` (290) | ~11 типов в одном файле | доменные события и состояния | вместе с адаптерами |
-| `Core/World/MinocMapSliceData.cs` (183) | захардкоженный кусок карты Минока | сборка `Data`, чтение настоящих файлов | Стадия 2 |
-| `Core/Threading/*`, `Presentation/Threading/MainThreadDispatcher.cs` | передача сетевых данных в главный поток через диспетчер | очередь пакетов и `GameClient.Tick` (`AGENTS.md` §2.3) | Стадия 1 |
-| ~~`Presentation/Bootstrap/GameBootstrap.cs`~~ | ~~точка входа в Presentation~~ | перенесён в сборку `Bootstrap` (`Bootstrap/GameBootstrap.cs`); поиск сервера и запуск loopback остались до замены `ModernUOLoopbackServer` | ✅ задача 0.1 |
-| `Presentation/Bootstrap/NetworkStatusHudPresenter.cs` (328) | размер, UI из C#; счётчики сети берёт через временный порт `INetworkDiagnostics` | View + Presenter, разметка UI Toolkit | Стадия 1 |
-| `Presentation/UI/Auth/*` (6 файлов, 111–281) | UI из C# на uGUI; создание персонажа по правилам GDD (80 очков статов, 3 навыка из списка GDD) | UI Toolkit; правила сервера: статы 90, навыки до 50, сумма 100 или 120 (`TARGET.md` §4) | Стадия 1 |
-| `Presentation/UI/InGameEscapeMenuModal.cs`, `InactivityAfkController.cs` | UI из C# | UI Toolkit | при касании |
-| `Core/Ports/INetworkDiagnostics.cs` | временный порт только для старого окна статуса сети (ADR 0009) | уходит вместе с `NetworkStatusHudPresenter` | Стадия 1 |
-| `#nullable disable` первой строкой в 12 файлах прототипа (`ModernUONetworkAdapter`, `Processors/*`, `ModernUOLoopbackServer`, `LocalWorldSimulator`, `ISessionAdapter`, `AdapterModels`) | код не размечен под nullable (ADR 0009) | исчезает вместе с файлами | по мере замены |
+Аудит идёт частями (по слоям, каждая часть — отдельный коммит). Сделанная часть отмечается ✅.
+
+| Часть (ADR 0011) | Что | Статус |
+|---|---|---|
+| 1. Presentation, Bootstrap, Editor | удалить старый UI на uGUI (окна входа, окно сети, меню Esc, AFK), диспетчер главного потока; упростить `GameBootstrap`; метка `PresentationAssembly`; `.asmdef` без uGUI и TextMeshPro | ⬜ |
+| 2. Network | удалить `ModernUONetworkAdapter`, `Processors/*` (7), `ModernUOLoopbackServer`, `PacketLengthTable`, `CharacterCreationPacketBuilder` | ⬜ |
+| 3. Network/Compression | `HuffmanCodec` → `HuffmanDecoder` через тесты (эталон сервера, переполнение буфера) | ⬜ |
+| 4. Core | удалить фасады `Adapters/*`, симулятор, кусок карты Минока, навыки GDD, модель статов, диспетчер, `CoordinateMapper`, `INetworkDiagnostics`; базовые типы — тесты по серверу и папка `Core/Primitives` | ⬜ |
+| 5. Core/Movement | `MovementSequenceQueue` через тесты по серверу | ⬜ |
 
 ## 2. Настройки Unity-проекта
 
