@@ -25,10 +25,10 @@ export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1
 
 echo "1/5 Матрица пакетов…"
 if ! tools/check/packets.sh > "$LOGS/packets.log" 2>&1; then
-  fail "матрица пакетов docs/protocol/packets.csv не прошла проверку."
+  fail "матрица пакетов docs/protocol/packets.csv или таблица PacketTable.g.cs не прошли проверку."
   grep -v "^ОК$" "$LOGS/packets.log"
 else
-  grep "Матрица пакетов" "$LOGS/packets.log"
+  grep -E "Матрица пакетов|Таблица пакетов" "$LOGS/packets.log"
 fi
 
 echo "2/5 Сборка dotnet…"

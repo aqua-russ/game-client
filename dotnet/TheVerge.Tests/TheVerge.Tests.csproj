@@ -16,6 +16,11 @@
     <PackageReference Include="NUnit3TestAdapter" Version="6.3.1" />
   </ItemGroup>
 
+  <!-- Матрица пакетов — источник ожиданий для PacketTableTests (ADR 0010 п. 7): тест читает её из папки тестов. -->
+  <ItemGroup>
+    <None Include="../../docs/protocol/packets.csv" Link="Network/Framing/packets.csv" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="../TheVerge.Core.csproj" />
     <ProjectReference Include="../TheVerge.Network.csproj" />
