@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Net.Sockets;
 using System.Threading;
+using System.Threading.Tasks;
 using NUnit.Framework;
 using TheVerge.Network.Transport;
 
@@ -12,7 +14,20 @@ namespace TheVerge.Tests.Network.Transport
     {
         public const int ShortTimeoutMs = 300;
 
+        // Порт для молчащего сервера: подключение подставное, по сети ничего не уходит, номер ни на что не влияет.
+        public const int SilentServerPort = 2593;
+
         public static TcpConnection NewConnection() => new TcpConnection(new CountingArrayPool(), ShortTimeoutMs, 1 << 20);
+
+        /// <summary>
+        /// Соединение с сервером, который не отвечает на подключение: подключение никогда не завершается. Раньше это
+        /// изображали забитой очередью слушателя, но macOS в таком случае подключение принимает — трюк работал только
+        /// в Linux. Подстановка одинакова на любой системе и не зависит от скорости машины.
+        /// </summary>
+        public static TcpConnection NewSilentServerConnection(int connectTimeoutMs) =>
+            new TcpConnection(new CountingArrayPool(), connectTimeoutMs, 1 << 20, NeverAnswers);
+
+        private static Task NeverAnswers(Socket socket, string host, int port) => new TaskCompletionSource<bool>().Task;
 
         public static ConnectionCloseReason LastCloseReason(List<ConnectionEvents.Received> events)
         {

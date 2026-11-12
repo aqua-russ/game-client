@@ -47,11 +47,10 @@ namespace TheVerge.Tests.Network.Transport
         [Test]
         public void NoAnswer_ConnectTimeout()
         {
-            using (var hanging = new HangingEndpoint())
-            using (var connection = NewConnection())
+            using (var connection = NewSilentServerConnection(ShortTimeoutMs))
             {
                 var watch = Stopwatch.StartNew();
-                connection.Connect("127.0.0.1", hanging.Port, CancellationToken.None);
+                connection.Connect("127.0.0.1", SilentServerPort, CancellationToken.None);
 
                 var events = ConnectionEvents.Collect(connection, ConnectionEvents.Until(InboundKind.Closed));
 
@@ -81,11 +80,10 @@ namespace TheVerge.Tests.Network.Transport
         [Test]
         public void CancelDuringConnect_ClosedQuickly()
         {
-            using (var hanging = new HangingEndpoint())
             using (var cancel = new CancellationTokenSource())
-            using (var connection = new TcpConnection(new CountingArrayPool(), ClientLimits.ConnectTimeoutMs, 1 << 20))
+            using (var connection = NewSilentServerConnection(ClientLimits.ConnectTimeoutMs))
             {
-                connection.Connect("127.0.0.1", hanging.Port, cancel.Token);
+                connection.Connect("127.0.0.1", SilentServerPort, cancel.Token);
                 Thread.Sleep(50);
                 var watch = Stopwatch.StartNew();
                 cancel.Cancel();
@@ -141,18 +139,15 @@ namespace TheVerge.Tests.Network.Transport
         [Test]
         public void Dispose_DuringConnect_ReturnsQuickly()
         {
-            using (var hanging = new HangingEndpoint())
-            {
-                var connection = new TcpConnection(new CountingArrayPool(), ClientLimits.ConnectTimeoutMs, 1 << 20);
-                connection.Connect("127.0.0.1", hanging.Port, CancellationToken.None);
-                Thread.Sleep(50);
+            var connection = NewSilentServerConnection(ClientLimits.ConnectTimeoutMs);
+            connection.Connect("127.0.0.1", SilentServerPort, CancellationToken.None);
+            Thread.Sleep(50);
 
-                var watch = Stopwatch.StartNew();
-                connection.Dispose();
+            var watch = Stopwatch.StartNew();
+            connection.Dispose();
 
-                Assert.That(watch.ElapsedMilliseconds, Is.LessThan(2000));
-                Assert.That(connection.State, Is.EqualTo(ConnectionState.Closed));
-            }
+            Assert.That(watch.ElapsedMilliseconds, Is.LessThan(2000));
+            Assert.That(connection.State, Is.EqualTo(ConnectionState.Closed));
         }
 
         [Test]

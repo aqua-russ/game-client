@@ -18,6 +18,7 @@ namespace TheVerge.Network.Transport
         private const int ReceiveBufferSize = 64 * 1024;
 
         private readonly int _connectTimeoutMs;
+        private readonly Func<Socket, string, int, Task> _connect;
         private readonly InboundQueue _inbound;
         private readonly ReceivePipeline _pipeline;
         private readonly Socket _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -31,8 +32,20 @@ namespace TheVerge.Network.Transport
         private int _sendError;
 
         public TcpConnection(ArrayPool<byte> pool, int connectTimeoutMs, int inboundQueueBytes)
+            : this(pool, connectTimeoutMs, inboundQueueBytes, ConnectSocket)
+        {
+        }
+
+        /// <summary>
+        /// <paramref name="connect"/> начинает подключение сокета. В игре это всегда настоящий
+        /// <see cref="Socket.ConnectAsync(string, int)"/>; тесты подставляют подключение, которое не отвечает, —
+        /// молчащий сервер нельзя одинаково изобразить средствами ОС на macOS и в Linux.
+        /// </summary>
+        internal TcpConnection(ArrayPool<byte> pool, int connectTimeoutMs, int inboundQueueBytes,
+            Func<Socket, string, int, Task> connect)
         {
             _connectTimeoutMs = connectTimeoutMs;
+            _connect = connect;
             _inbound = new InboundQueue(inboundQueueBytes);
             _pipeline = new ReceivePipeline(_inbound, pool);
             _socket.NoDelay = true;
@@ -105,7 +118,7 @@ namespace TheVerge.Network.Transport
 
         private bool TryConnect(string host, int port, ref ConnectionCloseReason reason, ref string detail)
         {
-            var connecting = _socket.ConnectAsync(host, port);
+            var connecting = _connect(_socket, host, port);
             // Если подключение брошено по таймауту или отмене, его ошибка (сокет закрыт) ожидаема: забираем её здесь.
             connecting.ContinueWith(t => t.Exception, TaskContinuationOptions.OnlyOnFaulted);
             try
@@ -129,6 +142,8 @@ namespace TheVerge.Network.Transport
 
             return false;
         }
+
+        private static Task ConnectSocket(Socket socket, string host, int port) => socket.ConnectAsync(host, port);
 
         private void ReadLoop(ref ConnectionCloseReason reason, ref string detail)
         {
