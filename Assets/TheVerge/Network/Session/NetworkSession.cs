@@ -1,5 +1,6 @@
 using System;
 using TheVerge.Core.Ports;
+using TheVerge.Core.Session;
 using TheVerge.Network.Diagnostics;
 using TheVerge.Network.Framing;
 using TheVerge.Network.Transport;
@@ -10,11 +11,13 @@ namespace TheVerge.Network.Session
     /// Реализация порта <see cref="INetworkSession"/> (ADR 0013 п. 7): по одному событию из очереди транспорта.
     /// Пакет — в <see cref="PacketDispatcher"/>, после чего его буфер возвращается в пул. Ошибка нарезки — контролируемый
     /// дисконнект с дампом в лог (AGENTS.md §3.5). Закрытие соединения — запись в лог. Исходящие тика — в
-    /// <see cref="Outgoing"/>, в сокет одним вызовом <see cref="Flush"/>. Работает в главном потоке.
+    /// <see cref="Outgoing"/>, в сокет одним вызовом <see cref="Flush"/>. Работает в главном потоке. Вход идёт через два
+    /// соединения (логин-сервер, затем игровой), поэтому соединение сменяется (<see cref="Attach"/>): события прежнего
+    /// больше не обрабатываются.
     /// </summary>
     public sealed class NetworkSession : INetworkSession, IDisposable
     {
-        private readonly IConnection _connection;
+        private IConnection? _connection;
         private readonly PacketDispatcher _dispatcher;
         private readonly ILog _log;
         private bool _sendFailureReported;
@@ -22,6 +25,13 @@ namespace TheVerge.Network.Session
         public NetworkSession(IConnection connection, PacketDispatcher dispatcher, ILog log)
         {
             _connection = connection;
+            _dispatcher = dispatcher;
+            _log = log;
+        }
+
+        /// <summary>Сессия без соединения: его даёт <see cref="Attach"/> (ServerConnector).</summary>
+        public NetworkSession(PacketDispatcher dispatcher, ILog log)
+        {
             _dispatcher = dispatcher;
             _log = log;
         }
@@ -34,7 +44,10 @@ namespace TheVerge.Network.Session
         /// </summary>
         public PacketLogWriter? PacketLog { get; set; }
 
-        public bool IsConnected => _connection.State == ConnectionState.Connected;
+        /// <summary>Кому сообщать о подключении и конце соединения (вход в игру, Core/Session/LoginFlow). null — никому.</summary>
+        public IConnectionObserver? Observer { get; set; }
+
+        public bool IsConnected => _connection != null && _connection.State == ConnectionState.Connected;
 
         /// <summary>Соединение закончилось (закрыто или разорвано из-за сломанного потока); почему — <see cref="CloseReason"/>.</summary>
         public bool IsClosed => CloseReason != ConnectionCloseReason.None;
@@ -46,7 +59,7 @@ namespace TheVerge.Network.Session
 
         public bool ProcessNext()
         {
-            if (!_connection.TryReceive(out var item))
+            if (_connection == null || !_connection.TryReceive(out var item))
             {
                 return false;
             }
@@ -62,6 +75,7 @@ namespace TheVerge.Network.Session
                 case InboundKind.Connected:
                     _log.Info("Подключено к серверу.");
                     PacketLog?.Connected();
+                    Observer?.OnConnected();
                     break;
                 case InboundKind.Closed:
                     OnClosed(item);
@@ -81,12 +95,25 @@ namespace TheVerge.Network.Session
             PacketLog?.Flush();
         }
 
-        public void Dispose() => _connection.Dispose();
+        /// <summary>
+        /// Перейти на новое соединение: прежнее закрывается, его необработанные события отбрасываются, сессия снова
+        /// не закрыта. Подключает новое соединение вызывающий (ServerConnector).
+        /// </summary>
+        public void Attach(IConnection connection)
+        {
+            _connection?.Dispose();
+            _connection = connection;
+            CloseReason = ConnectionCloseReason.None;
+            CloseDetail = string.Empty;
+            _sendFailureReported = false;
+        }
+
+        public void Dispose() => _connection?.Dispose();
 
         private void SendPending()
         {
             var pending = Outgoing.Pending;
-            var sent = _connection.Send(pending);
+            var sent = _connection != null && _connection.Send(pending);
             if (!sent && !_sendFailureReported)
             {
                 _sendFailureReported = true;
@@ -130,7 +157,7 @@ namespace TheVerge.Network.Session
                        ", длина в заголовке " + error.DeclaredLength + ". Соединение разорвано. Дамп (" + error.Dump.Length +
                        " байт): " + PacketDump.ToHex(error.Dump));
             MarkClosed(ConnectionCloseReason.FramingFailed, "пакет 0x" + error.Id.ToString("X2") + subCommand + " (" + error.Kind + ")");
-            _connection.Dispose();
+            _connection?.Dispose();
         }
 
         private void OnClosed(InboundEvent item)
@@ -146,7 +173,7 @@ namespace TheVerge.Network.Session
                 _log.Warning(message);
             }
 
-            _connection.Dispose();
+            _connection?.Dispose();
         }
 
         private void MarkClosed(ConnectionCloseReason reason, string detail)
@@ -154,6 +181,26 @@ namespace TheVerge.Network.Session
             CloseReason = reason;
             CloseDetail = detail;
             PacketLog?.Closed(reason, detail);
+            Observer?.OnDisconnected(DisconnectReasonOf(reason), detail);
+        }
+
+        private static DisconnectReason DisconnectReasonOf(ConnectionCloseReason reason)
+        {
+            switch (reason)
+            {
+                case ConnectionCloseReason.Cancelled:
+                    return DisconnectReason.Requested;
+                case ConnectionCloseReason.ConnectFailed:
+                    return DisconnectReason.ConnectFailed;
+                case ConnectionCloseReason.ConnectTimeout:
+                    return DisconnectReason.ConnectTimeout;
+                case ConnectionCloseReason.ServerClosed:
+                    return DisconnectReason.ServerClosed;
+                case ConnectionCloseReason.FramingFailed:
+                    return DisconnectReason.ProtocolError;
+                default:
+                    return DisconnectReason.NetworkError;
+            }
         }
     }
 }

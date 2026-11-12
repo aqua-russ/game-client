@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Проверка бота против настоящего сервера ModernUO (задачи 1.12 и 1.15) одной командой: сам запускает сервер, гоняет
+# Проверка бота против настоящего сервера ModernUO (задачи 1.5–1.15) одной командой: сам запускает сервер, гоняет
 # бота и останавливает сервер. Печатает «ОК» или «ОШИБКА: …». Ваш файл с паролем (remaster/secrets) не трогается:
 # проверка пишет временные настройки. Сервер должен быть остановлен: проверке нужен свежий запуск (список исключений
 # 127.0.0.1 читается при старте). Подробности — Logs/check/bot-*.log, лог сервера — Logs/check/server.log.
@@ -47,8 +47,12 @@ if port_open; then
   echo "ОШИБКА: сервер уже запущен (порт 2593 занят). Остановите его (Ctrl+C в его окне) и запустите проверку снова."; exit 1
 fi
 
+# Ваш логин бота (tools/bot/setup.sh) — только читается. Проверка входит с ним и с заведомо неверным паролем.
+SECRETS="${THEVERGE_SECRETS_DIR:-$ROOT/../../secrets}/bot.json"
+LOGIN="$(python3 -c "import json,sys; print(json.load(open(sys.argv[1])).get('login',''))" "$SECRETS" 2>/dev/null)"
+[ -n "$LOGIN" ] || { echo "ОШИБКА: нет логина бота в $SECRETS. Сохраните его: tools/bot/setup.sh"; exit 1; }
 PASSWORD="check-$(python3 -c 'import secrets; print(secrets.token_hex(6))')"
-printf '{"login":"botcheck","password":"%s"}\n' "$PASSWORD" > "$TMP/bot.json"
+printf '{"login":"%s","password":"%s"}\n' "$LOGIN" "$PASSWORD" > "$TMP/bot.json"
 printf '{"login":"botcheck"}\n' > "$TMP/nopass.json"
 chmod 600 "$TMP/bot.json" "$TMP/nopass.json"
 
@@ -75,14 +79,18 @@ grep -q "Manual allowlist loaded" "$LOGS/server.log" && ok "сервер зап�
 
 echo "4/6 Бот против сервера…"
 BEFORE="$(ls "$ROOT/Logs/packets" 2>/dev/null | wc -l)"
-expect_code "бот подключился и сам закрыл соединение" 0 bot-run.log bot --config "$TMP/bot.json"
+expect_code "неверный пароль: сервер отказал, бот не завис (код 6)" 6 bot-run.log bot --config "$TMP/bot.json"
+grep -q "отказал во входе" "$LOGS/bot-run.log" && ok "причина отказа названа: $(grep -o 'отказал во входе: [^(.]*' "$LOGS/bot-run.log" | head -n 1)" \
+  || fail "нет причины отказа в Logs/check/bot-run.log"
 NEWEST="$(ls -t "$ROOT/Logs/packets"/*.tsv 2>/dev/null | head -n 1)"
-if [ -n "$NEWEST" ] && grep -q "CONNECTED" "$NEWEST" && grep -q "CLOSED" "$NEWEST"; then ok "лог пакетов записан: ${NEWEST#$ROOT/}"; else fail "в логе пакетов нет CONNECTED и CLOSED"; fi
+if [ -n "$NEWEST" ] && grep -q "CONNECTED" "$NEWEST" && grep -q "0xEF" "$NEWEST" && grep -q "0x80" "$NEWEST" && grep -q "CLOSED" "$NEWEST"; then
+  ok "лог пакетов записан (подключение, seed, логин, закрытие): ${NEWEST#$ROOT/}"
+else fail "в логе пакетов нет CONNECTED, 0xEF, 0x80 и CLOSED"; fi
 if grep -q "$PASSWORD" "$LOGS/bot-run.log" ${NEWEST:+"$NEWEST"}; then fail "пароль попал на экран или в лог"; else ok "пароля нет ни на экране, ни в логе"; fi
 
 echo "5/6 Молчаливое подключение на 7 с, затем бот…"
 python3 -c "import socket,time; s=socket.create_connection(('127.0.0.1',2593)); time.sleep(7); s.close()"
-expect_code "после молчаливого подключения бот входит (127.0.0.1 не заблокирован)" 0 bot-after-silent.log bot --config "$TMP/bot.json" --no-packet-log
+expect_code "после молчаливого подключения сервер по-прежнему отвечает боту (127.0.0.1 не заблокирован)" 6 bot-after-silent.log bot --config "$TMP/bot.json" --no-packet-log
 
 echo "6/6 Остановка сервера, затем бот…"
 stop_server

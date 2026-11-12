@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Runtime.Versioning;
 using System.Threading;
+using System.Threading.Tasks;
 using NUnit.Framework;
 using TheVerge.Bot;
 using TheVerge.Core.Session;
@@ -94,20 +95,23 @@ namespace TheVerge.Tests.Bot
         }
 
         [Test]
-        public void ServerUp_Success_LogFileWritten_PasswordNeverShown()
+        public void ServerRejects_LogFileWritten_PasswordNeverShown()
         {
             using (var server = new LocalServer())
             {
                 var config = Config("{\"login\":\"gm\",\"password\":\"" + Password + "\"}");
+                var answer = RejectLogin(server);
 
                 var code = NewApp(null).Run(new[] { "--config", config, "--port", server.Port.ToString() }, CancellationToken.None);
 
-                Assert.That(code, Is.EqualTo(BotExitCode.Success));
+                Assert.That(answer.Wait(5000), Is.True);
+                Assert.That(code, Is.EqualTo(BotExitCode.LoginRejected));
                 var logs = Directory.GetFiles(Path.Combine(_root, "Logs", "packets"));
                 Assert.That(logs.Length, Is.EqualTo(1));
                 var log = File.ReadAllText(logs[0]);
                 Assert.That(log, Does.Contain("CONNECTED"));
-                Assert.That(_output.ToString(), Does.Contain(logs[0]).And.Contain("Код выхода 0"));
+                Assert.That(log, Does.Contain("0xEF").And.Contain("0x80").And.Contain("0x82"));
+                Assert.That(_output.ToString(), Does.Contain(logs[0]).And.Contain("Код выхода 6"));
                 Assert.That(_output.ToString() + log, Does.Not.Contain(Password));
             }
         }
@@ -118,14 +122,27 @@ namespace TheVerge.Tests.Bot
             using (var server = new LocalServer())
             {
                 var config = Config("{\"login\":\"gm\"}");
+                var answer = RejectLogin(server);
 
                 var code = NewApp(() => Password).Run(new[] { "--config", config, "--port", server.Port.ToString(), "--no-packet-log" },
                     CancellationToken.None);
 
-                Assert.That(code, Is.EqualTo(BotExitCode.Success));
+                Assert.That(answer.Wait(5000), Is.True);
+                Assert.That(code, Is.EqualTo(BotExitCode.LoginRejected));
                 Assert.That(_prompts, Is.EqualTo(1));
                 Assert.That(Directory.Exists(Path.Combine(_root, "Logs", "packets")), Is.False);
             }
+        }
+
+        [Test]
+        public void LoginLongerThanServerField_Code1_NothingSent()
+        {
+            var config = Config("{\"login\":\"" + new string('a', 31) + "\",\"password\":\"" + Password + "\"}");
+
+            var code = NewApp(null).Run(new[] { "--config", config, "--port", "1" }, CancellationToken.None);
+
+            Assert.That(code, Is.EqualTo(BotExitCode.BadArguments));
+            Assert.That(_output.ToString(), Does.Contain("30"));
         }
 
         [Test]
@@ -140,6 +157,16 @@ namespace TheVerge.Tests.Bot
                 _prompts++;
                 return prompt();
             }));
+
+        // Сервер-заглушка: принимает подключение, читает seed и логин (21 + 62 байта, IncomingAccountPackets.cs),
+        // отвечает отказом «неверный пароль» (0x82 0x03, OutgoingAccountPackets.cs) и закрывает соединение, как сервер.
+        private static Task RejectLogin(LocalServer server) => Task.Run(() =>
+        {
+            server.Accept();
+            server.ReadExactly(21 + 62);
+            server.Client.Send(new byte[] { 0x82, 0x03 });
+            server.CloseClient();
+        });
 
         private string Config(string json)
         {

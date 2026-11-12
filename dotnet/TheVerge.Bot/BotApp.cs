@@ -91,9 +91,15 @@ namespace TheVerge.Bot
                 settings.Password = _passwordPrompt() ?? string.Empty;
             }
 
-            return settings.Password.Length > 0
+            if (settings.Password.Length == 0)
+            {
+                return "нет пароля: сохраните его один раз командой tools/bot/setup.sh (файл " + path + ").";
+            }
+
+            return FitsServer(settings.Login) && FitsServer(settings.Password)
                 ? string.Empty
-                : "нет пароля: сохраните его один раз командой tools/bot/setup.sh (файл " + path + ").";
+                : "логин и пароль — не длиннее " + ServerLimits.CredentialMaxChars + " символов, только латиница " +
+                  "(сервер читает их в Latin-1). Исправьте командой tools/bot/setup.sh.";
         }
 
         private int Connect(BotSettings settings, bool writePacketLog, CancellationToken interrupt)
@@ -107,11 +113,32 @@ namespace TheVerge.Bot
                     log.Info("Лог пакетов: " + packetLog.Path);
                 }
 
-                var connection = new TcpConnection(ArrayPool<byte>.Shared, ClientLimits.ConnectTimeoutMs, ClientLimits.InboundQueueBytes);
-                var code = new BotRunner(connection, clock, log, packetLog?.Writer).Run(settings.Host, settings.Port, interrupt);
+                var login = new BotLogin(settings.Host, settings.Port, new LoginCredentials(settings.Login, settings.Password), settings.Character);
+                var code = new BotRunner(NewConnection, clock, log, packetLog?.Writer).Run(login, interrupt);
                 return Exit(code, string.Empty);
             }
         }
+
+        private static bool FitsServer(string value)
+        {
+            if (value.Length > ServerLimits.CredentialMaxChars)
+            {
+                return false;
+            }
+
+            foreach (var c in value)
+            {
+                if (c > ServerLimits.MaxLatin1Char)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static IConnection NewConnection() =>
+            new TcpConnection(ArrayPool<byte>.Shared, ClientLimits.ConnectTimeoutMs, ClientLimits.InboundQueueBytes);
 
         private int Exit(int code, string message)
         {

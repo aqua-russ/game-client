@@ -18,14 +18,19 @@ using TheVerge.Tests.Network.Transport;
 namespace TheVerge.Tests.Bot
 {
     /// <summary>
-    /// Каркас бота (PLAN Стадия 1, п. 15): собирает TcpConnection → NetworkSession → GameClient, крутит тики и честно
-    /// говорит, чем всё кончилось, — сообщением и кодом выхода. Вход на сервер — задачи 1.5–1.9; пока бот, подключившись,
-    /// сразу закрывает соединение сам: сервер блокирует адрес, если подключение 5 с молчит
-    /// (Projects/Server/Network/NetState/NetState.Network.cs, DisconnectUnattachedSockets, BanReasons.SilentConnect).
+    /// Бот (PLAN Стадия 1, п. 15): собирает TcpConnection → NetworkSession → GameClient и вход LoginFlow, крутит тики и
+    /// честно говорит, чем всё кончилось, — сообщением и кодом выхода. Сразу после подключения бот шлёт seed и логин:
+    /// сервер блокирует адрес, если подключение 5 с молчит (Projects/Server/Network/NetState/NetState.Network.cs,
+    /// DisconnectUnattachedSockets, BanReasons.SilentConnect). Отказ 0x82 — OutgoingAccountPackets.cs, ALRReason.
     /// </summary>
     public sealed class BotRunnerTests
     {
         private const int ServerSilenceLimitMs = 5000;
+
+        /// <summary>0xEF (21 байт) и 0x80 (62 байта): IncomingAccountPackets.cs, Register(0xEF, …, 21) и Register(0x80, …, 62).</summary>
+        private const int SeedAndLoginLength = 21 + 62;
+
+        private const string Password = "s3cretPw";
 
         private RecordingLog _log = new RecordingLog();
         private FakeClock _clock = new FakeClock();
@@ -38,42 +43,71 @@ namespace TheVerge.Tests.Bot
         }
 
         [Test]
-        public void ServerUp_ConnectsThenClosesItselfLongBeforeServerLimit_Success()
+        public void ServerUp_SeedAndLoginArriveLongBeforeServerLimit()
         {
             using (var server = new LocalServer())
             {
+                var run = Task.Run(() => NewRunner(NewConnection()).Run(Target(server.Port), CancellationToken.None));
                 var watch = Stopwatch.StartNew();
-
-                var code = NewRunner(NewConnection()).Run("127.0.0.1", server.Port, CancellationToken.None);
-
-                Assert.That(code, Is.EqualTo(BotExitCode.Success), LogText());
-                Assert.That(watch.ElapsedMilliseconds, Is.LessThan(ServerSilenceLimitMs / 5));
                 server.Accept();
-                Assert.That(server.SeesClientClosed(), Is.True);
-                Assert.That(Infos(), Does.Contain("Подключено").And.Contain("1.5"));
+
+                var received = server.ReadExactly(SeedAndLoginLength);
+
+                Assert.That(watch.ElapsedMilliseconds, Is.LessThan(ServerSilenceLimitMs / 5));
+                Assert.That(received[0], Is.EqualTo(0xEF));
+                Assert.That(received[21], Is.EqualTo(0x80));
+                server.Client.Send(new byte[] { 0x82, 0x03 });
+                server.CloseClient();
+                Assert.That(run.Wait(5000), Is.True, "бот не закончил работу");
+                Assert.That(run.Result, Is.EqualTo(BotExitCode.LoginRejected), LogText());
             }
         }
 
         [Test]
-        public void ServerUp_PacketLogHasConnectedAndClosed()
+        public void WrongPassword_LoginRejected_ReasonInWords_PasswordNowhere()
         {
-            using (var server = new LocalServer())
+            var connection = new FakeConnection();
+            connection.Push(InboundEvent.Connected());
+            connection.PushAfterSend(InboundEvent.FromPacket(new byte[] { 0x82, 0x03 }, 2, new CountingArrayPool()));
+            connection.PushAfterSend(InboundEvent.Closed(ConnectionCloseReason.ServerClosed, string.Empty));
+
+            var code = NewRunner(connection).Run(Target(2593), CancellationToken.None);
+
+            Assert.That(code, Is.EqualTo(BotExitCode.LoginRejected));
+            Assert.That(_log.Errors.Single(), Does.Contain("неверный пароль"));
+            Assert.That(LogText(), Does.Not.Contain(Password));
+        }
+
+        [Test]
+        public void PacketLog_ConnectedLoginRejectedClosed_PasswordMasked()
+        {
+            var output = new StringWriter();
+            var packetLog = new PacketLogWriter(output, _clock, _log, long.MaxValue);
+            var connection = new FakeConnection();
+            connection.Push(InboundEvent.Connected());
+            connection.PushAfterSend(InboundEvent.FromPacket(new byte[] { 0x82, 0x03 }, 2, new CountingArrayPool()));
+            connection.PushAfterSend(InboundEvent.Closed(ConnectionCloseReason.ServerClosed, string.Empty));
+
+            new BotRunner(() => connection, _clock, _log, packetLog).Run(Target(2593), CancellationToken.None);
+
+            var reader = new PacketLogReader(new StringReader(output.ToString()));
+            var kinds = new System.Collections.Generic.List<string>();
+            while (reader.TryRead(out var entry))
             {
-                var output = new StringWriter();
-                var packetLog = new PacketLogWriter(output, _clock, _log, long.MaxValue);
-
-                new BotRunner(NewConnection(), _clock, _log, packetLog).Run("127.0.0.1", server.Port, CancellationToken.None);
-
-                var reader = new PacketLogReader(new StringReader(output.ToString()));
-                Assert.That(reader.TryRead(out var connected) && connected.Kind == PacketLogKind.Connected, Is.True);
-                Assert.That(reader.TryRead(out var closed) && closed.Kind == PacketLogKind.Closed, Is.True);
+                kinds.Add(entry.Kind == PacketLogKind.Packet ? entry.Direction + " 0x" + entry.Packet[0].ToString("X2") : entry.Kind.ToString());
             }
+
+            Assert.That(kinds, Is.EqualTo(new[]
+            {
+                "Connected", "ClientToServer 0xEF", "ClientToServer 0x80", "ServerToClient 0x82", "Closed",
+            }));
+            Assert.That(output.ToString(), Does.Not.Contain(HexOf(Password)));
         }
 
         [Test]
         public void NothingListens_ConnectFailed()
         {
-            var code = NewRunner(NewConnection()).Run("127.0.0.1", FreePort(), CancellationToken.None);
+            var code = NewRunner(NewConnection()).Run(Target(FreePort()), CancellationToken.None);
 
             Assert.That(code, Is.EqualTo(BotExitCode.ConnectFailed));
             Assert.That(_log.Errors.Single(), Does.Contain("Не удалось подключиться").And.Contain("сервер"));
@@ -84,7 +118,7 @@ namespace TheVerge.Tests.Bot
         {
             var connection = TcpConnectionTestKit.NewSilentServerConnection(TcpConnectionTestKit.ShortTimeoutMs);
 
-            var code = NewRunner(connection).Run("127.0.0.1", TcpConnectionTestKit.SilentServerPort, CancellationToken.None);
+            var code = NewRunner(connection).Run(Target(TcpConnectionTestKit.SilentServerPort), CancellationToken.None);
 
             Assert.That(code, Is.EqualTo(BotExitCode.ConnectFailed));
             Assert.That(_log.Errors.Single(), Does.Contain("не ответил"));
@@ -97,7 +131,7 @@ namespace TheVerge.Tests.Bot
             connection.Push(InboundEvent.Connected());
             connection.Push(InboundEvent.Closed(ConnectionCloseReason.ServerClosed, string.Empty));
 
-            var code = NewRunner(connection).Run("127.0.0.1", 2593, CancellationToken.None);
+            var code = NewRunner(connection).Run(Target(2593), CancellationToken.None);
 
             Assert.That(code, Is.EqualTo(BotExitCode.ConnectionLost));
             Assert.That(_log.Errors.Single(), Does.Contain("Сервер закрыл соединение"));
@@ -109,7 +143,7 @@ namespace TheVerge.Tests.Bot
             var connection = new FakeConnection();
             connection.Push(InboundEvent.Closed(ConnectionCloseReason.SocketError, "Connection reset"));
 
-            var code = NewRunner(connection).Run("127.0.0.1", 2593, CancellationToken.None);
+            var code = NewRunner(connection).Run(Target(2593), CancellationToken.None);
 
             Assert.That(code, Is.EqualTo(BotExitCode.ConnectionLost));
             Assert.That(_log.Errors.Single(), Does.Contain("Connection reset"));
@@ -122,7 +156,7 @@ namespace TheVerge.Tests.Bot
             var error = new FramingError(FramingErrorKind.UnknownPacket, 0x02, 0, 0, new byte[] { 0x02 });
             connection.Push(InboundEvent.FramingFailed(error));
 
-            var code = NewRunner(connection).Run("127.0.0.1", 2593, CancellationToken.None);
+            var code = NewRunner(connection).Run(Target(2593), CancellationToken.None);
 
             Assert.That(code, Is.EqualTo(BotExitCode.ProtocolError));
         }
@@ -131,11 +165,11 @@ namespace TheVerge.Tests.Bot
         public void CtrlC_WhileConnecting_InterruptedQuickly()
         {
             var connection = TcpConnectionTestKit.NewSilentServerConnection(ClientLimits.ConnectTimeoutMs);
-            var runner = new BotRunner(connection, new SystemClockForTests(), _log, null);
+            var runner = new BotRunner(() => connection, new SystemClockForTests(), _log, null);
             using (var interrupt = new CancellationTokenSource())
             {
                 var watch = Stopwatch.StartNew();
-                var run = Task.Run(() => runner.Run("127.0.0.1", TcpConnectionTestKit.SilentServerPort, interrupt.Token));
+                var run = Task.Run(() => runner.Run(Target(TcpConnectionTestKit.SilentServerPort), interrupt.Token));
                 Thread.Sleep(100);
 
                 interrupt.Cancel();
@@ -156,10 +190,16 @@ namespace TheVerge.Tests.Bot
             Assert.That(BotExitCode.ConnectionLost, Is.EqualTo(3));
             Assert.That(BotExitCode.ProtocolError, Is.EqualTo(4));
             Assert.That(BotExitCode.InternalError, Is.EqualTo(5));
+            Assert.That(BotExitCode.LoginRejected, Is.EqualTo(6));
             Assert.That(BotExitCode.Interrupted, Is.EqualTo(130));
         }
 
-        private BotRunner NewRunner(IConnection connection) => new BotRunner(connection, new SystemClockForTests(), _log, null);
+        private BotRunner NewRunner(IConnection connection) => new BotRunner(() => connection, new SystemClockForTests(), _log, null);
+
+        private static BotLogin Target(int port) => new BotLogin("127.0.0.1", port, new LoginCredentials("player", Password), string.Empty);
+
+        private static string HexOf(string text) =>
+            string.Join(" ", System.Text.Encoding.ASCII.GetBytes(text).Select(b => b.ToString("X2")));
 
         private static TcpConnection NewConnection() =>
             new TcpConnection(new CountingArrayPool(), ClientLimits.ConnectTimeoutMs, ClientLimits.InboundQueueBytes);

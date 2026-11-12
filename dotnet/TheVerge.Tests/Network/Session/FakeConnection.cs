@@ -9,6 +9,7 @@ namespace TheVerge.Tests.Network.Session
     internal sealed class FakeConnection : IConnection
     {
         private readonly Queue<InboundEvent> _inbound = new Queue<InboundEvent>();
+        private readonly Queue<InboundEvent> _afterSend = new Queue<InboundEvent>();
 
         public List<byte[]> Sent { get; } = new List<byte[]>();
 
@@ -23,11 +24,21 @@ namespace TheVerge.Tests.Network.Session
 
         public void Push(InboundEvent item) => _inbound.Enqueue(item);
 
-        public void Connect(string host, int port, CancellationToken cancellation) => State = ConnectionState.Connecting;
+        /// <summary>Событие придёт только после следующей отправки клиента — как ответ сервера на неё.</summary>
+        public void PushAfterSend(InboundEvent item) => _afterSend.Enqueue(item);
 
-        public void EnableCompression()
+        /// <summary>Куда просили подключиться («адрес:порт»); пусто — Connect не вызывали.</summary>
+        public string ConnectedTo { get; private set; } = string.Empty;
+
+        public bool CompressionEnabled { get; private set; }
+
+        public void Connect(string host, int port, CancellationToken cancellation)
         {
+            State = ConnectionState.Connecting;
+            ConnectedTo = host + ":" + port;
         }
+
+        public void EnableCompression() => CompressionEnabled = true;
 
         public bool Send(ReadOnlySpan<byte> data)
         {
@@ -39,6 +50,11 @@ namespace TheVerge.Tests.Network.Session
             if (KeepSent)
             {
                 Sent.Add(data.ToArray());
+            }
+
+            while (_afterSend.Count > 0)
+            {
+                _inbound.Enqueue(_afterSend.Dequeue());
             }
 
             return true;
@@ -53,6 +69,11 @@ namespace TheVerge.Tests.Network.Session
             while (_inbound.Count > 0)
             {
                 _inbound.Dequeue().Release();
+            }
+
+            while (_afterSend.Count > 0)
+            {
+                _afterSend.Dequeue().Release();
             }
         }
     }

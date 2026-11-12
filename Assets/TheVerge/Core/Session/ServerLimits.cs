@@ -37,5 +37,14 @@ namespace TheVerge.Core.Session
 
         /// <summary>Максимум одного стата (stats.statMax).</summary>
         public const int StatMax = 100;
+
+        /// <summary>Версия клиента (docs/TARGET.md §1, ADR 0002): её клиент шлёт в 0xEF и в ответе 0xBD.</summary>
+        public static readonly ClientVersion ClientVersion = new ClientVersion(7, 0, 95, 0);
+
+        /// <summary>Логин и пароль — не длиннее (поле Latin-1 из 30 байт, IncomingAccountPackets.cs, ReadLatin1Safe(30)).</summary>
+        public const int CredentialMaxChars = 30;
+
+        /// <summary>Последняя буква Latin-1: логин и пароль сервер читает в этой кодировке.</summary>
+        public const char MaxLatin1Char = '\u00FF';
     }
 }

@@ -24,6 +24,9 @@ namespace TheVerge.Bot
         /// <summary>Ошибка в самом боте.</summary>
         public const int InternalError = 5;
 
+        /// <summary>Сервер отказал во входе (неверный пароль, аккаунт заблокирован или занят); причина — в сообщении.</summary>
+        public const int LoginRejected = 6;
+
         /// <summary>Остановлено по Ctrl+C (как принято в Unix: 128 + номер сигнала SIGINT).</summary>
         public const int Interrupted = 130;
     }
