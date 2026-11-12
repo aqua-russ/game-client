@@ -25,5 +25,7 @@
     <ProjectReference Include="../TheVerge.Core.csproj" />
     <ProjectReference Include="../TheVerge.Network.csproj" />
     <ProjectReference Include="../TheVerge.Data.csproj" />
+    <!-- Бот — консольная программа; тесты проверяют его цикл, коды выхода и параметры без запуска процесса. -->
+    <ProjectReference Include="../TheVerge.Bot/TheVerge.Bot.csproj" />
   </ItemGroup>
 </Project>

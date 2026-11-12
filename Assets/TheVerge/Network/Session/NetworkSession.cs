@@ -36,6 +36,14 @@ namespace TheVerge.Network.Session
 
         public bool IsConnected => _connection.State == ConnectionState.Connected;
 
+        /// <summary>Соединение закончилось (закрыто или разорвано из-за сломанного потока); почему — <see cref="CloseReason"/>.</summary>
+        public bool IsClosed => CloseReason != ConnectionCloseReason.None;
+
+        public ConnectionCloseReason CloseReason { get; private set; }
+
+        /// <summary>Подробности для человека: текст ошибки сокета или какой пакет сломал поток.</summary>
+        public string CloseDetail { get; private set; } = string.Empty;
+
         public bool ProcessNext()
         {
             if (!_connection.TryReceive(out var item))
@@ -121,13 +129,13 @@ namespace TheVerge.Network.Session
             _log.Error("Сломанный поток от сервера (" + error.Kind + "): пакет 0x" + error.Id.ToString("X2") + subCommand +
                        ", длина в заголовке " + error.DeclaredLength + ". Соединение разорвано. Дамп (" + error.Dump.Length +
                        " байт): " + PacketDump.ToHex(error.Dump));
-            PacketLog?.Closed(ConnectionCloseReason.FramingFailed, "пакет 0x" + error.Id.ToString("X2") + subCommand + " (" + error.Kind + ")");
+            MarkClosed(ConnectionCloseReason.FramingFailed, "пакет 0x" + error.Id.ToString("X2") + subCommand + " (" + error.Kind + ")");
             _connection.Dispose();
         }
 
         private void OnClosed(InboundEvent item)
         {
-            PacketLog?.Closed(item.CloseReason, item.Reason);
+            MarkClosed(item.CloseReason, item.Reason);
             var message = "Соединение закрыто: " + item.CloseReason + (item.Reason.Length > 0 ? " (" + item.Reason + ")." : ".");
             if (item.CloseReason == ConnectionCloseReason.Cancelled)
             {
@@ -139,6 +147,13 @@ namespace TheVerge.Network.Session
             }
 
             _connection.Dispose();
+        }
+
+        private void MarkClosed(ConnectionCloseReason reason, string detail)
+        {
+            CloseReason = reason;
+            CloseDetail = detail;
+            PacketLog?.Closed(reason, detail);
         }
     }
 }

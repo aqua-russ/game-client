@@ -109,6 +109,45 @@ namespace TheVerge.Tests.Network.Session
         }
 
         [Test]
+        public void Open_NotClosed_NoReason()
+        {
+            var session = new NetworkSession(_connection, new PacketDispatcher(_log), _log);
+            _connection.Push(InboundEvent.Connected());
+
+            session.ProcessNext();
+
+            Assert.That(session.IsClosed, Is.False);
+            Assert.That(session.CloseReason, Is.EqualTo(ConnectionCloseReason.None));
+        }
+
+        [Test]
+        public void Closed_ReasonAndDetailKept()
+        {
+            var session = new NetworkSession(_connection, new PacketDispatcher(_log), _log);
+            _connection.Push(InboundEvent.Closed(ConnectionCloseReason.ConnectFailed, "Connection refused"));
+
+            session.ProcessNext();
+
+            Assert.That(session.IsClosed, Is.True);
+            Assert.That(session.CloseReason, Is.EqualTo(ConnectionCloseReason.ConnectFailed));
+            Assert.That(session.CloseDetail, Is.EqualTo("Connection refused"));
+        }
+
+        [Test]
+        public void FramingFailed_ClosedByFraming()
+        {
+            var session = new NetworkSession(_connection, new PacketDispatcher(_log), _log);
+            var error = new FramingError(FramingErrorKind.UnknownPacket, 0x02, 0, 0, new byte[] { 0x02, 0x01 });
+            _connection.Push(InboundEvent.FramingFailed(error));
+
+            session.ProcessNext();
+
+            Assert.That(session.IsClosed, Is.True);
+            Assert.That(session.CloseReason, Is.EqualTo(ConnectionCloseReason.FramingFailed));
+            Assert.That(session.CloseDetail, Does.Contain("0x02"));
+        }
+
+        [Test]
         public void Flush_AllPacketsOfTickInOneSend()
         {
             var session = new NetworkSession(_connection, new PacketDispatcher(_log), _log);
