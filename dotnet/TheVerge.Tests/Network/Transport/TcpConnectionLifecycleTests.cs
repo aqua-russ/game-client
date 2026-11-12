@@ -115,6 +115,27 @@ namespace TheVerge.Tests.Network.Transport
         }
 
         [Test]
+        public void CancelWhileReading_EndOfStreamAfterOwnClose_IsCancelledNotServerClosed()
+        {
+            // Своё закрытие сокета будит ждущее чтение, и оно может вернуть «0 байт» раньше, чем сокет закроется
+            // окончательно. Это не сервер закрыл соединение: отмену запросили мы. Подстановка чтения делает порядок
+            // «отмена, затем 0 байт» постоянным, а не случайным.
+            using (var server = new LocalServer())
+            using (var cancel = new CancellationTokenSource())
+            using (var connection = NewConnectionReadingEndAfter(cancel.Token))
+            {
+                connection.Connect("127.0.0.1", server.Port, cancel.Token);
+                server.Accept();
+                ConnectionEvents.Collect(connection, ConnectionEvents.Count(1));
+
+                cancel.Cancel();
+                var events = ConnectionEvents.Collect(connection, ConnectionEvents.Until(InboundKind.Closed));
+
+                Assert.That(LastCloseReason(events), Is.EqualTo(ConnectionCloseReason.Cancelled));
+            }
+        }
+
+        [Test]
         public void Dispose_WhileConnected_ServerSeesClose_BuffersReturned()
         {
             var pool = new CountingArrayPool();

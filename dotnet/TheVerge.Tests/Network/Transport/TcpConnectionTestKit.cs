@@ -25,7 +25,22 @@ namespace TheVerge.Tests.Network.Transport
         /// в Linux. Подстановка одинакова на любой системе и не зависит от скорости машины.
         /// </summary>
         public static TcpConnection NewSilentServerConnection(int connectTimeoutMs) =>
-            new TcpConnection(new CountingArrayPool(), connectTimeoutMs, 1 << 20, NeverAnswers);
+            new TcpConnection(new CountingArrayPool(), connectTimeoutMs, 1 << 20, NeverAnswers, ReceiveFromSocket);
+
+        /// <summary>
+        /// Настоящее подключение, но чтение ждёт отмены <paramref name="cancelled"/> и возвращает «0 байт» — так ведёт себя
+        /// сокет, когда его будит наше же закрытие.
+        /// </summary>
+        public static TcpConnection NewConnectionReadingEndAfter(CancellationToken cancelled) =>
+            new TcpConnection(new CountingArrayPool(), ShortTimeoutMs, 1 << 20, ConnectToServer, (socket, buffer) =>
+            {
+                cancelled.WaitHandle.WaitOne();
+                return 0;
+            });
+
+        private static Task ConnectToServer(Socket socket, string host, int port) => socket.ConnectAsync(host, port);
+
+        private static int ReceiveFromSocket(Socket socket, byte[] buffer) => socket.Receive(buffer);
 
         private static Task NeverAnswers(Socket socket, string host, int port) => new TaskCompletionSource<bool>().Task;
 

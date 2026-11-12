@@ -19,6 +19,7 @@ namespace TheVerge.Network.Transport
 
         private readonly int _connectTimeoutMs;
         private readonly Func<Socket, string, int, Task> _connect;
+        private readonly Func<Socket, byte[], int> _receive;
         private readonly InboundQueue _inbound;
         private readonly ReceivePipeline _pipeline;
         private readonly Socket _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -32,20 +33,22 @@ namespace TheVerge.Network.Transport
         private int _sendError;
 
         public TcpConnection(ArrayPool<byte> pool, int connectTimeoutMs, int inboundQueueBytes)
-            : this(pool, connectTimeoutMs, inboundQueueBytes, ConnectSocket)
+            : this(pool, connectTimeoutMs, inboundQueueBytes, ConnectSocket, ReceiveSocket)
         {
         }
 
         /// <summary>
-        /// <paramref name="connect"/> начинает подключение сокета. В игре это всегда настоящий
-        /// <see cref="Socket.ConnectAsync(string, int)"/>; тесты подставляют подключение, которое не отвечает, —
-        /// молчащий сервер нельзя одинаково изобразить средствами ОС на macOS и в Linux.
+        /// <paramref name="connect"/> начинает подключение сокета, <paramref name="receive"/> читает из него. В игре это всегда
+        /// настоящие <see cref="Socket.ConnectAsync(string, int)"/> и <see cref="Socket.Receive(byte[])"/>; тесты
+        /// подставляют подключение, которое не отвечает, и чтение с заданным порядком событий — молчащий сервер и гонку
+        /// «закрытие против чтения» нельзя одинаково и надёжно изобразить средствами ОС на macOS и в Linux.
         /// </summary>
         internal TcpConnection(ArrayPool<byte> pool, int connectTimeoutMs, int inboundQueueBytes,
-            Func<Socket, string, int, Task> connect)
+            Func<Socket, string, int, Task> connect, Func<Socket, byte[], int> receive)
         {
             _connectTimeoutMs = connectTimeoutMs;
             _connect = connect;
+            _receive = receive;
             _inbound = new InboundQueue(inboundQueueBytes);
             _pipeline = new ReceivePipeline(_inbound, pool);
             _socket.NoDelay = true;
@@ -145,6 +148,8 @@ namespace TheVerge.Network.Transport
 
         private static Task ConnectSocket(Socket socket, string host, int port) => socket.ConnectAsync(host, port);
 
+        private static int ReceiveSocket(Socket socket, byte[] buffer) => socket.Receive(buffer);
+
         private void ReadLoop(ref ConnectionCloseReason reason, ref string detail)
         {
             var buffer = new byte[ReceiveBufferSize];
@@ -158,7 +163,8 @@ namespace TheVerge.Network.Transport
 
                 if (count == 0)
                 {
-                    reason = ConnectionCloseReason.ServerClosed;
+                    // «0 байт» бывает и после нашего же закрытия: оно будит ждущее чтение. Тогда это отмена, а не сервер.
+                    reason = _stop.IsCancellationRequested ? ConnectionCloseReason.Cancelled : ConnectionCloseReason.ServerClosed;
                     return;
                 }
 
@@ -178,7 +184,7 @@ namespace TheVerge.Network.Transport
             count = 0;
             try
             {
-                count = _socket.Receive(buffer);
+                count = _receive(_socket, buffer);
                 return true;
             }
             catch (SocketException e)
