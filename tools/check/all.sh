@@ -49,11 +49,20 @@ else
 fi
 
 echo "3/5 Тесты…"
-if dotnet test "$SLN" --no-build -nologo -tl:off -v:q > "$LOGS/test.log" 2>&1; then
+TRX="$LOGS/tests.trx"
+rm -f "$TRX"
+if dotnet test "$SLN" --no-build -nologo -tl:off -v:q --logger "trx;LogFileName=tests.trx" --results-directory "$LOGS" \
+    > "$LOGS/test.log" 2>&1; then
   grep -E "Passed!|Пройден" "$LOGS/test.log" | head -n 5
 else
   fail "упали тесты."
-  show_tail "$LOGS/test.log" 40
+  grep -E "Failed!|Не пройден" "$LOGS/test.log" | head -n 5
+  if [ -f "$TRX" ]; then
+    python3 tools/check/failed_tests.py "$TRX"
+    echo "Подробно: Logs/check/tests.trx"
+  else
+    show_tail "$LOGS/test.log" 40
+  fi
 fi
 
 echo "4/5 Архитектура…"
