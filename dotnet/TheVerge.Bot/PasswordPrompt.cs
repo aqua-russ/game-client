@@ -8,6 +8,9 @@ namespace TheVerge.Bot
     {
         public static string? Read()
         {
+            // Первое обращение к вводу переводит терминал в режим, где .NET сам решает, показывать ли нажатое. Без этого
+            // пароль, вставленный сразу после вопроса, терминал успевал показать до первого ReadKey.
+            _ = Console.KeyAvailable;
             Console.Write("Пароль (не отображается): ");
             var password = new StringBuilder();
             while (true)
