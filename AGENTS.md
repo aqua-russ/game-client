@@ -110,6 +110,7 @@ The Verge/                         ← корень репо = Unity-проек�
     │   ├── Framing/       PacketFramer, PacketTable.g.cs (генерируется, руками не править)
     │   ├── Compression/   HuffmanDecoder
     │   ├── Session/       NetworkSession (порт INetworkSession), PacketDispatcher (разбор по id), OutgoingBuffer
+    │   ├── Diagnostics/   лог пакетов: запись и чтение обратно (PacketLogWriter, PacketLogReader), скрытие пароля
     │   ├── IO/            PacketReader, PacketWriter (ref struct, big-endian)
     │   └── Packets/<Domain>/   входящие *Handler, исходящие *Packet и <Domain>Sender (реализация порта)
     ├── Data/              Files/ (MUL, UOP) · Map/ · Tiles/ · Multis/ · Text/ (cliloc, speech, skills)
