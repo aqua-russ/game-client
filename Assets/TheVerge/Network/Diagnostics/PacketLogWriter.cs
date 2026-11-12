@@ -23,6 +23,7 @@ namespace TheVerge.Network.Diagnostics
         private readonly PacketLogLine _line = new PacketLogLine();
         private long _written;
         private bool _failed;
+        private bool _unflushed;
 
         /// <param name="maxChars">Предел размера лога в символах (для текста лога это почти байты).</param>
         public PacketLogWriter(TextWriter output, IClock clock, ILog log, long maxChars)
@@ -93,10 +94,13 @@ namespace TheVerge.Network.Diagnostics
             Commit();
         }
 
-        /// <summary>Сбросить накопленное в файл (в конце тика), чтобы при сбое программы лог не потерялся.</summary>
+        /// <summary>
+        /// Сбросить накопленное в файл (в конце тика), чтобы при сбое программы лог не потерялся. Если с прошлого сброса
+        /// ничего не записано, файл не трогается: тик без пакетов ничего не стоит.
+        /// </summary>
         public void Flush()
         {
-            if (_failed)
+            if (_failed || !_unflushed)
             {
                 return;
             }
@@ -104,6 +108,7 @@ namespace TheVerge.Network.Diagnostics
             try
             {
                 _output.Flush();
+                _unflushed = false;
             }
             catch (IOException e)
             {
@@ -165,6 +170,7 @@ namespace TheVerge.Network.Diagnostics
             try
             {
                 _output.Write(_line.Chars, 0, _line.Length);
+                _unflushed = true;
             }
             catch (IOException e)
             {

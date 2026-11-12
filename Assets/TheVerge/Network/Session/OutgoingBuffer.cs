@@ -17,8 +17,24 @@ namespace TheVerge.Network.Session
         private byte[] _buffer = new byte[InitialSize];
         private int _length;
         private int _reserved;
+        private int[] _ends = new int[16];
+        private int _count;
 
         public ReadOnlySpan<byte> Pending => new ReadOnlySpan<byte>(_buffer, 0, _length);
+
+        /// <summary>Сколько пакетов записано за тик. Границы нужны логу пакетов: он пишет каждый пакет своей строкой.</summary>
+        public int Count => _count;
+
+        public ReadOnlySpan<byte> PacketAt(int index)
+        {
+            if (index < 0 || index >= _count)
+            {
+                throw new ArgumentOutOfRangeException(nameof(index));
+            }
+
+            var start = index == 0 ? 0 : _ends[index - 1];
+            return new ReadOnlySpan<byte>(_buffer, start, _ends[index] - start);
+        }
 
         /// <summary>Место под пакет не длиннее <paramref name="maxLength"/>. Годно до следующего вызова.</summary>
         public Span<byte> Reserve(int maxLength)
@@ -43,12 +59,19 @@ namespace TheVerge.Network.Session
             Validate(new ReadOnlySpan<byte>(_buffer, _length, length));
             _length += length;
             _reserved = 0;
+            if (_count == _ends.Length)
+            {
+                Array.Resize(ref _ends, _ends.Length * 2);
+            }
+
+            _ends[_count++] = _length;
         }
 
         public void Clear()
         {
             _length = 0;
             _reserved = 0;
+            _count = 0;
         }
 
         private static void Validate(ReadOnlySpan<byte> packet)

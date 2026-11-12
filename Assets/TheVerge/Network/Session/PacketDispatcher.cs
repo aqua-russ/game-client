@@ -83,11 +83,6 @@ namespace TheVerge.Network.Session
                 return DispatchResult.NoHandler;
             }
 
-            return Invoke(handler, packet, payloadStart, Label(id, layout.HasSubCommand, subCommand, info.Name));
-        }
-
-        private DispatchResult Invoke(PacketHandler handler, ReadOnlySpan<byte> packet, int payloadStart, string label)
-        {
             var reader = new PacketReader(packet.Slice(payloadStart));
             try
             {
@@ -96,8 +91,9 @@ namespace TheVerge.Network.Session
             }
             catch (PacketOutOfRangeException e)
             {
-                _log.Warning("Пакет " + label + " пропущен: " + e.Message + " Дамп (" + packet.Length + " байт): " +
-                             PacketDump.ToHex(packet));
+                // Подпись пакета собирается только здесь: на обычном пути разбор не выделяет память (AGENTS.md §3.1).
+                _log.Warning("Пакет " + Label(id, layout.HasSubCommand, subCommand, info.Name) + " пропущен: " + e.Message +
+                             " Дамп (" + packet.Length + " байт): " + PacketDump.ToHex(packet));
                 return DispatchResult.ReadError;
             }
         }

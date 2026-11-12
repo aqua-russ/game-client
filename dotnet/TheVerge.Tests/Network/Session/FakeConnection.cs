@@ -14,6 +14,9 @@ namespace TheVerge.Tests.Network.Session
 
         public bool AcceptsSend { get; set; } = true;
 
+        /// <summary>false — не копировать отправленное (тест на выделение памяти: копия сама выделяет память).</summary>
+        public bool KeepSent { get; set; } = true;
+
         public bool Disposed { get; private set; }
 
         public ConnectionState State { get; set; } = ConnectionState.Connected;
@@ -33,7 +36,11 @@ namespace TheVerge.Tests.Network.Session
                 return false;
             }
 
-            Sent.Add(data.ToArray());
+            if (KeepSent)
+            {
+                Sent.Add(data.ToArray());
+            }
+
             return true;
         }
 

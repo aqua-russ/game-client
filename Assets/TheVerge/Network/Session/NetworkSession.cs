@@ -1,5 +1,6 @@
 using System;
 using TheVerge.Core.Ports;
+using TheVerge.Network.Diagnostics;
 using TheVerge.Network.Framing;
 using TheVerge.Network.Transport;
 
@@ -27,6 +28,12 @@ namespace TheVerge.Network.Session
 
         public OutgoingBuffer Outgoing { get; } = new OutgoingBuffer();
 
+        /// <summary>
+        /// Лог пакетов (PLAN Стадия 1, п. 12): входящие — после нарезки, до обработки; исходящие — каждый пакет, когда тик
+        /// передаёт их в сокет. null — лог выключен, и сессия ничего лишнего не делает.
+        /// </summary>
+        public PacketLogWriter? PacketLog { get; set; }
+
         public bool IsConnected => _connection.State == ConnectionState.Connected;
 
         public bool ProcessNext()
@@ -46,6 +53,7 @@ namespace TheVerge.Network.Session
                     break;
                 case InboundKind.Connected:
                     _log.Info("Подключено к серверу.");
+                    PacketLog?.Connected();
                     break;
                 case InboundKind.Closed:
                     OnClosed(item);
@@ -57,25 +65,46 @@ namespace TheVerge.Network.Session
 
         public void Flush()
         {
-            var pending = Outgoing.Pending;
-            if (pending.IsEmpty)
+            if (Outgoing.Count > 0)
             {
-                return;
+                SendPending();
             }
 
-            if (!_connection.Send(pending) && !_sendFailureReported)
+            PacketLog?.Flush();
+        }
+
+        public void Dispose() => _connection.Dispose();
+
+        private void SendPending()
+        {
+            var pending = Outgoing.Pending;
+            var sent = _connection.Send(pending);
+            if (!sent && !_sendFailureReported)
             {
                 _sendFailureReported = true;
                 _log.Warning("Отправка не удалась: соединения нет. Исходящие пакеты пропущены (" + pending.Length + " байт).");
             }
 
+            LogOutgoing(sent);
             Outgoing.Clear();
         }
 
-        public void Dispose() => _connection.Dispose();
+        private void LogOutgoing(bool sent)
+        {
+            if (PacketLog == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < Outgoing.Count; i++)
+            {
+                PacketLog.Packet(PacketDirection.ClientToServer, Outgoing.PacketAt(i), sent);
+            }
+        }
 
         private void Handle(InboundEvent item)
         {
+            PacketLog?.Packet(PacketDirection.ServerToClient, item.Packet, true);
             try
             {
                 _dispatcher.Dispatch(item.Packet);
@@ -92,11 +121,13 @@ namespace TheVerge.Network.Session
             _log.Error("Сломанный поток от сервера (" + error.Kind + "): пакет 0x" + error.Id.ToString("X2") + subCommand +
                        ", длина в заголовке " + error.DeclaredLength + ". Соединение разорвано. Дамп (" + error.Dump.Length +
                        " байт): " + PacketDump.ToHex(error.Dump));
+            PacketLog?.Closed(ConnectionCloseReason.FramingFailed, "пакет 0x" + error.Id.ToString("X2") + subCommand + " (" + error.Kind + ")");
             _connection.Dispose();
         }
 
         private void OnClosed(InboundEvent item)
         {
+            PacketLog?.Closed(item.CloseReason, item.Reason);
             var message = "Соединение закрыто: " + item.CloseReason + (item.Reason.Length > 0 ? " (" + item.Reason + ")." : ".");
             if (item.CloseReason == ConnectionCloseReason.Cancelled)
             {

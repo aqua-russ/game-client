@@ -53,6 +53,32 @@ namespace TheVerge.Tests.Network.Session
         }
 
         [Test]
+        public void Packets_ListedOneByOneWithBoundaries()
+        {
+            // Лог пакетов пишет исходящие по одному (PLAN Стадия 1, п. 12), поэтому буфер помнит границы пакетов.
+            var buffer = new OutgoingBuffer();
+            Write(buffer, new byte[] { 0x73, 0x05 });
+            Write(buffer, new byte[] { 0xBD, 0x00, 0x04, 0x00 });
+            Write(buffer, new byte[] { 0xD1, 0x00 });
+
+            Assert.That(buffer.Count, Is.EqualTo(3));
+            Assert.That(buffer.PacketAt(0).ToArray(), Is.EqualTo(new byte[] { 0x73, 0x05 }));
+            Assert.That(buffer.PacketAt(1).ToArray(), Is.EqualTo(new byte[] { 0xBD, 0x00, 0x04, 0x00 }));
+            Assert.That(buffer.PacketAt(2).ToArray(), Is.EqualTo(new byte[] { 0xD1, 0x00 }));
+        }
+
+        [Test]
+        public void Clear_ForgetsPackets()
+        {
+            var buffer = new OutgoingBuffer();
+            Write(buffer, new byte[] { 0x73, 0x05 });
+
+            buffer.Clear();
+
+            Assert.That(buffer.Count, Is.EqualTo(0));
+        }
+
+        [Test]
         public void Clear_EmptiesPending()
         {
             var buffer = new OutgoingBuffer();
