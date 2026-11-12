@@ -88,7 +88,8 @@ The Verge/                         ← корень репо = Unity-проек�
 ├── golden/          эталонные логи трафика ClassicUO (`docs/REFERENCE-CLIENT.md`) — только чтение
 ├── tools/
 │   ├── gen/         генератор PacketTable из packets.csv
-│   └── check/       скрипты проверки: all.sh (всё разом), architecture.sh, отдельные проверки задач (§9)
+│   ├── check/       скрипты проверки: all.sh (всё разом), architecture.sh, отдельные проверки задач (§9)
+│   └── bot/         запуск бота (run.sh) и сохранение его логина и пароля вне git (setup.sh)
 ├── dotnet/          ВНЕ Assets, Unity его не видит
 │   ├── TheVerge.Core.csproj      ← <Compile Include="../Assets/TheVerge/Core/**/*.cs" />
 │   ├── TheVerge.Network.csproj   ← то же для Network

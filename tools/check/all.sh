@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Проверка «готово» (AGENTS.md §7) одной командой: матрица пакетов, сборка, тесты, архитектура, запуск бота.
+# Проверка «готово» (AGENTS.md §7) одной командой: матрица пакетов, сборка, тесты, архитектура, запуск бота
+# (самопроверка без сервера: --self-check).
 # Печатает «ОК» или «ОШИБКА: …». Ключ --unity дополнительно проверяет компиляцию в Unity (tools/check/unity.sh).
 # Подробные логи — в Logs/check/.
 set -u
@@ -74,7 +75,7 @@ else
 fi
 
 echo "5/5 Запуск бота…"
-if dotnet run --project dotnet/TheVerge.Bot --no-build > "$LOGS/bot.log" 2>&1 && grep -q "TheVerge.Bot: ОК" "$LOGS/bot.log"; then
+if dotnet run --project dotnet/TheVerge.Bot --no-build -- --self-check > "$LOGS/bot.log" 2>&1 && grep -q "TheVerge.Bot: ОК" "$LOGS/bot.log"; then
   grep "TheVerge.Bot: ОК" "$LOGS/bot.log"
 else
   fail "бот не запустился."

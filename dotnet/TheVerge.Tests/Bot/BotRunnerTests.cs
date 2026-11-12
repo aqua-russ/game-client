@@ -46,7 +46,7 @@ namespace TheVerge.Tests.Bot
 
                 var code = NewRunner(NewConnection()).Run("127.0.0.1", server.Port, CancellationToken.None);
 
-                Assert.That(code, Is.EqualTo(BotExitCode.Success));
+                Assert.That(code, Is.EqualTo(BotExitCode.Success), LogText());
                 Assert.That(watch.ElapsedMilliseconds, Is.LessThan(ServerSilenceLimitMs / 5));
                 server.Accept();
                 Assert.That(server.SeesClientClosed(), Is.True);
@@ -163,6 +163,8 @@ namespace TheVerge.Tests.Bot
 
         private static TcpConnection NewConnection() =>
             new TcpConnection(new CountingArrayPool(), ClientLimits.ConnectTimeoutMs, ClientLimits.InboundQueueBytes);
+
+        private string LogText() => string.Join("\n", _log.Entries.Select(e => e.Level + ": " + e.Message));
 
         private string Infos() => string.Join("\n", _log.Entries.Where(e => e.Level == "info").Select(e => e.Message));
 

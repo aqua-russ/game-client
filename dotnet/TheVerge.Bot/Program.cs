@@ -1,30 +1,38 @@
 using System;
-using TheVerge.Core.Session;
-using TheVerge.Data;
-using TheVerge.Network.Compression;
+using System.Text;
+using System.Threading;
 
 namespace TheVerge.Bot
 {
     /// <summary>
-    /// Headless-клиент без Unity. Пока только подтверждает, что Core, Network и Data загружаются и работают
-    /// вне Unity. Вход на сервер и сценарии появятся на Стадии 1 (docs/PLAN.md §3).
+    /// Точка входа бота: консоль, Ctrl+C и поиск корня клиента. Всё остальное — <see cref="BotApp"/>.
+    /// Справка — <see cref="BotUsage"/> (tools/bot/run.sh --help).
     /// </summary>
     public static class Program
     {
-        public static int Main()
+        public static int Main(string[] args)
         {
-            Console.WriteLine("TheVerge.Bot: сборки загружены:");
-            PrintAssembly(typeof(ServerLimits));
-            PrintAssembly(typeof(HuffmanDecoder));
-            PrintAssembly(typeof(DataAssembly));
-            Console.WriteLine("TheVerge.Bot: ОК (вход на сервер появится на Стадии 1)");
-            return 0;
-        }
-
-        private static void PrintAssembly(Type marker)
-        {
-            var name = marker.Assembly.GetName();
-            Console.WriteLine("  " + name.Name + " " + name.Version);
+            Console.OutputEncoding = new UTF8Encoding(false);
+            using (var interrupt = new CancellationTokenSource())
+            {
+                // Ctrl+C не убивает процесс сразу: бот закрывает соединение, дописывает лог и выходит с кодом 130.
+                ConsoleCancelEventHandler onCancel = (sender, e) =>
+                {
+                    e.Cancel = true;
+                    interrupt.Cancel();
+                };
+                Console.CancelKeyPress += onCancel;
+                try
+                {
+                    var clientRoot = BotPaths.FindClientRoot(AppContext.BaseDirectory);
+                    var prompt = Console.IsInputRedirected ? null : new Func<string?>(PasswordPrompt.Read);
+                    return new BotApp(Console.Out, clientRoot, prompt).Run(args, interrupt.Token);
+                }
+                finally
+                {
+                    Console.CancelKeyPress -= onCancel;
+                }
+            }
         }
     }
 }

@@ -42,6 +42,7 @@
 | `Distribution/Configuration/expansion.json` | Renaissance, только Фелукка | [ADR 0002](adr/0002-client-version-and-era.md) |
 | `Distribution/Configuration/modernuo.json` | значения эры UOR, `theverge.sandbox.enable`, `serverListing.address` = 127.0.0.1 | ADR 0002, ADR 0004 |
 | `Distribution/Configuration/FeatureFlags/flags.json` | `speedhack_detection` = true | ADR 0004 |
+| `Distribution/Configuration/ip-allowlist.json`, `ip-allowlist-theverge.txt` | ручной список исключений включён, в нём 127.0.0.1 | dev-стенд: молчаливое подключение не блокирует localhost на 15 минут (`TARGET.md` §5), 12 ноября 2026 |
 
 `Distribution/Configuration/` не хранится в git (так задумано в ModernUO). Версионируемая копия значений The Verge — `Distribution/ConfigurationTemplates/theverge/` (см. README там); при изменении реальной конфигурации обновлять шаблон. Копия до правок 10 ноября — `Distribution/Configuration/backup-2026-11-10/` (локально).
 

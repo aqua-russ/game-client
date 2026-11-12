@@ -14,6 +14,7 @@
 Проверки — в Терминале из папки `client/The Verge`:
 - `tools/check/all.sh` — сборка, тесты, правила архитектуры, запуск бота; в конце `ОК` или `ОШИБКА`.
 - `tools/check/all.sh --unity` — то же плюс компиляция в Unity; **редактор Unity должен быть закрыт**.
+- Бот против запущенного сервера: один раз `tools/bot/setup.sh` (логин и пароль — в `remaster/secrets/bot.json`, вне git), затем `tools/bot/run.sh`; справка — `tools/bot/run.sh --help`. Лог пакетов — `Logs/packets/`.
 - Подробные логи — `Logs/check/`. Упавшие тесты `all.sh` печатает сам (название и причина), полный отчёт — `Logs/check/tests.trx`.
 
 ## 2. Среда агента
