@@ -66,6 +66,12 @@ namespace TheVerge.Bot
         /// </summary>
         public void OnStateChanged(LoginFlow flow, LoginState state)
         {
+            if (state != _decided)
+            {
+                // Вход ушёл дальше (или начат заново после разрыва): то же решение может понадобиться снова.
+                _decided = LoginState.Idle;
+            }
+
             switch (state)
             {
                 case LoginState.ConnectingGame:
@@ -120,6 +126,12 @@ namespace TheVerge.Bot
             {
                 _log.Info("Выбран персонаж «" + characters.Slots[slot].Name + "».");
                 characters.Select(slot);
+                return;
+            }
+
+            if (_login.CreateCharacter && _login.Character.Length > 0 && characters.Cities.Count == 0)
+            {
+                Problem = "сервер не прислал ни одного стартового города: создать персонажа «" + _login.Character + "» негде.";
                 return;
             }
 

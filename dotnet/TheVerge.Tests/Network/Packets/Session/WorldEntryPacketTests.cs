@@ -73,6 +73,24 @@ namespace TheVerge.Tests.Network.Packets.Session
         }
 
         [Test]
+        public void VersionRequest_Repeated_NoGarbage()
+        {
+            // Сервер спрашивает версию и во время ходьбы (замер RTT): ответ — горячий путь без мусора (AGENTS.md §3.1).
+            var session = new NetworkSession(new FakeConnection { KeepSent = false }, new PacketDispatcher(new RecordingLog()), new RecordingLog());
+            var requests = new ServerRequests(new SessionSender(session));
+            requests.OnClientVersionRequest();
+            session.Flush();
+            var before = GC.GetAllocatedBytesForCurrentThread();
+            for (var i = 0; i < 100; i++)
+            {
+                requests.OnClientVersionRequest();
+                session.Flush();
+            }
+
+            Assert.That(GC.GetAllocatedBytesForCurrentThread() - before, Is.EqualTo(0));
+        }
+
+        [Test]
         public void OutgoingPackets_MatchMatrix()
         {
             Assert.That(PacketTable.Get(PacketDirection.ClientToServer, 0xC8).FixedLength, Is.EqualTo(2));

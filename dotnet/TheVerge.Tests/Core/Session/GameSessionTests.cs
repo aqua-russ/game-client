@@ -103,6 +103,20 @@ namespace TheVerge.Tests.Core.Session
         }
 
         [Test]
+        public void Logout_ServerClosesInsteadOfAck_ClosedNotError()
+        {
+            // Игрок просил выйти: если сервер вместо ответа закрыл соединение, это тоже выход, а не разрыв (и не повод
+            // для повтора входа).
+            EnterWorld();
+            _session.Logout();
+
+            _flow.OnDisconnected(DisconnectReason.ServerClosed, string.Empty);
+
+            Assert.That(_flow.State, Is.EqualTo(LoginState.Closed));
+            Assert.That(_flow.Error.Kind, Is.EqualTo(LoginErrorKind.None));
+        }
+
+        [Test]
         public void Logout_NoAck_ClosesAfterTimeout()
         {
             EnterWorld();

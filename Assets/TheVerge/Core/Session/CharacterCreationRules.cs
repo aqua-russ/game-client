@@ -5,15 +5,12 @@ namespace TheVerge.Core.Session
     /// <summary>
     /// Правила создания персонажа (docs/TARGET.md §4, числа — <see cref="ServerLimits"/>). Сервер неверный выбор
     /// не отвергает, а молча портит: статы — 10/10/10, навыки — без навыков, имя — «Generic Player»
-    /// (UOContent/Engines/Character Creation/CharacterCreation.cs: SetStats, ValidateSkills, SetName). Поэтому клиент
-    /// проверяет сам и не отправляет то, что сервер испортит. Полная проверка имени (запрещённые слова и символы,
-    /// NameVerification сервера) — в окне создания, задача 1.16.
+    /// (UOContent/Engines/Character Creation/CharacterCreation.cs: SetStats, ValidateSkills, SetName; имя —
+    /// UOContent/Misc/NameVerification.cs, ValidatePlayerName). Поэтому клиент проверяет сам и не отправляет то, что
+    /// сервер испортит.
     /// </summary>
     public static class CharacterCreationRules
     {
-        /// <summary>Поле имени в 0xF8 — 30 байт UTF-8 (IncomingAccountPackets.cs, CreateCharacter: ReadUTF8(30)).</summary>
-        public const int NameMaxBytes = 30;
-
         /// <summary>Пусто — можно отправлять; иначе — что не так, словами.</summary>
         public static string Validate(NewCharacter character)
         {
@@ -26,14 +23,29 @@ namespace TheVerge.Core.Session
             return problem.Length == 0 ? ValidateSkills(character.Skills) : problem;
         }
 
+        // Как сервер: CharacterCreation.SetName обрезает пробелы по краям, затем NameVerification.ValidatePlayerName.
         private static string ValidateName(string name)
         {
-            if (string.IsNullOrWhiteSpace(name))
+            var trimmed = (name ?? string.Empty).Trim();
+            if (trimmed.Length < ServerLimits.NameMinChars || trimmed.Length > ServerLimits.NameMaxChars)
             {
-                return "пустое имя";
+                return "имя — от " + ServerLimits.NameMinChars + " до " + ServerLimits.NameMaxChars + " символов";
             }
 
-            return Encoding.UTF8.GetByteCount(name) > NameMaxBytes ? "имя длиннее " + NameMaxBytes + " байт UTF-8" : string.Empty;
+            if (Encoding.UTF8.GetByteCount(trimmed) > ServerLimits.NameMaxUtf8Bytes)
+            {
+                return "имя длиннее " + ServerLimits.NameMaxUtf8Bytes + " байт UTF-8 (кириллица — 2 байта на букву)";
+            }
+
+            foreach (var c in trimmed)
+            {
+                if (!char.IsLetter(c) && c != ' ' && c != '-' && c != '\'')
+                {
+                    return "имя: можно только буквы, пробел, дефис и апостроф";
+                }
+            }
+
+            return string.Empty;
         }
 
         private static string ValidateStats(int str, int dex, int intel)

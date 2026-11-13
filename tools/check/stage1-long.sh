@@ -34,7 +34,8 @@ trap stop_server EXIT
 # Mac не засыпает, пока идёт проверка (caffeinate есть только на macOS).
 awake() { if command -v caffeinate >/dev/null 2>&1; then caffeinate -i "$@"; else "$@"; fi; }
 # Первый вход создаёт персонажа бота, если его нет (имя — из tools/bot/setup.sh; аккаунт сервер создаёт сам).
-CREATE=(--create-character)
+# Строка, а не массив: bash 3.2 на Mac с «set -u» падает на пустом массиве.
+CREATE="--create-character"
 
 echo "1/5 Сборка бота…"
 dotnet build dotnet/TheVerge.Bot -nologo -v:q -tl:off > "$LOGS/stage1-build.log" 2>&1 || { echo "ОШИБКА: бот не собрался. Лог: Logs/check/stage1-build.log"; exit 1; }
@@ -52,14 +53,14 @@ ok "сервер запущен"
 echo "3/5 $LOGINS входов подряд: вход, мир, выход…"
 BAD=0
 for i in $(seq 1 "$LOGINS"); do
-  dotnet "$BOT_DLL" --config "$SECRETS" --no-packet-log "${CREATE[@]}" > "$LOGS/stage1-login.log" 2>&1
+  dotnet "$BOT_DLL" --config "$SECRETS" --no-packet-log $CREATE > "$LOGS/stage1-login.log" 2>&1
   CODE=$?
   if [ "$CODE" -ne 0 ] || ! grep -q "Вышел из игры" "$LOGS/stage1-login.log"; then
     BAD=$((BAD + 1))
     cp "$LOGS/stage1-login.log" "$LOGS/stage1-login-failed-$i.log"
     echo "  вход $i: код $CODE — $(grep -E 'ОШИБКА' "$LOGS/stage1-login.log" | head -n 1) (лог: Logs/check/stage1-login-failed-$i.log)"
   fi
-  CREATE=()
+  CREATE=""
   [ $((i % 10)) -eq 0 ] && echo "  … $i из $LOGINS"
 done
 [ "$BAD" -eq 0 ] && ok "$LOGINS входов подряд, сбоев 0" || fail "сбоев $BAD из $LOGINS входов"

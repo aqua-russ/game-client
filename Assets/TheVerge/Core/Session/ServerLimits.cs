@@ -53,6 +53,10 @@ namespace TheVerge.Core.Session
         /// </summary>
         public const int CreationSkillLastClassic = 46;
         public const int CreationSkillMysticism = 55;
+        // Имя персонажа (UOContent/Misc/NameVerification.cs, ValidatePlayerName; docs/protocol/extensions.md, E1).
+        public const int NameMinChars = 2;
+        public const int NameMaxChars = 24;
+        public const int NameMaxUtf8Bytes = 29;
         /// <summary>Дальность обзора, клеток: на запрос клиента сервер всегда отвечает 18 (SetUpdateRange).</summary>
         public const int UpdateRange = 18;
         /// <summary>«Неверный клиент» сервер выгоняет через столько мс после проверки версии (clientVerification.kickDelay).</summary>

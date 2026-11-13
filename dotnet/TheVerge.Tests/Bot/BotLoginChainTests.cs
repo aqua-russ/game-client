@@ -105,7 +105,7 @@ namespace TheVerge.Tests.Bot
             var login = new FakeConnection();
             login.Push(InboundEvent.Connected());
             var queue = new System.Collections.Generic.Queue<IConnection>(new IConnection[] { login });
-            var runner = new BotRunner(() => queue.Dequeue(), new SteppingClock(1000), _log, null);
+            var runner = new BotRunner(() => queue.Dequeue(), new BotTestClocks.Stepping(1000), _log, null);
 
             var code = RunWithin(runner, Target(2593), 5000);
 
@@ -117,16 +117,41 @@ namespace TheVerge.Tests.Bot
         public void DropInWorld_Reconnect_SameCharacterAgain_ThenLogout()
         {
             // Задача 1.11б: с --reconnect разрыв в мире — повтор через ClientLimits.ReconnectDelaysMs[0] тем же персонажем.
+            // Бот стоит в мире (--idle 1): разрыв после запрошенного выхода — это выход, а не повод для повтора.
             var (login1, game1) = LoginAndGame(new[] { "First", "AQuaruss", null, null, null }, dropInWorld: true);
             var (login2, game2) = LoginAndGame(new[] { "First", "AQuaruss", null, null, null });
 
-            var code = RunWithin(Runner(login1, game1, login2, game2), Target(2593, "AQuaruss", reconnect: true), 8000);
+            var code = RunWithin(Runner(login1, game1, login2, game2), Target(2593, "AQuaruss", idleSeconds: 1, reconnect: true), 8000);
 
             Assert.That(code, Is.EqualTo(BotExitCode.Success), LogText());
             Assert.That(game2.Sent[1][0], Is.EqualTo(0x5D));
             Assert.That(game2.Sent[1][1 + 4 + 30 + 2 + 4 + 24 + 3], Is.EqualTo(1), "тот же персонаж");
             Assert.That(Infos(), Does.Contain("Повтор входа через 1 с"));
             Assert.That(game2.Sent.Last(), Is.EqualTo(new byte[] { 0xD1, 0x00 }));
+        }
+
+        [Test]
+        public void DropInWorld_Reconnect_CharacterGone_BotSaysSo_NotHang()
+        {
+            // После повтора входа прежнего персонажа нет в списке: бот не ждёт молча, а называет причину.
+            var (login1, game1) = LoginAndGame(new[] { "First", "AQuaruss", null, null, null }, dropInWorld: true);
+            var (login2, game2) = LoginAndGame(new[] { "First", null, null, null, null });
+
+            var code = RunWithin(Runner(login1, game1, login2, game2), Target(2593, "AQuaruss", idleSeconds: 1, reconnect: true), 8000);
+
+            Assert.That(code, Is.EqualTo(BotExitCode.BadArguments), LogText());
+            Assert.That(_log.Errors.Last(), Does.Contain("AQuaruss"));
+        }
+
+        [Test]
+        public void CreateCharacter_ServerSentNoCities_ProblemInWords_NotCrash()
+        {
+            var (login, game) = LoginAndGame(new[] { null, null, null, null, (string?)null }, noCities: true);
+
+            var code = RunWithin(Runner(login, game), Target(2593, "Botik", createCharacter: true), 5000);
+
+            Assert.That(code, Is.EqualTo(BotExitCode.BadArguments), LogText());
+            Assert.That(_log.Errors.Single(), Does.Contain("город"));
         }
 
         [Test]
@@ -188,7 +213,7 @@ namespace TheVerge.Tests.Bot
             return false;
         }
 
-        private (FakeConnection Login, FakeConnection Game) LoginAndGame(string?[] characters, bool rejectCharacter = false, bool dropInWorld = false)
+        private (FakeConnection Login, FakeConnection Game) LoginAndGame(string?[] characters, bool rejectCharacter = false, bool dropInWorld = false, bool noCities = false)
         {
             var localhost = new byte[] { 127, 0, 0, 1 };
             var login = new FakeConnection();
@@ -201,7 +226,8 @@ namespace TheVerge.Tests.Bot
             game.Push(InboundEvent.Connected());
             game.Reply(
                 Packet(AccountServerSamples.SupportedFeatures(0x8000_02DF)),
-                Packet(AccountServerSamples.CharacterList(characters, new[] { new AccountServerSamples.City("Britain", "Inn", 1, 2, 3, 0) }, 0)));
+                Packet(AccountServerSamples.CharacterList(characters,
+                    noCities ? new AccountServerSamples.City[0] : new[] { new AccountServerSamples.City("Britain", "Inn", 1, 2, 3, 0) }, 0)));
             if (rejectCharacter)
             {
                 game.Reply(Packet(new byte[] { 0xBD, 0x00, 0x03 }), Packet(new byte[] { 0x53, 0x05 }));
@@ -228,7 +254,7 @@ namespace TheVerge.Tests.Bot
         private BotRunner Runner(params IConnection[] connections)
         {
             var queue = new System.Collections.Generic.Queue<IConnection>(connections);
-            return new BotRunner(() => queue.Dequeue(), new SystemClockForTests(), _log, null);
+            return new BotRunner(() => queue.Dequeue(), new BotTestClocks.Real(), _log, null);
         }
 
         // Бот, который ждёт не того, не вешает тесты: через timeoutMs тест падает, а поток бота (фоновый) бросается.
@@ -251,26 +277,5 @@ namespace TheVerge.Tests.Bot
         private string LogText() => string.Join("\n", _log.Entries.Select(e => e.Level + ": " + e.Message));
 
         private string Infos() => string.Join("\n", _log.Entries.Where(e => e.Level == "info").Select(e => e.Message));
-
-        private sealed class SystemClockForTests : TheVerge.Core.Ports.IClock
-        {
-            private readonly System.Diagnostics.Stopwatch _watch = System.Diagnostics.Stopwatch.StartNew();
-
-            public long NowMs => _watch.ElapsedMilliseconds;
-        }
-
-        /// <summary>Часы, которые на каждый вопрос уходят вперёд: таймауты в десятки секунд проходят за миллисекунды.</summary>
-        private sealed class SteppingClock : TheVerge.Core.Ports.IClock
-        {
-            private readonly long _step;
-            private long _now;
-
-            public SteppingClock(long step)
-            {
-                _step = step;
-            }
-
-            public long NowMs => _now += _step;
-        }
     }
 }

@@ -1,4 +1,3 @@
-using TheVerge.Core.Session;
 using TheVerge.Network.IO;
 
 namespace TheVerge.Network.Packets.Session
@@ -12,13 +11,14 @@ namespace TheVerge.Network.Packets.Session
         public const byte PacketId = 0xBD;
 
         /// <summary>Номер, длина (2), строка версии и ноль.</summary>
-        public static int LengthOf(ClientVersion version) => 1 + 2 + version.ToString().Length + 1;
+        public static int LengthOf(string versionText) => 1 + 2 + versionText.Length + 1;
 
-        public static void Write(ref PacketWriter writer, ClientVersion version)
+        /// <param name="versionText">Версия строкой, как её разбирает сервер: «7.0.95.0» (ClientVersion.ToString).</param>
+        public static void Write(ref PacketWriter writer, string versionText)
         {
             writer.Write(PacketId);
-            writer.Write((ushort)LengthOf(version));
-            writer.WriteAsciiNullTerminated(version.ToString());
+            writer.Write((ushort)LengthOf(versionText));
+            writer.WriteAsciiNullTerminated(versionText);
         }
     }
 }

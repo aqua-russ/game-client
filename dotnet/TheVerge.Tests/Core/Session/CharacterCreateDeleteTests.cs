@@ -84,15 +84,34 @@ namespace TheVerge.Tests.Core.Session
             Assert.That(CharacterCreationRules.Validate(c), Is.Empty, "Mysticism (55) сервер при создании разрешает");
         }
 
-        [Test]
-        public void Rules_Name_EmptyOrLongerThan30BytesUtf8_Refused()
+        // Сервер: UOContent/Misc/NameVerification.cs, ValidatePlayerName (после Trim в CharacterCreation.SetName) — 2–24
+        // символа, не больше 29 байт UTF-8, только буквы, пробел, дефис и апостроф; иначе имя молча станет «Generic Player».
+        [TestCase("  ")]
+        [TestCase("A")]
+        [TestCase(" A ")]
+        [TestCase("Bot1")]
+        [TestCase("Lord_British")]
+        [TestCase("Abcdefghijklmnopqrstuvwxy")]
+        [TestCase("Жжжжжжжжжжжжжжж")]
+        public void Rules_Name_ServerWouldReplace_Refused(string name)
         {
             var c = Valid();
-            c.Name = "  ";
-            Assert.That(CharacterCreationRules.Validate(c), Does.Contain("имя"));
+            c.Name = name;
 
-            c.Name = new string('Ж', 16); // 32 байта UTF-8 — не влезет в поле 30 байт
-            Assert.That(CharacterCreationRules.Validate(c), Does.Contain("30"));
+            Assert.That(CharacterCreationRules.Validate(c), Does.Contain("имя"));
+        }
+
+        [TestCase("Al")]
+        [TestCase("Lord British")]
+        [TestCase("Anne-Marie O'Neil")]
+        [TestCase("Abcdefghijklmnopqrstuvwx")]
+        [TestCase("Жжжжжжжжжжжжжж")]
+        public void Rules_Name_ServerAccepts_Allowed(string name)
+        {
+            var c = Valid();
+            c.Name = name;
+
+            Assert.That(CharacterCreationRules.Validate(c), Is.Empty);
         }
 
         [Test]

@@ -100,7 +100,8 @@ namespace TheVerge.Core.Session
                 return;
             }
 
-            if (reason == DisconnectReason.Requested)
+            // Выход уже запрошен: как бы соединение ни закрылось, это выход, а не разрыв.
+            if (reason == DisconnectReason.Requested || State == LoginState.LoggingOut)
             {
                 MoveTo(LoginState.Closed);
                 return;
