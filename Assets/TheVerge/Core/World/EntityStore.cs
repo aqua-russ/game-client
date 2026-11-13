@@ -18,7 +18,7 @@ namespace TheVerge.Core.World
 
         public EntityStore()
         {
-            _removal = new EntityRemoval(_mobiles, _items);
+            _removal = new EntityRemoval(_mobiles, _items, Spatial);
         }
 
         public event Action<Mobile>? MobileChanged;
@@ -32,6 +32,8 @@ namespace TheVerge.Core.World
         public event Action? Cleared;
 
         public WorldMetrics Metrics { get; } = new WorldMetrics();
+
+        public SpatialIndex Spatial { get; } = new SpatialIndex();
 
         public Serial PlayerSerial { get; private set; }
 
@@ -62,13 +64,20 @@ namespace TheVerge.Core.World
                 return Reject(WorldResult.InvalidSerial);
             }
 
-            if (!_mobiles.TryGetValue(serial.Value, out var mobile))
+            if (_mobiles.TryGetValue(serial.Value, out var mobile))
+            {
+                var from = mobile.Position;
+                mobile.Apply(info);
+                Spatial.MoveMobile(mobile, from);
+            }
+            else
             {
                 mobile = new Mobile(serial);
                 _mobiles.Add(serial.Value, mobile);
+                mobile.Apply(info);
+                Spatial.AddMobile(mobile);
             }
 
-            mobile.Apply(info);
             MobileChanged?.Invoke(mobile);
             return WorldResult.Applied;
         }
@@ -95,6 +104,7 @@ namespace TheVerge.Core.World
             var item = TakeItem(serial);
             item.Apply(info);
             item.Place = ItemPlace.World;
+            Spatial.AddItem(item);
             ItemChanged?.Invoke(item);
             return WorldResult.Applied;
         }
@@ -225,6 +235,7 @@ namespace TheVerge.Core.World
             {
                 _mobiles.Clear();
                 _items.Clear();
+                Spatial.Clear();
                 PlayerSerial = Serial.Zero;
             }
             else
@@ -248,6 +259,11 @@ namespace TheVerge.Core.World
         {
             if (_items.TryGetValue(serial.Value, out var item))
             {
+                if (item.Place == ItemPlace.World)
+                {
+                    Spatial.RemoveItem(item);
+                }
+
                 ItemTree.Detach(item);
                 return item;
             }

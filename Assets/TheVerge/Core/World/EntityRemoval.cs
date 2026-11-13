@@ -12,12 +12,14 @@ namespace TheVerge.Core.World
     {
         private readonly Dictionary<uint, Mobile> _mobiles;
         private readonly Dictionary<uint, Item> _items;
+        private readonly SpatialIndex _spatial;
         private readonly Stack<Item> _removing = new Stack<Item>();
 
-        public EntityRemoval(Dictionary<uint, Mobile> mobiles, Dictionary<uint, Item> items)
+        public EntityRemoval(Dictionary<uint, Mobile> mobiles, Dictionary<uint, Item> items, SpatialIndex spatial)
         {
             _mobiles = mobiles;
             _items = items;
+            _spatial = spatial;
         }
 
         public void RemoveMobile(Mobile mobile, Action<Serial>? removed)
@@ -31,12 +33,18 @@ namespace TheVerge.Core.World
                 }
             }
 
+            _spatial.RemoveMobile(mobile);
             _mobiles.Remove(mobile.Serial.Value);
             removed?.Invoke(mobile.Serial);
         }
 
         public void RemoveItem(Item root, Action<Serial>? removed)
         {
+            if (root.Place == ItemPlace.World)
+            {
+                _spatial.RemoveItem(root);
+            }
+
             ItemTree.Detach(root);
             _removing.Push(root);
             while (_removing.Count > 0)

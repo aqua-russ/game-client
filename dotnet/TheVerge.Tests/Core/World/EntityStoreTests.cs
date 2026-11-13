@@ -62,20 +62,26 @@ namespace TheVerge.Tests.Core.World
         [Test]
         public void UpdateExisting_DoesNotAllocate()
         {
+            // Установившийся режим (PLAN Стадия 2, критерии): объекты ходят по уже знакомым местам. Первый заход в новый
+            // блок карты 8×8 заводит его список в индексе (2.8) — поэтому путь сначала проходится один раз.
             _store.UpdateMobile(Orc, Mob(100, 200));
             _store.PlaceInWorld(Apple, Thing(x: 100, y: 200));
-            _store.UpdateMobile(Orc, Mob(100, 201));
-            _store.PlaceInWorld(Apple, Thing(x: 100, y: 201));
+            MoveAlongPath();
 
             var before = GC.GetAllocatedBytesForCurrentThread();
+            MoveAlongPath();
+
+            Assert.That(GC.GetAllocatedBytesForCurrentThread() - before, Is.EqualTo(0));
+        }
+
+        private void MoveAlongPath()
+        {
             for (short i = 0; i < 1000; i++)
             {
                 _store.UpdateMobile(Orc, Mob(100, i));
                 _store.MoveMobile(Orc, Mob(101, i));
                 _store.PlaceInWorld(Apple, Thing(x: 100, y: i));
             }
-
-            Assert.That(GC.GetAllocatedBytesForCurrentThread() - before, Is.EqualTo(0));
         }
 
         [TestCase(0x00000000u)]
