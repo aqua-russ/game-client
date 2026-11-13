@@ -53,7 +53,7 @@ namespace TheVerge.Bot
                 return BotExitCode.Success;
             }
 
-            var dataError = BotData.Detect(parsed.DataFolder, _output, out _);
+            var dataError = BotData.Load(parsed.DataFolder, _output, out _);
             if (dataError.Length > 0)
             {
                 return Exit(BotExitCode.BadArguments, "ОШИБКА: " + dataError);

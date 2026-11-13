@@ -1,4 +1,6 @@
+using System;
 using System.IO;
+using System.Runtime.Versioning;
 using System.Threading;
 using NUnit.Framework;
 using TheVerge.Bot;
@@ -10,6 +12,8 @@ namespace TheVerge.Tests.Bot
     /// Папка файлов данных у бота (PLAN Стадия 2, п. 1): параметр --data. Что найдено — пишется при старте; папка не
     /// подходит — понятная ошибка и код 1 до подключения к серверу. Самопроверка с --data проверяет только папку.
     /// </summary>
+    // Права файла (chmod) есть только в macOS и Linux — там и работают бот и проверки.
+    [UnsupportedOSPlatform("windows")]
     public sealed class BotDataTests
     {
         private TempDataFolder _data = null!;
@@ -54,6 +58,19 @@ namespace TheVerge.Tests.Bot
             Assert.That(code, Is.EqualTo(BotExitCode.Success));
             Assert.That(_output.ToString(), Does.Contain("map0.mul").And.Contain("tiledata.mul").And.Contain("multi.idx"));
             Assert.That(_output.ToString(), Does.Contain("TheVerge.Bot: ОК"));
+            Assert.That(_output.ToString(), Does.Contain("Tiledata прочитана: земли 0x4000, предметов 0x8000"));
+        }
+
+        [Test]
+        public void SelfCheck_TileDataUnreadable_Code1()
+        {
+            // Файл есть и подходит по длине, но прочитать его нельзя — ошибка с именем файла, а не падение бота.
+            File.SetUnixFileMode(_data.File("tiledata.mul"), UnixFileMode.None);
+
+            var code = Run("--self-check", "--data", _data.Path);
+
+            Assert.That(code, Is.EqualTo(BotExitCode.BadArguments));
+            Assert.That(_output.ToString(), Does.Contain("tiledata.mul"));
         }
 
         [Test]
