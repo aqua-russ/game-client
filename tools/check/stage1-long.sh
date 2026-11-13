@@ -33,9 +33,8 @@ stop_server() {
 trap stop_server EXIT
 # Mac не засыпает, пока идёт проверка (caffeinate есть только на macOS).
 awake() { if command -v caffeinate >/dev/null 2>&1; then caffeinate -i "$@"; else "$@"; fi; }
-# THEVERGE_BOT_CHECK_CREATE=1 — создать персонажа, если его нет (чистый стенд в среде агента; ваш аккаунт так не трогается).
-CREATE=()
-[ "${THEVERGE_BOT_CHECK_CREATE:-}" = "1" ] && CREATE=(--create-character)
+# Первый вход создаёт персонажа бота, если его нет (имя — из tools/bot/setup.sh; аккаунт сервер создаёт сам).
+CREATE=(--create-character)
 
 echo "1/5 Сборка бота…"
 dotnet build dotnet/TheVerge.Bot -nologo -v:q -tl:off > "$LOGS/stage1-build.log" 2>&1 || { echo "ОШИБКА: бот не собрался. Лог: Logs/check/stage1-build.log"; exit 1; }

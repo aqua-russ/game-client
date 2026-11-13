@@ -105,6 +105,7 @@
 | `clientVerification.invalidClientResponse` | Warn | Kick |
 | `serverListing.address` / `autoDetect` | 127.0.0.1 / False | 127.0.0.1 / False |
 | Аккаунты | GM и игрок | GM (подготовка сцены) и игрок (тесты движения и боя) |
+| Аккаунтов с одного адреса (`accountHandler.maxAccountsPerIP`) | 10: бот, тестовые аккаунты и нагрузочные проверки входят с 127.0.0.1 | 10 (решить перед нагрузочным тестированием) |
 | Ручной список исключений (`ip-allowlist.json`, `ip-allowlist-theverge.txt`) | включён: 127.0.0.1 | выключен |
 
 **Молчаливое подключение.** Подключение, которое 5 с ничего не прислало, сервер считает атакой и блокирует адрес на 15 минут (`NetState.Network.cs`, `DisconnectUnattachedSockets` → `BanReasons.SilentConnect` → `AutoDenylist`, `auto-denylist.json`; для 127.0.0.1 исключения нет). Тогда на стенд не войти ни боту, ни ClassicUO. Поэтому на dev-стенде 127.0.0.1 — в ручном списке исключений (`ManualAllowlist`), а бот не держит соединение молча (PLAN Стадия 1, риски).
