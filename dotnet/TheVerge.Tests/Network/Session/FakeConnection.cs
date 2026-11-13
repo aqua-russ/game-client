@@ -42,10 +42,19 @@ namespace TheVerge.Tests.Network.Session
 
         public bool CompressionEnabled { get; private set; }
 
+        /// <summary>Как TcpConnection: отмена закрывает соединение событием Closed(Cancelled), отправка после неё не проходит.</summary>
         public void Connect(string host, int port, CancellationToken cancellation)
         {
             State = ConnectionState.Connecting;
             ConnectedTo = host + ":" + port;
+            cancellation.Register(() =>
+            {
+                AcceptsSend = false;
+                if (!Disposed)
+                {
+                    Push(InboundEvent.Closed(ConnectionCloseReason.Cancelled, string.Empty));
+                }
+            });
         }
 
         public void EnableCompression() => CompressionEnabled = true;

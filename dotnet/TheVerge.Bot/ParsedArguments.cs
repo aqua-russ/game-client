@@ -14,5 +14,8 @@ namespace TheVerge.Bot
 
         /// <summary>Писать лог пакетов в файл (выключается --no-packet-log).</summary>
         public bool PacketLog { get; internal set; } = true;
+
+        /// <summary>Персонажа из --character нет — создать (--create-character).</summary>
+        public bool CreateCharacter { get; internal set; }
     }
 }

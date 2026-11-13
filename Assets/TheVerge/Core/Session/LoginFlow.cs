@@ -9,7 +9,7 @@ namespace TheVerge.Core.Session
     /// порт <see cref="IAccountSender"/>, подключается через <see cref="IServerConnector"/>, а пакеты сервера приходят
     /// вызовами On… от обработчиков в Network. Сразу после подключения к логин-серверу шлёт seed и логин: подключение,
     /// которое молчит 5 с, сервер блокирует на 15 минут (NetState.Network.cs, DisconnectUnattachedSockets).
-    /// Ошибка — состояние <see cref="LoginState.Failed"/> и <see cref="Error"/>; первая ошибка не затирается следующими.
+    /// Ошибка — состояние <see cref="LoginState.Failed"/> и <see cref="Error"/> (<see cref="LoginProgress"/>).
     /// </summary>
     public sealed class LoginFlow : IConnectionObserver
     {
@@ -28,17 +28,27 @@ namespace TheVerge.Core.Session
 
             _sender = sender;
             _connector = connector;
+            Characters = new CharacterSelection(Progress, sender);
             _seed = seed;
         }
 
-        public LoginState State { get; private set; }
+        public LoginProgress Progress { get; } = new LoginProgress();
 
-        public LoginError Error { get; private set; } = LoginError.None;
+        /// <summary>Персонажи на игровом сервере (с состояния <see cref="LoginState.AwaitingCharacterList"/>).</summary>
+        public CharacterSelection Characters { get; }
+
+        public LoginState State => Progress.State;
+
+        public LoginError Error => Progress.Error;
 
         /// <summary>Вход закончился: ошибкой или закрытием по просьбе клиента.</summary>
-        public bool IsFinished => State == LoginState.Failed || State == LoginState.Closed;
+        public bool IsFinished => Progress.IsFinished;
 
-        public event Action<LoginState>? StateChanged;
+        public event Action<LoginState>? StateChanged
+        {
+            add => Progress.StateChanged += value;
+            remove => Progress.StateChanged -= value;
+        }
 
         /// <summary>Список шардов от логин-сервера; пуст, пока не пришёл.</summary>
         public IReadOnlyList<ShardEntry> Shards { get; private set; } = Array.Empty<ShardEntry>();
@@ -122,10 +132,7 @@ namespace TheVerge.Core.Session
         /// </summary>
         public void SelectShard(int position)
         {
-            if (State != LoginState.ShardSelection)
-            {
-                throw new InvalidOperationException("Шард выбирают из полученного списка, а сейчас " + State + ".");
-            }
+            Progress.Require(LoginState.ShardSelection, "Выбор шарда");
 
             if (position < 0 || position >= Shards.Count)
             {
@@ -154,10 +161,7 @@ namespace TheVerge.Core.Session
         }
 
         /// <summary>Пакет пришёл, но разобрать его нельзя (длины не сходятся): ждать дальше нечего — ошибка протокола.</summary>
-        public void OnMalformedPacket(string detail)
-        {
-            Fail(new LoginError(LoginErrorKind.ProtocolError, (int)DisconnectReason.ProtocolError, detail));
-        }
+        public void OnMalformedPacket(string detail) => Progress.FailProtocol(detail);
 
         private static LoginErrorKind KindOf(DisconnectReason reason)
         {
@@ -173,21 +177,8 @@ namespace TheVerge.Core.Session
             }
         }
 
-        private void Fail(LoginError error)
-        {
-            if (IsFinished)
-            {
-                return;
-            }
+        private void Fail(LoginError error) => Progress.Fail(error);
 
-            Error = error;
-            MoveTo(LoginState.Failed);
-        }
-
-        private void MoveTo(LoginState state)
-        {
-            State = state;
-            StateChanged?.Invoke(state);
-        }
+        private void MoveTo(LoginState state) => Progress.MoveTo(state);
     }
 }

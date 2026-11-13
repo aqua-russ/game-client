@@ -26,6 +26,12 @@ namespace TheVerge.Core.Session
         /// <summary>Ключ и вход на игровой сервер отправлены, ждём список персонажей.</summary>
         AwaitingCharacterList = 7,
 
+        /// <summary>Список персонажей получен (<see cref="LoginFlow.Characters"/>), ждём выбора.</summary>
+        CharacterSelection = 8,
+
+        /// <summary>Персонаж выбран, ждём вход в мир.</summary>
+        EnteringWorld = 9,
+
         /// <summary>Вход закончился ошибкой (<see cref="LoginFlow.Error"/>).</summary>
         Failed = 100,
 

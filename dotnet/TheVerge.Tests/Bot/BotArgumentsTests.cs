@@ -22,6 +22,13 @@ namespace TheVerge.Tests.Bot
         }
 
         [Test]
+        public void CreateCharacter_Flag()
+        {
+            Assert.That(BotArguments.Parse(new[] { "--character", "Борис", "--create-character" }).CreateCharacter, Is.True);
+            Assert.That(BotArguments.Parse(new string[0]).CreateCharacter, Is.False);
+        }
+
+        [Test]
         public void Overrides_HostPortLoginCharacterConfig()
         {
             var parsed = BotArguments.Parse(new[]

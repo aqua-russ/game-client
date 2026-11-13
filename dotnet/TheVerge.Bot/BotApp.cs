@@ -57,7 +57,9 @@ namespace TheVerge.Bot
             }
 
             var settings = LoadSettings(parsed, out var problem);
-            return settings == null ? Exit(BotExitCode.BadArguments, "ОШИБКА: " + problem) : Connect(settings, parsed.PacketLog, interrupt);
+            return settings == null
+                ? Exit(BotExitCode.BadArguments, "ОШИБКА: " + problem)
+                : Connect(settings, parsed.PacketLog, parsed.CreateCharacter, interrupt);
         }
 
         private BotSettings? LoadSettings(ParsedArguments parsed, out string problem)
@@ -102,7 +104,7 @@ namespace TheVerge.Bot
                   "(сервер читает их в Latin-1). Исправьте командой tools/bot/setup.sh.";
         }
 
-        private int Connect(BotSettings settings, bool writePacketLog, CancellationToken interrupt)
+        private int Connect(BotSettings settings, bool writePacketLog, bool createCharacter, CancellationToken interrupt)
         {
             var log = new ConsoleLog(_output);
             var clock = new StopwatchClock();
@@ -113,7 +115,7 @@ namespace TheVerge.Bot
                     log.Info("Лог пакетов: " + packetLog.Path);
                 }
 
-                var login = new BotLogin(settings.Host, settings.Port, new LoginCredentials(settings.Login, settings.Password), settings.Character);
+                var login = new BotLogin(settings.Host, settings.Port, new LoginCredentials(settings.Login, settings.Password), settings.Character, createCharacter);
                 var code = new BotRunner(NewConnection, clock, log, packetLog?.Writer).Run(login, interrupt);
                 return Exit(code, string.Empty);
             }

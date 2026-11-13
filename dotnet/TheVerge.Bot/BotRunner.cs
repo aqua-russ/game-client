@@ -48,8 +48,9 @@ namespace TheVerge.Bot
                     session.Observer = flow;
                     _log.Info("Подключение к " + login.Endpoint + "…");
                     flow.Start(login.Host, login.Port, login.Credentials);
-                    RunUntilDone(session, new GameClient(session, _clock), flow, stop);
-                    return BotOutcome.Report(flow, login.Endpoint, interrupt.IsCancellationRequested, _log);
+                    var driver = new BotDriver(_log, login);
+                    RunUntilDone(session, new GameClient(session, _clock), flow, driver, stop);
+                    return BotOutcome.Report(flow, driver, login.Endpoint, interrupt.IsCancellationRequested, _log);
                 }
             }
         }
@@ -57,20 +58,24 @@ namespace TheVerge.Bot
         // Seed логин-сервера: любое число, кроме 0 (NetState.cs: нулевой сервер отключает).
         private static int NewSeed() => RandomNumberGenerator.GetInt32(1, int.MaxValue);
 
-        private void RunUntilDone(NetworkSession session, GameClient client, LoginFlow flow, CancellationTokenSource stop)
+        // Решение бота (Act) пишет пакет в исходящие; он уходит в конце следующего тика. Поэтому «готово» проверяется после
+        // тика и до решения: соединение закрывается, только когда последний пакет бота уже отправлен.
+        private void RunUntilDone(NetworkSession session, GameClient client, LoginFlow flow, BotDriver driver, CancellationTokenSource stop)
         {
-            var driver = new BotDriver(_log);
             while (true)
             {
                 client.Tick(_clock.NowMs);
-                driver.Act(flow);
-                var done = flow.IsFinished || BotDriver.IsGoal(flow);
+                var done = flow.IsFinished || BotDriver.IsGoal(flow) || driver.Problem.Length > 0;
                 if (done && session.IsClosed)
                 {
                     return;
                 }
 
-                if (done && !stop.IsCancellationRequested)
+                if (!done)
+                {
+                    driver.Act(flow);
+                }
+                else if (!stop.IsCancellationRequested)
                 {
                     // Вход закончился, а соединение ещё открыто — закрываем сами, чтобы не молчать на сервере.
                     stop.Cancel();

@@ -35,6 +35,9 @@ namespace TheVerge.Bot
                 case "-h":
                     parsed.Mode = BotMode.Help;
                     return string.Empty;
+                case "--create-character":
+                    parsed.CreateCharacter = true;
+                    return string.Empty;
                 case "--no-packet-log":
                     parsed.PacketLog = false;
                     return string.Empty;

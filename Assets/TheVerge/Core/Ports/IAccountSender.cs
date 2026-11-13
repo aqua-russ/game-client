@@ -21,5 +21,13 @@ namespace TheVerge.Core.Ports
         /// здесь же, до отправки: ответ на вход уже сжат.
         /// </summary>
         void SendGameLogin(int authKey, LoginCredentials credentials);
+
+        /// <summary>Войти в мир персонажем из слота <paramref name="slot"/>.</summary>
+        void SendPlayCharacter(int slot, string name);
+
+        /// <summary>Создать персонажа (сервер кладёт его в первый свободный слот) и войти им в мир.</summary>
+        void SendCreateCharacter(NewCharacter character, int slot);
+
+        void SendDeleteCharacter(int slot);
     }
 }

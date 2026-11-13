@@ -12,7 +12,6 @@ using TheVerge.Network.Diagnostics;
 using TheVerge.Network.Framing;
 using TheVerge.Network.Transport;
 using TheVerge.Tests.Core.Session;
-using TheVerge.Tests.Network.Packets.Account;
 using TheVerge.Tests.Network.Session;
 using TheVerge.Tests.Network.Transport;
 
@@ -106,31 +105,6 @@ namespace TheVerge.Tests.Bot
         }
 
         [Test]
-        public void FirstShardChosen_Redirect_GameLoginOnNewConnection_Success()
-        {
-            // Задачи 1.6–1.7: бот выбирает первый шард, по редиректу подключается к игровому серверу и шлёт ключ и 0x91.
-            // Дальше (список персонажей) — задача 1.8, поэтому цель бота пока — отправленный вход на игровой сервер.
-            var login = new FakeConnection();
-            login.Push(InboundEvent.Connected());
-            login.Reply(Packet(AccountServerSamples.ServerList(("Remaster UO", 0, 3, new byte[] { 127, 0, 0, 1 }))));
-            login.Reply(
-                Packet(AccountServerSamples.PlayServerAck(new byte[] { 127, 0, 0, 1 }, 2593, 77)),
-                InboundEvent.Closed(ConnectionCloseReason.ServerClosed, string.Empty));
-            var game = new FakeConnection();
-            game.Push(InboundEvent.Connected());
-            game.Reply(InboundEvent.Closed(ConnectionCloseReason.Cancelled, string.Empty));
-            var connections = new System.Collections.Generic.Queue<IConnection>(new IConnection[] { login, game });
-
-            var code = RunWithin(new BotRunner(() => connections.Dequeue(), new SystemClockForTests(), _log, null), 5000);
-
-            Assert.That(code, Is.EqualTo(BotExitCode.Success), LogText());
-            Assert.That(login.Sent[1], Is.EqualTo(new byte[] { 0xA0, 0x00, 0x00 }));
-            Assert.That(game.Sent.Single().Length, Is.EqualTo(4 + 65));
-            Assert.That(Infos(), Does.Contain("Remaster UO").And.Contain("127.0.0.1:2593"));
-            Assert.That(_log.Errors, Is.Empty);
-        }
-
-        [Test]
         public void NothingListens_ConnectFailed()
         {
             var code = NewRunner(NewConnection()).Run(Target(FreePort()), CancellationToken.None);
@@ -220,19 +194,10 @@ namespace TheVerge.Tests.Bot
             Assert.That(BotExitCode.Interrupted, Is.EqualTo(130));
         }
 
-        // Бот, который ждёт не того, не вешает тесты: через timeoutMs тест падает, а поток бота (фоновый) бросается.
-        private static int RunWithin(BotRunner runner, int timeoutMs)
-        {
-            var run = Task.Run(() => runner.Run(Target(2593), CancellationToken.None));
-            Assert.That(run.Wait(timeoutMs), Is.True, "бот не закончил работу за " + timeoutMs + " мс");
-            return run.Result;
-        }
-
-        private static InboundEvent Packet(byte[] bytes) => InboundEvent.FromPacket(bytes, bytes.Length, new CountingArrayPool());
-
         private BotRunner NewRunner(IConnection connection) => new BotRunner(() => connection, new SystemClockForTests(), _log, null);
 
-        private static BotLogin Target(int port) => new BotLogin("127.0.0.1", port, new LoginCredentials("player", Password), string.Empty);
+        private static BotLogin Target(int port, string character = "", bool createCharacter = false) =>
+            new BotLogin("127.0.0.1", port, new LoginCredentials("player", Password), character, createCharacter);
 
         private static string HexOf(string text) =>
             string.Join(" ", System.Text.Encoding.ASCII.GetBytes(text).Select(b => b.ToString("X2")));

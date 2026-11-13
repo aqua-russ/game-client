@@ -58,6 +58,27 @@ namespace TheVerge.Network.Packets.Account
             _session.Outgoing.Commit(writer.Position);
         }
 
+        public void SendPlayCharacter(int slot, string name)
+        {
+            var writer = Begin(PlayCharacterPacket.PacketId);
+            PlayCharacterPacket.Write(ref writer, slot, name);
+            _session.Outgoing.Commit(writer.Position);
+        }
+
+        public void SendCreateCharacter(NewCharacter character, int slot)
+        {
+            var writer = Begin(CreateCharacterPacket.PacketId);
+            CreateCharacterPacket.Write(ref writer, character, slot);
+            _session.Outgoing.Commit(writer.Position);
+        }
+
+        public void SendDeleteCharacter(int slot)
+        {
+            var writer = Begin(DeleteCharacterPacket.PacketId);
+            DeleteCharacterPacket.Write(ref writer, slot);
+            _session.Outgoing.Commit(writer.Position);
+        }
+
         private PacketWriter Begin(byte id) =>
             new PacketWriter(_session.Outgoing.Reserve(PacketTable.Get(PacketDirection.ClientToServer, id).FixedLength));
     }

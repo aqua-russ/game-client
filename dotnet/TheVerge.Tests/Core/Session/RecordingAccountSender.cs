@@ -39,6 +39,34 @@ namespace TheVerge.Tests.Core.Session
             Credentials = credentials;
         }
 
+        public int CharacterSlot { get; private set; } = -1;
+
+        public string CharacterName { get; private set; } = string.Empty;
+
+        public void SendPlayCharacter(int slot, string name)
+        {
+            Calls.Add("play");
+            CharacterSlot = slot;
+            CharacterName = name;
+        }
+
+        public NewCharacter? Created { get; private set; }
+
+        public int DeletedSlot { get; private set; } = -1;
+
+        public void SendCreateCharacter(NewCharacter character, int slot)
+        {
+            Calls.Add("create");
+            Created = character;
+            CharacterSlot = slot;
+        }
+
+        public void SendDeleteCharacter(int slot)
+        {
+            Calls.Add("delete");
+            DeletedSlot = slot;
+        }
+
         public void SendAccountLogin(LoginCredentials credentials)
         {
             Calls.Add("login");

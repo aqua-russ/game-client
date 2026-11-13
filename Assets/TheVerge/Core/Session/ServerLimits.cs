@@ -38,6 +38,21 @@ namespace TheVerge.Core.Session
         /// <summary>Максимум одного стата (stats.statMax).</summary>
         public const int StatMax = 100;
 
+        // Создание персонажа (docs/TARGET.md §4; CharacterCreation.cs: SetStats, ValidateSkills; клиенты 7.0.16+).
+        public const int CreationStatTotal = 90;
+        public const int CreationStatMin = 10;
+        public const int CreationStatMax = 60;
+        public const int CreationSkillCount = 4;
+        public const int CreationSkillMax = 50;
+        public const int CreationSkillTotalLow = 100;
+        public const int CreationSkillTotalHigh = 120;
+        /// <summary>
+        /// Навыки, которые сервер даёт выбрать при создании в UOR: Alchemy (0) … Meditation (46) и Mysticism (55).
+        /// Stealth, RemoveTrap и Spellweaving в списке сервера нет; Necromancy, Focus, Chivalry (до AoS), Bushido, Ninjitsu
+        /// (до SE), Imbuing, Throwing (до SA) сервер обнуляет.
+        /// </summary>
+        public const int CreationSkillLastClassic = 46;
+        public const int CreationSkillMysticism = 55;
         /// <summary>Версия клиента (docs/TARGET.md §1, ADR 0002): её клиент шлёт в 0xEF и в ответе 0xBD.</summary>
         public static readonly ClientVersion ClientVersion = new ClientVersion(7, 0, 95, 0);
 

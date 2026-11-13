@@ -6,8 +6,14 @@ namespace TheVerge.Bot
     /// <summary>Чем кончился вход бота: сообщение человеку и код выхода (<see cref="BotExitCode"/>). Пароля здесь нет.</summary>
     internal static class BotOutcome
     {
-        public static int Report(LoginFlow flow, string endpoint, bool interrupted, ILog log)
+        public static int Report(LoginFlow flow, BotDriver driver, string endpoint, bool interrupted, ILog log)
         {
+            if (driver.Problem.Length > 0 && flow.Error.Kind == LoginErrorKind.None)
+            {
+                log.Error("Бот не может продолжить: " + driver.Problem);
+                return BotExitCode.BadArguments;
+            }
+
             var error = flow.Error;
             var detail = string.IsNullOrEmpty(error.Detail) ? string.Empty : " (" + error.Detail + ")";
             switch (error.Kind)
