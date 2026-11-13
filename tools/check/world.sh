@@ -26,7 +26,11 @@ stop_server() {
   [ -z "$SERVER_PID" ] && return
   kill -INT "$SERVER_PID" 2>/dev/null
   for _ in $(seq 1 60); do kill -0 "$SERVER_PID" 2>/dev/null || break; sleep 0.5; done
-  pkill -9 -P "$SERVER_PID" 2>/dev/null; kill -9 "$SERVER_PID" 2>/dev/null
+  if kill -0 "$SERVER_PID" 2>/dev/null; then
+    echo "  ВНИМАНИЕ: копия сервера не остановилась сама за 30 с — остановлена принудительно (ваши данные не затронуты)."
+    pkill -9 -P "$SERVER_PID" 2>/dev/null; kill -9 "$SERVER_PID" 2>/dev/null
+  fi
+  wait "$SERVER_PID" 2>/dev/null
   SERVER_PID=""
 }
 cleanup() { stop_server; rm -rf "$TMP"; }

@@ -24,9 +24,17 @@ def main():
 
     pid, fd = pty.fork()
     if pid == 0:
+        # Фоновая команда скрипта получает Ctrl+C «игнорировать» (так делает bash для «&»), а это наследуется через exec:
+        # сервер тогда не услышал бы Ctrl+C и не остановился бы мягко (замечено на Mac). Возвращаем обычную реакцию.
+        signal.signal(signal.SIGINT, signal.SIG_DFL)
         os.execvp(command[0], command)
 
     def stop(*_):
+        # Как человек в терминале: Ctrl+C в терминал сервера и, на всякий случай, сигнал самому процессу.
+        try:
+            os.write(fd, b"\x03")
+        except OSError:
+            pass
         try:
             os.kill(pid, signal.SIGINT)
         except ProcessLookupError:
