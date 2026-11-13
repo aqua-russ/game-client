@@ -60,6 +60,7 @@ namespace TheVerge.Tests.Bot
             Assert.That(_output.ToString(), Does.Contain("TheVerge.Bot: ОК"));
             Assert.That(_output.ToString(), Does.Contain("Tiledata прочитана: земли 0x4000, предметов 0x8000"));
             Assert.That(_output.ToString(), Does.Contain("Карта открыта: клетка (3584, 2048) — земля 0x0000, Z 0, статики: 0"));
+            Assert.That(_output.ToString(), Does.Contain("Дома и корабли прочитаны: 0"));
         }
 
         [Test]

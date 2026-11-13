@@ -3,13 +3,14 @@ using System.IO;
 using TheVerge.Core.Tiles;
 using TheVerge.Data.Files;
 using TheVerge.Data.Map;
+using TheVerge.Data.Multis;
 using TheVerge.Data.Tiles;
 
 namespace TheVerge.Bot
 {
     /// <summary>
     /// Папка файлов данных UO у бота (--data, PLAN Стадия 2): что найдено и в каком формате — в вывод при старте, затем
-    /// чтение tiledata и открытие карты; папка или файл не подходят — ошибка словами. Карта — только Фелукка (TARGET.md §1).
+    /// чтение tiledata, открытие карты, чтение домов и кораблей; папка или файл не подходят — ошибка словами. Карта — только Фелукка (TARGET.md §1).
     /// </summary>
     public static class BotData
     {
@@ -48,8 +49,16 @@ namespace TheVerge.Bot
                 return "файлы данных: " + error;
             }
 
-            data = new BotWorldData(layout, tiles, map);
             output.WriteLine(DescribeCenter(map));
+            var multis = MultiTable.Load(layout.Multi, out error);
+            if (multis == null)
+            {
+                map.Dispose();
+                return "файлы данных: " + error;
+            }
+
+            output.WriteLine("Дома и корабли прочитаны: " + multis.Count);
+            data = new BotWorldData(layout, tiles, map, multis);
             return string.Empty;
         }
 
