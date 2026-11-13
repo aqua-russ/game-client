@@ -13,6 +13,7 @@ namespace TheVerge.Bot
         private readonly BotWorld _world;
         private readonly ILog _log;
         private readonly string _argument;
+        private readonly System.Collections.Generic.List<Item> _found = new System.Collections.Generic.List<Item>();
 
         public TargetStep(BotWorld world, ILog log, string argument)
         {
@@ -36,6 +37,7 @@ namespace TheVerge.Bot
             var player = _world.Entities.Player;
             var sent = _argument == "cancel" ? cursor.Cancel()
                 : _argument == "self" ? player != null && cursor.TargetObject(player.Serial)
+                : BotAction.TryParseGraphic(_argument, out var graphic) ? TargetItemAtFeet(player, graphic)
                 : TargetCell(player);
             if (sent)
             {
@@ -51,6 +53,24 @@ namespace TheVerge.Bot
 
         public void Finish()
         {
+        }
+
+        private bool TargetItemAtFeet(Mobile? player, ushort graphic)
+        {
+            if (player != null)
+            {
+                _world.Entities.Spatial.QueryItems(player.Position.X, player.Position.Y, 0, _found);
+                foreach (var item in _found)
+                {
+                    if (item.Graphic == graphic)
+                    {
+                        return _world.Target.TargetObject(item.Serial);
+                    }
+                }
+            }
+
+            Failure = "под ногами нет предмета 0x" + graphic.ToString("X4") + ".";
+            return false;
         }
 
         private bool TargetCell(Mobile? player)

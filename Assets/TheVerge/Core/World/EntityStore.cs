@@ -6,10 +6,8 @@ using TheVerge.Core.Session;
 namespace TheVerge.Core.World
 {
     /// <summary>
-    /// Мир клиента — реестр мобов и предметов по серийнику (PLAN Стадия 2, п. 7) со связями «контейнер → содержимое» и
-    /// «моб → надетое». Меняется только из обработчиков пакетов сервера; о каждом изменении — событие. Отказ (не тот вид
-    /// серийника, неизвестный моб, цикл вложенности) мир не меняет и считается в <see cref="Metrics"/>.
-    /// Сервер шлёт объект заново при каждом изменении, поэтому известный объект обновляется на месте без новой памяти.
+    /// Мир клиента — мобы и предметы по серийнику (PLAN Стадия 2, п. 7), «контейнер → содержимое», «моб → надетое». Меняется
+    /// из обработчиков пакетов; о каждом изменении — событие; отказ мир не меняет и считается в <see cref="Metrics"/>.
     /// </summary>
     public sealed class EntityStore
     {
@@ -74,6 +72,10 @@ namespace TheVerge.Core.World
         public int MobileCount => _mobiles.Count;
 
         public int ItemCount => _items.Count;
+
+        public IReadOnlyCollection<Mobile> Mobiles => _mobiles.Values;
+
+        public IReadOnlyCollection<Item> Items => _items.Values;
 
         public Mobile? FindMobile(Serial serial) => _mobiles.TryGetValue(serial.Value, out var mobile) ? mobile : null;
 

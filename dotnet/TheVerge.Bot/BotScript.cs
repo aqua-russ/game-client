@@ -12,6 +12,11 @@ namespace TheVerge.Bot
         /// <summary>Сколько ждать ответа сервера на действие, мс.</summary>
         public const int ActionTimeoutMs = 10000;
 
+        /// <summary>
+        /// Сколько ждать после [DumpVisible, прежде чем сверять: пакеты, которые сервер отправил до команды, должны дойти.
+        /// </summary>
+        public const int DumpSettleMs = 1000;
+
         private readonly IReadOnlyList<BotAction> _actions;
         private readonly BotWorld _world;
         private readonly ILog _log;
@@ -79,6 +84,8 @@ namespace TheVerge.Bot
                     return new TargetStep(_world, _log, action.Argument);
                 case BotActionKind.SeenItem:
                     return new SeenItemStep(_world, _log, action.Argument);
+                case BotActionKind.Dump:
+                    return new DumpStep(_world, _log, _clock, action.Argument);
                 default:
                     return new OpenBackpackStep(_world, _log);
             }

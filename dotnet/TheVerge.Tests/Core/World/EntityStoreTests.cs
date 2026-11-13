@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using NUnit.Framework;
 using TheVerge.Core.Primitives;
 using TheVerge.Core.World;
@@ -127,6 +128,17 @@ namespace TheVerge.Tests.Core.World
             Assert.That(apple.IsMulti, Is.False);
             Assert.That(apple.Container, Is.Null);
             Assert.That(apple.Owner, Is.Null);
+        }
+
+        [Test]
+        public void MobilesAndItems_EnumerateAll()
+        {
+            _store.UpdateMobile(Orc, Mob(1, 1));
+            _store.PlaceInWorld(Box, Thing());
+            _store.PlaceInContainer(Apple, Thing(), Box, 0);
+
+            Assert.That(_store.Mobiles.Select(m => m.Serial), Is.EqualTo(new[] { Orc }));
+            Assert.That(_store.Items.Select(i => i.Serial), Is.EquivalentTo(new[] { Box, Apple }));
         }
 
         [Test]

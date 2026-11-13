@@ -16,6 +16,9 @@ namespace TheVerge.Bot
         Target,
 
         /// <summary>seen:0xГРАФИКА — ждать предмет с этой графикой на земле в клетке персонажа.</summary>
-        SeenItem
+        SeenItem,
+
+        /// <summary>dump:&lt;папка&gt; — сказать [DumpVisible, дождаться файла сервера в папке и сверить свой мир с ним.</summary>
+        Dump
     }
 }

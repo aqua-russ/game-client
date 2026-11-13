@@ -1,0 +1,100 @@
+{
+  "player": "0x00000001",
+  "map": 0,
+  "x": 5445,
+  "y": 1153,
+  "z": 0,
+  "objects": [
+    {
+      "serial": "0x00000001",
+      "kind": "mobile",
+      "place": "world",
+      "graphic": 400,
+      "hue": 33770,
+      "amount": 1,
+      "x": 5445,
+      "y": 1153,
+      "z": 0,
+      "parent": "0x00000000",
+      "layer": 0
+    },
+    {
+      "serial": "0x40000001",
+      "kind": "item",
+      "place": "equipped",
+      "graphic": 3701,
+      "hue": 0,
+      "amount": 1,
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "parent": "0x00000001",
+      "layer": 21
+    },
+    {
+      "serial": "0x40000002",
+      "kind": "item",
+      "place": "container",
+      "graphic": 4081,
+      "hue": 0,
+      "amount": 1,
+      "x": 50,
+      "y": 96,
+      "z": 0,
+      "parent": "0x40000001",
+      "layer": 0
+    },
+    {
+      "serial": "0x40000003",
+      "kind": "item",
+      "place": "container",
+      "graphic": 3821,
+      "hue": 0,
+      "amount": 1000,
+      "x": 72,
+      "y": 94,
+      "z": 0,
+      "parent": "0x40000001",
+      "layer": 0
+    },
+    {
+      "serial": "0x40000004",
+      "kind": "item",
+      "place": "container",
+      "graphic": 3922,
+      "hue": 0,
+      "amount": 1,
+      "x": 78,
+      "y": 93,
+      "z": 0,
+      "parent": "0x40000001",
+      "layer": 0
+    },
+    {
+      "serial": "0x40000005",
+      "kind": "item",
+      "place": "container",
+      "graphic": 2600,
+      "hue": 0,
+      "amount": 1,
+      "x": 30,
+      "y": 131,
+      "z": 0,
+      "parent": "0x40000001",
+      "layer": 0
+    },
+    {
+      "serial": "0x40000006",
+      "kind": "item",
+      "place": "equipped",
+      "graphic": 8271,
+      "hue": 1359,
+      "amount": 1,
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "parent": "0x00000001",
+      "layer": 22
+    }
+  ]
+}

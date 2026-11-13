@@ -56,6 +56,8 @@ namespace TheVerge.Tests.Bot
         [TestCase("target:cancel", BotActionKind.Target)]
         [TestCase("target:1500,1600,-5", BotActionKind.Target)]
         [TestCase("seen:0x09D0", BotActionKind.SeenItem)]
+        [TestCase("target:0x09D0", BotActionKind.Target)]
+        [TestCase("dump:/tmp/parity", BotActionKind.Dump)]
         public void Action_TargetAndSeen(string text, BotActionKind kind)
         {
             var parsed = BotArguments.Parse(new[] { "--action", text });

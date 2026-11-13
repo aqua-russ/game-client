@@ -43,7 +43,8 @@ namespace TheVerge.Bot
                 return new BotAction(BotActionKind.WaitAt, argument, text);
             }
 
-            if (kind == "target" && (argument == "here" || argument == "self" || argument == "cancel" || TryParsePoint(argument, out _)))
+            if (kind == "target" && (argument == "here" || argument == "self" || argument == "cancel" ||
+                                     TryParsePoint(argument, out _) || TryParseGraphic(argument, out _)))
             {
                 return new BotAction(BotActionKind.Target, argument, text);
             }
@@ -51,6 +52,11 @@ namespace TheVerge.Bot
             if (kind == "seen" && TryParseGraphic(argument, out _))
             {
                 return new BotAction(BotActionKind.SeenItem, argument, text);
+            }
+
+            if (kind == "dump" && argument.Length > 0)
+            {
+                return new BotAction(BotActionKind.Dump, argument, text);
             }
 
             error = "--action «" + text + "»: непонятное действие. Список действий: --help.";
