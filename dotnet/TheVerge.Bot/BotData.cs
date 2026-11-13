@@ -7,7 +7,7 @@ namespace TheVerge.Bot
 {
     /// <summary>
     /// Папка файлов данных UO у бота (--data, PLAN Стадия 2): что найдено и в каком формате — в вывод при старте, затем
-    /// чтение tiledata; папка или файл не подходят — ошибка словами. Карта — только Фелукка (TARGET.md §1).
+    /// чтение tiledata и открытие карты; папка или файл не подходят — ошибка словами. Карта — только Фелукка (TARGET.md §1).
     /// </summary>
     public static class BotData
     {
@@ -40,8 +40,22 @@ namespace TheVerge.Bot
 
             output.WriteLine("Tiledata прочитана: земли 0x" + TileDataTable.LandTableSize.ToString("X") + ", предметов 0x" +
                              tiles.ItemCount.ToString("X"));
-            data = new BotWorldData(layout, tiles);
+            var map = MapData.Open(layout.Map, MapData.DefaultCacheBlocks, out error);
+            if (map == null)
+            {
+                return "файлы данных: " + error;
+            }
+
+            data = new BotWorldData(layout, tiles, map);
+            output.WriteLine(DescribeCenter(map));
             return string.Empty;
+        }
+
+        private static string DescribeCenter(MapData map)
+        {
+            int x = map.Width / 2, y = map.Height / 2;
+            map.TryGetLand(x, y, out var land);
+            return "Карта открыта: клетка (" + x + ", " + y + ") — земля 0x" + land.Id.ToString("X4") + ", Z " + land.Z;
         }
     }
 }

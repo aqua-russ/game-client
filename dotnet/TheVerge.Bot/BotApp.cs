@@ -53,17 +53,20 @@ namespace TheVerge.Bot
                 return BotExitCode.Success;
             }
 
-            var dataError = BotData.Load(parsed.DataFolder, _output, out _);
-            if (dataError.Length > 0)
+            var dataError = BotData.Load(parsed.DataFolder, _output, out var data);
+            using (data)
             {
-                return Exit(BotExitCode.BadArguments, "ОШИБКА: " + dataError);
-            }
+                if (dataError.Length > 0)
+                {
+                    return Exit(BotExitCode.BadArguments, "ОШИБКА: " + dataError);
+                }
 
-            if (parsed.Mode == BotMode.SelfCheck)
-            {
-                return BotSelfCheck.Run(_output);
+                return parsed.Mode == BotMode.SelfCheck ? BotSelfCheck.Run(_output) : RunWithSettings(parsed, interrupt);
             }
+        }
 
+        private int RunWithSettings(ParsedArguments parsed, CancellationToken interrupt)
+        {
             var settings = LoadSettings(parsed, out var problem);
             return settings == null
                 ? Exit(BotExitCode.BadArguments, "ОШИБКА: " + problem)
