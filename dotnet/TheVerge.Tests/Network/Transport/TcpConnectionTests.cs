@@ -40,6 +40,28 @@ namespace TheVerge.Tests.Network.Transport
         }
 
         [Test]
+        public void ServerClosesMidPacket_WholePacketsThenClosed_NoWaitForRest()
+        {
+            // PLAN Стадия 1, п. 14: обрезанные данные — контролируемое закрытие, клиент не ждёт остаток пакета.
+            var whole = ServerPacketSamples.LoginStream()[0];
+            var cut = ServerPacketSamples.Concat(ServerPacketSamples.LoginStream()).Skip(whole.Length).Take(3).ToArray();
+            using (var server = new LocalServer())
+            using (var connection = NewConnection())
+            {
+                connection.Connect("127.0.0.1", server.Port, CancellationToken.None);
+                server.Accept();
+                server.SendInChunks(whole.Concat(cut).ToArray(), 1000);
+                server.CloseClient();
+
+                var events = ConnectionEvents.Collect(connection, ConnectionEvents.Until(InboundKind.Closed));
+
+                Assert.That(events.Select(e => e.Kind), Is.EqualTo(new[] { InboundKind.Connected, InboundKind.Packet, InboundKind.Closed }));
+                Assert.That(events[1].Packet, Is.EqualTo(whole));
+                Assert.That(events[2].CloseReason, Is.EqualTo(ConnectionCloseReason.ServerClosed));
+            }
+        }
+
+        [Test]
         public void CompressionEnabled_CompressedStream_SamePackets()
         {
             var expected = ServerPacketSamples.LoginStream();
