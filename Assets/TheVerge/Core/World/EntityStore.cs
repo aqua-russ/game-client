@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using TheVerge.Core.Primitives;
+using TheVerge.Core.Session;
 
 namespace TheVerge.Core.World
 {
@@ -35,7 +36,38 @@ namespace TheVerge.Core.World
 
         public SpatialIndex Spatial { get; } = new SpatialIndex();
 
+        /// <summary>Номер карты ещё не приходил (0xBF 0x08).</summary>
+        public const int UnknownMap = -1;
+
         public Serial PlayerSerial { get; private set; }
+
+        /// <summary>Карта, на которой мир (0xBF 0x08); <see cref="UnknownMap"/> — ещё не известна.</summary>
+        public int MapIndex { get; private set; } = UnknownMap;
+
+        /// <summary>Удалять объекты дальше дальности обзора, когда свой персонаж сдвинулся (умолчание — ClientLimits).</summary>
+        public bool PruneOutOfRange { get; set; } = ClientLimits.RemoveOutOfRange;
+
+        /// <summary>Карта (0xBF 0x08): та же или первая — ничего (при входе она приходит дважды); другая — остаётся только свой
+        /// персонаж со своими вещами (сервер сам очищает экран и шлёт всё заново: Mobile.Map).</summary>
+        public void ChangeMap(int map)
+        {
+            if (MapIndex != UnknownMap && map != MapIndex)
+            {
+                Clear(keepPlayer: true);
+            }
+
+            MapIndex = map;
+        }
+
+        /// <summary>Свой персонаж на новом месте (0x76): остальное о нём не меняется.</summary>
+        public void MovePlayerTo(Point3D position)
+        {
+            var player = Player;
+            if (player != null)
+            {
+                UpdateMobile(player.Serial, new MobileInfo(player.Body, position, player.Direction, player.Hue, player.Flags, player.Notoriety));
+            }
+        }
 
         public Mobile? Player => FindMobile(PlayerSerial);
 
@@ -51,6 +83,7 @@ namespace TheVerge.Core.World
         public void Reset(PlayerState player)
         {
             Clear(keepPlayer: false);
+            MapIndex = UnknownMap;
             PlayerSerial = player.Serial;
             var info = new MobileInfo(player.Body, player.Position, player.Direction, 0, 0, MobileInfo.NotorietyUnknown);
             UpdateMobile(player.Serial, info);
@@ -69,6 +102,10 @@ namespace TheVerge.Core.World
                 var from = mobile.Position;
                 mobile.Apply(info);
                 Spatial.MoveMobile(mobile, from);
+                if (PruneOutOfRange && serial == PlayerSerial && (from.X != info.Position.X || from.Y != info.Position.Y))
+                {
+                    _removal.RemoveOutOfRange(mobile, Removed);
+                }
             }
             else
             {
@@ -175,30 +212,15 @@ namespace TheVerge.Core.World
         }
 
         /// <summary>Начало полного списка надетого (0x78): что не будет надето до <see cref="EndEquipment"/>, снято.</summary>
-        public void BeginEquipment(Serial mobileSerial)
-        {
-            var mobile = FindMobile(mobileSerial);
-            for (var i = 1; mobile != null && i < Mobile.SlotCount; i++)
-            {
-                var item = mobile.GetEquipped((Layer)i);
-                if (item != null)
-                {
-                    item.PendingUnequip = true;
-                }
-            }
-        }
+        public void BeginEquipment(Serial mobileSerial) => FindMobile(mobileSerial)?.MarkEquipmentPending();
 
         /// <summary>Конец полного списка надетого: не повторённые предметы удаляются (сервер их больше не показывает).</summary>
         public void EndEquipment(Serial mobileSerial)
         {
             var mobile = FindMobile(mobileSerial);
-            for (var i = 1; mobile != null && i < Mobile.SlotCount; i++)
+            if (mobile != null)
             {
-                var item = mobile.GetEquipped((Layer)i);
-                if (item != null && item.PendingUnequip)
-                {
-                    _removal.RemoveItem(item, Removed);
-                }
+                _removal.RemovePendingEquipment(mobile, Removed);
             }
         }
 
@@ -233,9 +255,7 @@ namespace TheVerge.Core.World
             var player = keepPlayer ? Player : null;
             if (player == null)
             {
-                _mobiles.Clear();
-                _items.Clear();
-                Spatial.Clear();
+                _removal.RemoveAll();
                 PlayerSerial = Serial.Zero;
             }
             else
@@ -259,12 +279,7 @@ namespace TheVerge.Core.World
         {
             if (_items.TryGetValue(serial.Value, out var item))
             {
-                if (item.Place == ItemPlace.World)
-                {
-                    Spatial.RemoveItem(item);
-                }
-
-                ItemTree.Detach(item);
+                _removal.Detach(item);
                 return item;
             }
 

@@ -54,6 +54,18 @@ namespace TheVerge.Core.World
             }
         }
 
+        /// <summary>Отметить всё надетое к снятию: что не будет надето снова до конца списка 0x78, снимется.</summary>
+        internal void MarkEquipmentPending()
+        {
+            foreach (var item in _slots)
+            {
+                if (item != null)
+                {
+                    item.PendingUnequip = true;
+                }
+            }
+        }
+
         internal void SetSlot(Layer layer, Item? item)
         {
             var index = (int)layer;

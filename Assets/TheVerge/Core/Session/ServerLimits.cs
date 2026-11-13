@@ -59,6 +59,9 @@ namespace TheVerge.Core.Session
         public const int NameMaxUtf8Bytes = 29;
         /// <summary>Дальность обзора, клеток: на запрос клиента сервер всегда отвечает 18 (SetUpdateRange).</summary>
         public const int UpdateRange = 18;
+
+        /// <summary>Дальность обзора multi (дома, корабли), клеток: BaseMulti.GetUpdateRange.</summary>
+        public const int MultiUpdateRange = 22;
         /// <summary>«Неверный клиент» сервер выгоняет через столько мс после проверки версии (clientVerification.kickDelay).</summary>
         public const int ClientVerificationKickDelayMs = 20000;
         /// <summary>Версия клиента (docs/TARGET.md §1, ADR 0002): её клиент шлёт в 0xEF и в ответе 0xBD.</summary>

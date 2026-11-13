@@ -27,7 +27,7 @@ namespace TheVerge.Tests.Network.Packets.World
         {
             _store = new EntityStore();
             _dispatcher = new PacketDispatcher(new RecordingLog());
-            WorldHandlers.Register(_dispatcher, _store);
+            WorldHandlers.Register(_dispatcher, _store, new WorldEnvironment());
             _store.Reset(new PlayerState(new Serial(Player), 0x190, new Point3D(633, 858, 0), Direction.North, new MapSize(7168, 4096)));
         }
 

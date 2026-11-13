@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using TheVerge.Core.Primitives;
+using TheVerge.Core.Session;
 
 namespace TheVerge.Core.World
 {
@@ -14,6 +15,8 @@ namespace TheVerge.Core.World
         private readonly Dictionary<uint, Item> _items;
         private readonly SpatialIndex _spatial;
         private readonly Stack<Item> _removing = new Stack<Item>();
+        private readonly List<Mobile> _farMobiles = new List<Mobile>();
+        private readonly List<Item> _farItems = new List<Item>();
 
         public EntityRemoval(Dictionary<uint, Mobile> mobiles, Dictionary<uint, Item> items, SpatialIndex spatial)
         {
@@ -38,14 +41,41 @@ namespace TheVerge.Core.World
             removed?.Invoke(mobile.Serial);
         }
 
-        public void RemoveItem(Item root, Action<Serial>? removed)
+        /// <summary>Снять предмет с прежнего места, в том числе с земли (из поиска рядом). Содержимое остаётся при нём.</summary>
+        public void Detach(Item item)
         {
-            if (root.Place == ItemPlace.World)
+            if (item.Place == ItemPlace.World)
             {
-                _spatial.RemoveItem(root);
+                _spatial.RemoveItem(item);
             }
 
-            ItemTree.Detach(root);
+            ItemTree.Detach(item);
+        }
+
+        /// <summary>Молча забыть всё.</summary>
+        public void RemoveAll()
+        {
+            _mobiles.Clear();
+            _items.Clear();
+            _spatial.Clear();
+        }
+
+        /// <summary>Снять с моба надетое, которое полный список 0x78 не повторил.</summary>
+        public void RemovePendingEquipment(Mobile mobile, Action<Serial>? removed)
+        {
+            for (var i = 1; i < Mobile.SlotCount; i++)
+            {
+                var item = mobile.GetEquipped((Layer)i);
+                if (item != null && item.PendingUnequip)
+                {
+                    RemoveItem(item, removed);
+                }
+            }
+        }
+
+        public void RemoveItem(Item root, Action<Serial>? removed)
+        {
+            Detach(root);
             _removing.Push(root);
             while (_removing.Count > 0)
             {
@@ -54,6 +84,44 @@ namespace TheVerge.Core.World
                 _items.Remove(item.Serial.Value);
                 removed?.Invoke(item.Serial);
             }
+        }
+
+        /// <summary>
+        /// Удалить мобов и предметы на земле дальше дальности обзора от своего персонажа: 18 клеток, multi — 22
+        /// (Item.GetUpdateRange, BaseMulti.GetUpdateRange; квадрат, как Utility.InRange).
+        /// </summary>
+        public void RemoveOutOfRange(Mobile player, Action<Serial>? removed)
+        {
+            var center = player.Position;
+            foreach (var mobile in _mobiles.Values)
+            {
+                if (mobile != player && !InRange(center, mobile.Position, ServerLimits.UpdateRange))
+                {
+                    _farMobiles.Add(mobile);
+                }
+            }
+
+            foreach (var item in _items.Values)
+            {
+                var range = item.IsMulti ? ServerLimits.MultiUpdateRange : ServerLimits.UpdateRange;
+                if (item.Place == ItemPlace.World && !InRange(center, item.Position, range))
+                {
+                    _farItems.Add(item);
+                }
+            }
+
+            foreach (var mobile in _farMobiles)
+            {
+                RemoveMobile(mobile, removed);
+            }
+
+            foreach (var item in _farItems)
+            {
+                RemoveItem(item, removed);
+            }
+
+            _farMobiles.Clear();
+            _farItems.Clear();
         }
 
         /// <summary>Молча удалить всё, кроме своего персонажа, его надетого и содержимого.</summary>
@@ -83,5 +151,8 @@ namespace TheVerge.Core.World
                 RemoveItem(item, null);
             }
         }
+
+        private static bool InRange(Point3D center, Point3D point, int range) =>
+            System.Math.Abs(point.X - center.X) <= range && System.Math.Abs(point.Y - center.Y) <= range;
     }
 }

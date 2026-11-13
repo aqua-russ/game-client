@@ -123,6 +123,91 @@ namespace TheVerge.Tests.Network.Packets.World
             return p.ToArray();
         }
 
+        /// <summary>Поля предмета для 0xF3.</summary>
+        public sealed class WorldEntity
+        {
+            public byte Type { get; set; }
+            public uint Serial { get; set; }
+            public ushort Graphic { get; set; }
+            public short Amount { get; set; } = 1;
+            public short X { get; set; }
+            public short Y { get; set; }
+            public sbyte Z { get; set; }
+            public byte Light { get; set; }
+            public ushort Hue { get; set; }
+            public byte Flags { get; set; }
+        }
+
+        /// <summary>
+        /// OutgoingEntityPackets.CreateWorldEntity для клиента High Seas (7.0.9.0+): 0xF3, short 1, byte тип (0 предмет,
+        /// 1 моб, 2 multi), Serial, ushort графика, byte 0, short количество дважды, short X &amp; 0x7FFF, Y &amp; 0x3FFF, sbyte Z,
+        /// byte свет, short цвет, byte флаги, short 0.
+        /// </summary>
+        public static byte[] WorldObject(WorldEntity e)
+        {
+            var p = new List<byte> { 0xF3 };
+            U16(p, 1);
+            p.Add(e.Type);
+            U32(p, e.Serial);
+            U16(p, e.Graphic);
+            p.Add(0);
+            U16(p, (ushort)e.Amount);
+            U16(p, (ushort)e.Amount);
+            U16(p, (ushort)(e.X & 0x7FFF));
+            U16(p, (ushort)(e.Y & 0x3FFF));
+            p.Add((byte)e.Z);
+            p.Add(e.Light);
+            U16(p, e.Hue);
+            p.Add(e.Flags);
+            U16(p, 0);
+            return p.ToArray();
+        }
+
+        /// <summary>OutgoingMapPackets.SendMapChange: 0xBF, длина 6, подкоманда 8, номер карты.</summary>
+        public static byte[] MapChange(byte map) => new byte[] { 0xBF, 0x00, 0x06, 0x00, 0x08, map };
+
+        /// <summary>OutgoingMapPackets.SendMapPatches: 0xBF, длина 41, подкоманда 0x18, int 4, на каждую карту int статика, int земля.</summary>
+        public static byte[] MapPatches(params int[] staticAndLand)
+        {
+            var p = new List<byte> { 0xBF };
+            U16(p, (ushort)(9 + staticAndLand.Length * 4));
+            U16(p, 0x18);
+            U32(p, (uint)(staticAndLand.Length / 2));
+            foreach (var value in staticAndLand)
+            {
+                U32(p, (uint)value);
+            }
+
+            return p.ToArray();
+        }
+
+        /// <summary>OutgoingPlayerPackets.SendServerChange: X, Y, Z (short), byte 0, short 0, short 0, ширина, высота карты.</summary>
+        public static byte[] ServerChange(short x, short y, short z, short width, short height)
+        {
+            var p = new List<byte> { 0x76 };
+            U16(p, (ushort)x);
+            U16(p, (ushort)y);
+            U16(p, (ushort)z);
+            p.Add(0);
+            U16(p, 0);
+            U16(p, 0);
+            U16(p, (ushort)width);
+            U16(p, (ushort)height);
+            return p.ToArray();
+        }
+
+        /// <summary>OutgoingEffectPackets.CreateSoundEffect: byte 1, short звук, short 0 (громкость), short X, Y, Z.</summary>
+        public static byte[] PlaySound(ushort sound, short x, short y, short z)
+        {
+            var p = new List<byte> { 0x54, 1 };
+            U16(p, sound);
+            U16(p, 0);
+            U16(p, (ushort)x);
+            U16(p, (ushort)y);
+            U16(p, (ushort)z);
+            return p.ToArray();
+        }
+
         private static void U16(List<byte> p, ushort value)
         {
             p.Add((byte)(value >> 8));

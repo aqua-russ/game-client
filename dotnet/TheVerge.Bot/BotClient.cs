@@ -31,7 +31,8 @@ namespace TheVerge.Bot
             AccountHandlers.Register(dispatcher, Flow);
             SessionHandlers.Register(dispatcher, World, new ServerRequests(sessionSender), Game);
             Entities = new EntityStore();
-            WorldHandlers.Register(dispatcher, Entities);
+            Environment = new WorldEnvironment();
+            WorldHandlers.Register(dispatcher, Entities, Environment);
             World.PlayerConfirmed += Entities.Reset;
             Session.Observer = Flow;
             var watchdog = new LoginWatchdog(Flow.Progress);
@@ -51,6 +52,9 @@ namespace TheVerge.Bot
 
         /// <summary>Мир: мобы и предметы, которые прислал сервер (PLAN Стадия 2).</summary>
         public EntityStore Entities { get; }
+
+        /// <summary>Свет, сезон, время, погода, патчи карт (PLAN Стадия 2, п. 9).</summary>
+        public WorldEnvironment Environment { get; }
 
         public GameClient Core { get; }
 

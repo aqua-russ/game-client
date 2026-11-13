@@ -45,6 +45,12 @@ namespace TheVerge.Core.Session
         public const int PingIntervalMs = 10000;
         /// <summary>Сколько ждать ответа сервера на выход, мс; дальше клиент закрывает соединение сам.</summary>
         public const int LogoutTimeoutMs = 5000;
+
+        /// <summary>
+        /// Удалять объекты дальше дальности обзора, когда свой персонаж сдвинулся. Сервер 0x1D за оставшимися позади не
+        /// шлёт (Mobile.SetLocation), поэтому по умолчанию включено; выключение — только для отладки (docs/TARGET.md §3.1).
+        /// </summary>
+        public const bool RemoveOutOfRange = true;
         /// <summary>Сколько ждать ответа сервера во время входа (список, редирект, вход в мир), мс; дальше — ошибка.</summary>
         public const int ServerResponseTimeoutMs = 30000;
         /// <summary>
