@@ -20,8 +20,8 @@
 | Что | Где | Что сделать | Когда |
 |---|---|---|---|
 | Песочница Минока и команды `[minoc:` (клиент их больше не шлёт: старая сеть удалена в 0.9) | `Custom/MinocSandboxInitializer.cs` + перехваты в `IncomingAccountPackets`, `IncomingMessagePackets`, `IncomingEntityPackets` | удалить целиком | после Стадий 4–7 |
-| Подгонка разбора 0xBD под ошибку старого клиента (пропуск нулей, подстановка версии) | `IncomingAccountPackets.cs` | вернуть оригинал | когда новый клиент пройдёт тест на 0xBD (Стадия 1) |
 | Нет комментариев `// THE VERGE:` в ранних правках движка | `SpanWriter.cs`, `OutgoingAccountPackets.cs`, `OutgoingMobilePackets.cs` | добавить комментарии | при следующей правке сервера |
+| Правки UTF-8 считают размер пакета по буквам, а не по байтам (0xBF 0x10, 0x9E, 0x7C): с кириллицей — ошибка сервера; имя в кукле 0x88 осталось в Latin-1 | `OutgoingEquipmentPackets.cs`, `OutgoingVendorSellPackets.cs`, `OutgoingMenuPackets.cs`, `OutgoingPlayerPackets.cs` (движок) | исправить размер по байтам, 0x88 — в UTF-8; тест на сервере с кириллическим именем | ждёт разрешения пользователя (правка движка) |
 | Снята проверка запрещённых слов в именах | `Misc/NameVerification.cs` | вернуть (с поддержкой кириллицы) | перед открытым тестом |
 | Нет 7-дневного запрета на удаление персонажа | `Accounting/AccountHandler.cs` | вернуть `RestrictDeletion = true` | перед открытым тестом |
 | Заглушка данных мира | `Distribution/Data/ClientData/` | положить полную установку клиента (ADR 0003) | задача 0.2 |
