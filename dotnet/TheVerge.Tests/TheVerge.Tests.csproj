@@ -19,6 +19,7 @@
   <!-- Матрица пакетов — источник ожиданий для PacketTableTests (ADR 0010 п. 7): тест читает её из папки тестов. -->
   <ItemGroup>
     <None Include="../../docs/protocol/packets.csv" Link="Network/Framing/packets.csv" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Bot/Replays/*.tsv" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
