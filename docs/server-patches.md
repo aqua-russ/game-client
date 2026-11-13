@@ -12,7 +12,8 @@
 | `Network/Packets/OutgoingAccountPackets.cs` | имена в списках персонажей — UTF-8 (оба варианта) | кириллица | ADR 0005 |
 | `Network/Packets/OutgoingMessagePackets.cs` | имя говорящего в 0xC1, 0xCC, 0x1C, 0xAE — UTF-8 | кириллица | ADR 0005 |
 | `Network/Packets/OutgoingSecureTradePackets.cs` | имя в 0x6F — UTF-8 | кириллица | ADR 0005 |
-| `Network/Packets/OutgoingVendorSellPackets.cs`, `OutgoingMenuPackets.cs`, `OutgoingEquipmentPackets.cs` | строки с длиной впереди — UTF-8, длина в байтах | кириллица | ADR 0005 |
+| `Network/Packets/OutgoingPlayerPackets.cs` | заголовок куклы 0x88 (имя и титул) — UTF-8 (13 ноября 2026, с разрешения пользователя) | кириллица | ADR 0005 |
+| `Network/Packets/OutgoingVendorSellPackets.cs`, `OutgoingMenuPackets.cs`, `OutgoingEquipmentPackets.cs` | строки с длиной впереди — UTF-8, длина в байтах; **размер пакета тоже в байтах** (исправлено 13 ноября 2026: раньше считался по буквам, и кириллица давала ошибку сервера) | кириллица | ADR 0005 |
 | `Network/Packets/OutgoingMobilePackets.cs` | имя в 0x98 и 0x11 — UTF-8 | кириллица | ADR 0005 |
 
 Новые правки помечены `// THE VERGE:`; в трёх ранних (`SpanWriter.cs`, `OutgoingAccountPackets.cs`, `OutgoingMobilePackets.cs`) комментариев нет — долг, см. [`TECH-DEBT.md`](TECH-DEBT.md).
@@ -33,8 +34,6 @@
 | `Accounting/AccountHandler.cs` | `RestrictDeletion = false` (нет 7-дневного запрета удаления персонажа) | удобство разработки | вернуть перед открытым тестом |
 | `Engines/Character Creation/CharacterCreation.cs` | — | — | **возвращён к оригиналу** ([ADR 0001](adr/0001-no-gdd-port-original-mechanics.md)) |
 
-**Известные ошибки в правках UTF-8 (найдены 13 ноября 2026, ждут решения пользователя — правка движка):** (1) в 0xBF 0x10 (имя мастера), 0x9E (список продажи) и 0x7C (меню) размер пакета считается по числу букв, а пишется в байтах UTF-8 — с кириллицей в названии сервер получит ошибку «Buffer is full»; (2) в окне куклы 0x88 имя персонажа по-прежнему пишется в Latin-1 — кириллица превратится в «?».
-
 ## Данные и конфигурация
 
 | Файл | Что | Статус |
@@ -48,6 +47,8 @@
 | `Distribution/Configuration/ip-allowlist.json`, `ip-allowlist-theverge.txt` | ручной список исключений включён, в нём 127.0.0.1 | dev-стенд: молчаливое подключение не блокирует localhost на 15 минут (`TARGET.md` §5), 12 ноября 2026 |
 
 `Distribution/Configuration/` не хранится в git (так задумано в ModernUO). Версионируемая копия значений The Verge — `Distribution/ConfigurationTemplates/theverge/` (см. README там); при изменении реальной конфигурации обновлять шаблон. Копия до правок 10 ноября — `Distribution/Configuration/backup-2026-11-10/` (локально).
+
+Тесты правок UTF-8 — `Projects/Server.Tests/Tests/Network/Packets/Outgoing/TheVergeUtf8PacketTests.cs` (кириллица в 0xBF 0x10, 0x9E, 0x7C, 0x88).
 
 ## Как проверить, что журнал полный
 
