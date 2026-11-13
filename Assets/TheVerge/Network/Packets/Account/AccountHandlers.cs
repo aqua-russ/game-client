@@ -9,6 +9,8 @@ namespace TheVerge.Network.Packets.Account
         public static void Register(PacketDispatcher dispatcher, LoginFlow flow)
         {
             dispatcher.Register(LoginRejectedHandler.PacketId, new LoginRejectedHandler(flow).Handle);
+            dispatcher.Register(ServerListHandler.PacketId, new ServerListHandler(flow).Handle);
+            dispatcher.Register(ServerRedirectHandler.PacketId, new ServerRedirectHandler(flow).Handle);
         }
     }
 }

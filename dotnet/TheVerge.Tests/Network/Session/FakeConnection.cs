@@ -10,6 +10,7 @@ namespace TheVerge.Tests.Network.Session
     {
         private readonly Queue<InboundEvent> _inbound = new Queue<InboundEvent>();
         private readonly Queue<InboundEvent> _afterSend = new Queue<InboundEvent>();
+        private readonly Queue<InboundEvent[]> _replies = new Queue<InboundEvent[]>();
 
         public List<byte[]> Sent { get; } = new List<byte[]>();
 
@@ -26,6 +27,12 @@ namespace TheVerge.Tests.Network.Session
 
         /// <summary>Событие придёт только после следующей отправки клиента — как ответ сервера на неё.</summary>
         public void PushAfterSend(InboundEvent item) => _afterSend.Enqueue(item);
+
+        /// <summary>
+        /// Ответ сервера на одну отправку клиента: каждая отправка открывает следующий ответ по порядку (диалог входа:
+        /// логин → список шардов, выбор шарда → редирект).
+        /// </summary>
+        public void Reply(params InboundEvent[] items) => _replies.Enqueue(items);
 
         /// <summary>Куда просили подключиться («адрес:порт»); пусто — Connect не вызывали.</summary>
         public string ConnectedTo { get; private set; } = string.Empty;
@@ -57,6 +64,14 @@ namespace TheVerge.Tests.Network.Session
                 _inbound.Enqueue(_afterSend.Dequeue());
             }
 
+            if (_replies.Count > 0)
+            {
+                foreach (var item in _replies.Dequeue())
+                {
+                    _inbound.Enqueue(item);
+                }
+            }
+
             return true;
         }
 
@@ -74,6 +89,14 @@ namespace TheVerge.Tests.Network.Session
             while (_afterSend.Count > 0)
             {
                 _afterSend.Dequeue().Release();
+            }
+
+            while (_replies.Count > 0)
+            {
+                foreach (var item in _replies.Dequeue())
+                {
+                    item.Release();
+                }
             }
         }
     }

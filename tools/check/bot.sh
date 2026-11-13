@@ -78,8 +78,26 @@ grep -q "Manual allowlist loaded" "$LOGS/server.log" && ok "сервер зап�
   || fail "сервер запущен, но список исключений не включён (нет ip-allowlist.json с enabled: true — шаблон ConfigurationTemplates/theverge)"
 
 echo "4/6 Бот против сервера…"
-BEFORE="$(ls "$ROOT/Logs/packets" 2>/dev/null | wc -l)"
-expect_code "неверный пароль: сервер отказал, бот не завис (код 6)" 6 bot-run.log bot --config "$TMP/bot.json"
+# Сначала вход с настоящим паролем, потом неверный: при автосоздании аккаунта неверный пароль первым создал бы
+# аккаунт со случайным паролем.
+bot --config "$SECRETS" > "$LOGS/bot-login.log" 2>&1
+CODE=$?
+if [ "$CODE" -eq 0 ] && grep -q "Игровой сервер: " "$LOGS/bot-login.log"; then
+  ok "вход с вашим логином: $(grep -o 'Выбран шард «[^»]*»' "$LOGS/bot-login.log" | head -n 1), $(grep -oE 'Игровой сервер: [0-9.]*[0-9]:[0-9]+' "$LOGS/bot-login.log" | head -n 1) (код 0)"
+elif [ "$CODE" -eq 6 ]; then
+  fail "вход с вашим логином: сервер отказал ($(grep -o 'отказал во входе: [^(.]*' "$LOGS/bot-login.log" | head -n 1)). Если причина «сервер не пустил по своей причине» — аккаунт бота не создан: см. PROGRESS.md, «Вопросы пользователю». Лог: Logs/check/bot-login.log"
+else
+  fail "вход с вашим логином: код $CODE, ждали 0. Лог: Logs/check/bot-login.log"; tail -n 5 "$LOGS/bot-login.log"
+fi
+LOGIN_PACKETS="$(ls -t "$ROOT/Logs/packets"/*.tsv 2>/dev/null | head -n 1)"
+if python3 - "$SECRETS" "$LOGS/bot-login.log" ${LOGIN_PACKETS:+"$LOGIN_PACKETS"} <<'PY'
+import json, sys
+secret = json.load(open(sys.argv[1])).get("password", "")
+hexed = " ".join("%02X" % b for b in secret.encode("latin-1", "replace"))
+sys.exit(1 if secret and any(secret in open(f, encoding="utf-8", errors="replace").read() or hexed in open(f, encoding="utf-8", errors="replace").read() for f in sys.argv[2:]) else 0)
+PY
+then ok "вашего пароля нет ни на экране, ни в логе пакетов"; else fail "ваш пароль попал на экран или в лог пакетов"; fi
+expect_code "неверный пароль: сервер отказал, бот не завис" 6 bot-run.log bot --config "$TMP/bot.json"
 grep -q "отказал во входе" "$LOGS/bot-run.log" && ok "причина отказа названа: $(grep -o 'отказал во входе: [^(.]*' "$LOGS/bot-run.log" | head -n 1)" \
   || fail "нет причины отказа в Logs/check/bot-run.log"
 NEWEST="$(ls -t "$ROOT/Logs/packets"/*.tsv 2>/dev/null | head -n 1)"

@@ -12,6 +12,7 @@ using TheVerge.Network.Diagnostics;
 using TheVerge.Network.Framing;
 using TheVerge.Network.Transport;
 using TheVerge.Tests.Core.Session;
+using TheVerge.Tests.Network.Packets.Account;
 using TheVerge.Tests.Network.Session;
 using TheVerge.Tests.Network.Transport;
 
@@ -105,6 +106,25 @@ namespace TheVerge.Tests.Bot
         }
 
         [Test]
+        public void ShardListAndRedirect_FirstShardChosen_Success()
+        {
+            // Задача 1.6: бот выбирает первый шард и доходит до адреса игрового сервера (вход на него — задача 1.7).
+            var connection = new FakeConnection();
+            connection.Push(InboundEvent.Connected());
+            connection.Reply(Packet(AccountServerSamples.ServerList(("Remaster UO", 0, 3, new byte[] { 127, 0, 0, 1 }))));
+            connection.Reply(
+                Packet(AccountServerSamples.PlayServerAck(new byte[] { 127, 0, 0, 1 }, 2593, 77)),
+                InboundEvent.Closed(ConnectionCloseReason.ServerClosed, string.Empty));
+
+            var code = RunWithin(NewRunner(connection), 5000);
+
+            Assert.That(code, Is.EqualTo(BotExitCode.Success), LogText());
+            Assert.That(connection.Sent[1], Is.EqualTo(new byte[] { 0xA0, 0x00, 0x00 }));
+            Assert.That(Infos(), Does.Contain("Remaster UO").And.Contain("127.0.0.1:2593"));
+            Assert.That(_log.Errors, Is.Empty);
+        }
+
+        [Test]
         public void NothingListens_ConnectFailed()
         {
             var code = NewRunner(NewConnection()).Run(Target(FreePort()), CancellationToken.None);
@@ -193,6 +213,16 @@ namespace TheVerge.Tests.Bot
             Assert.That(BotExitCode.LoginRejected, Is.EqualTo(6));
             Assert.That(BotExitCode.Interrupted, Is.EqualTo(130));
         }
+
+        // Бот, который ждёт не того, не вешает тесты: через timeoutMs тест падает, а поток бота (фоновый) бросается.
+        private static int RunWithin(BotRunner runner, int timeoutMs)
+        {
+            var run = Task.Run(() => runner.Run(Target(2593), CancellationToken.None));
+            Assert.That(run.Wait(timeoutMs), Is.True, "бот не закончил работу за " + timeoutMs + " мс");
+            return run.Result;
+        }
+
+        private static InboundEvent Packet(byte[] bytes) => InboundEvent.FromPacket(bytes, bytes.Length, new CountingArrayPool());
 
         private BotRunner NewRunner(IConnection connection) => new BotRunner(() => connection, new SystemClockForTests(), _log, null);
 

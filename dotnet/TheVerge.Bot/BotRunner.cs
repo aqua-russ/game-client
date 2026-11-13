@@ -59,15 +59,18 @@ namespace TheVerge.Bot
 
         private void RunUntilDone(NetworkSession session, GameClient client, LoginFlow flow, CancellationTokenSource stop)
         {
+            var driver = new BotDriver(_log);
             while (true)
             {
                 client.Tick(_clock.NowMs);
-                if (flow.IsFinished && session.IsClosed)
+                driver.Act(flow);
+                var done = flow.IsFinished || BotDriver.IsGoal(flow);
+                if (done && session.IsClosed)
                 {
                     return;
                 }
 
-                if (flow.IsFinished && !stop.IsCancellationRequested)
+                if (done && !stop.IsCancellationRequested)
                 {
                     // Вход закончился, а соединение ещё открыто — закрываем сами, чтобы не молчать на сервере.
                     stop.Cancel();

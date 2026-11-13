@@ -22,6 +22,14 @@ namespace TheVerge.Tests.Core.Session
             Version = version;
         }
 
+        public int ShardIndex { get; private set; } = -1;
+
+        public void SendSelectShard(int index)
+        {
+            Calls.Add("shard");
+            ShardIndex = index;
+        }
+
         public void SendAccountLogin(LoginCredentials credentials)
         {
             Calls.Add("login");

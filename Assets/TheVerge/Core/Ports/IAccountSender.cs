@@ -12,5 +12,8 @@ namespace TheVerge.Core.Ports
         void SendLoginSeed(int seed, ClientVersion version);
 
         void SendAccountLogin(LoginCredentials credentials);
+
+        /// <summary>Выбор шарда: <paramref name="index"/> — номер шарда из списка сервера (<see cref="ShardEntry.Index"/>).</summary>
+        void SendSelectShard(int index);
     }
 }

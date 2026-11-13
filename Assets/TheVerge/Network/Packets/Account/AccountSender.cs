@@ -33,6 +33,13 @@ namespace TheVerge.Network.Packets.Account
             _session.Outgoing.Commit(writer.Position);
         }
 
+        public void SendSelectShard(int index)
+        {
+            var writer = Begin(SelectServerPacket.PacketId);
+            SelectServerPacket.Write(ref writer, index);
+            _session.Outgoing.Commit(writer.Position);
+        }
+
         private PacketWriter Begin(byte id) =>
             new PacketWriter(_session.Outgoing.Reserve(PacketTable.Get(PacketDirection.ClientToServer, id).FixedLength));
     }

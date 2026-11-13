@@ -11,6 +11,15 @@ namespace TheVerge.Core.Session
         /// <summary>Seed и логин отправлены, ждём список шардов или отказ.</summary>
         AwaitingShardList = 2,
 
+        /// <summary>Список шардов получен (<see cref="LoginFlow.Shards"/>), ждём выбора (<see cref="LoginFlow.SelectShard"/>).</summary>
+        ShardSelection = 3,
+
+        /// <summary>Шард выбран, ждём адрес игрового сервера.</summary>
+        AwaitingRedirect = 4,
+
+        /// <summary>Адрес игрового сервера получен (<see cref="LoginFlow.Redirect"/>).</summary>
+        Redirected = 5,
+
         /// <summary>Вход закончился ошибкой (<see cref="LoginFlow.Error"/>).</summary>
         Failed = 100,
 

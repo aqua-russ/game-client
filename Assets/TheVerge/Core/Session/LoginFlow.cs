@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using TheVerge.Core.Ports;
 
 namespace TheVerge.Core.Session
@@ -39,6 +40,12 @@ namespace TheVerge.Core.Session
 
         public event Action<LoginState>? StateChanged;
 
+        /// <summary>Список шардов от логин-сервера; пуст, пока не пришёл.</summary>
+        public IReadOnlyList<ShardEntry> Shards { get; private set; } = Array.Empty<ShardEntry>();
+
+        /// <summary>Адрес игрового сервера и ключ; заполнен с состояния <see cref="LoginState.Redirected"/>.</summary>
+        public ServerRedirect Redirect { get; private set; }
+
         public void Start(string host, int port, LoginCredentials credentials)
         {
             if (State != LoginState.Idle)
@@ -65,7 +72,8 @@ namespace TheVerge.Core.Session
 
         public void OnDisconnected(DisconnectReason reason, string detail)
         {
-            if (IsFinished)
+            // После редиректа сервер закрывает логин-соединение сам (NetState.cs, LoginServer_AwaitingServerSelect).
+            if (IsFinished || State == LoginState.Redirected)
             {
                 return;
             }
@@ -83,6 +91,62 @@ namespace TheVerge.Core.Session
         public void OnLoginRejected(LoginRejectReason reason)
         {
             Fail(new LoginError(LoginErrorKind.LoginDenied, (int)reason, reason.ToString()));
+        }
+
+        /// <summary>Список шардов (ответ на верный логин). Пустой список — ошибка протокола: выбирать не из чего.</summary>
+        public void OnShardList(IReadOnlyList<ShardEntry> shards)
+        {
+            if (State != LoginState.AwaitingShardList)
+            {
+                return;
+            }
+
+            if (shards.Count == 0)
+            {
+                OnMalformedPacket("логин-сервер прислал пустой список шардов");
+                return;
+            }
+
+            Shards = shards;
+            MoveTo(LoginState.ShardSelection);
+        }
+
+        /// <summary>
+        /// Выбрать шард: <paramref name="position"/> — место в <see cref="Shards"/>, серверу уходит номер шарда. Сервер
+        /// принимает выбор один раз на соединение, поэтому не в своё время или с неверным номером ничего не уходит.
+        /// </summary>
+        public void SelectShard(int position)
+        {
+            if (State != LoginState.ShardSelection)
+            {
+                throw new InvalidOperationException("Шард выбирают из полученного списка, а сейчас " + State + ".");
+            }
+
+            if (position < 0 || position >= Shards.Count)
+            {
+                throw new ArgumentOutOfRangeException(nameof(position), "В списке " + Shards.Count + " шард(ов).");
+            }
+
+            _sender.SendSelectShard(Shards[position].Index);
+            MoveTo(LoginState.AwaitingRedirect);
+        }
+
+        /// <summary>Адрес игрового сервера. Логин-соединение после этого сервер закрывает сам.</summary>
+        public void OnRedirect(ServerRedirect redirect)
+        {
+            if (State != LoginState.AwaitingRedirect)
+            {
+                return;
+            }
+
+            Redirect = redirect;
+            MoveTo(LoginState.Redirected);
+        }
+
+        /// <summary>Пакет пришёл, но разобрать его нельзя (длины не сходятся): ждать дальше нечего — ошибка протокола.</summary>
+        public void OnMalformedPacket(string detail)
+        {
+            Fail(new LoginError(LoginErrorKind.ProtocolError, (int)DisconnectReason.ProtocolError, detail));
         }
 
         private static LoginErrorKind KindOf(DisconnectReason reason)
