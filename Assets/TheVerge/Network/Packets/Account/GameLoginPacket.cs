@@ -1,9 +1,12 @@
+using TheVerge.Core.Session;
+using TheVerge.Network.IO;
+
 namespace TheVerge.Network.Packets.Account
 {
     /// <summary>
     /// 0x91 Game Login: вход на игровой сокет по ключу из 0x8C. Сервер: Projects/UOContent/Network/Packets/
     /// IncomingAccountPackets.cs, GameLogin — ReadInt32 ключ, ReadLatin1Safe(30) логин, ReadLatin1Safe(30) пароль.
-    /// Сейчас здесь только раскладка полей: по ней лог пакетов скрывает пароль; запись пакета (Write) — задача 1.7.
+    /// По этой же раскладке лог пакетов скрывает пароль.
     /// </summary>
     public static class GameLoginPacket
     {
@@ -13,10 +16,19 @@ namespace TheVerge.Network.Packets.Account
         public const int CredentialLength = 30;
 
         private const int AuthIdOffset = 1;
-        private const int AuthIdLength = 4;
+        /// <summary>Ключ: int в 0x91 и столько же сырых байт seed перед ним.</summary>
+        public const int AuthIdLength = 4;
 
         public const int UsernameOffset = AuthIdOffset + AuthIdLength;
 
         public const int PasswordOffset = UsernameOffset + CredentialLength;
+
+        public static void Write(ref PacketWriter writer, int authKey, LoginCredentials credentials)
+        {
+            writer.Write(PacketId);
+            writer.Write(authKey);
+            writer.WriteLatin1(credentials.Username, CredentialLength);
+            writer.WriteLatin1(credentials.Password, CredentialLength);
+        }
     }
 }

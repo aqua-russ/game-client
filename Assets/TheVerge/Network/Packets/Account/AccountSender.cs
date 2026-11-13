@@ -1,3 +1,4 @@
+using System;
 using TheVerge.Core.Ports;
 using TheVerge.Core.Session;
 using TheVerge.Network.Framing;
@@ -37,6 +38,23 @@ namespace TheVerge.Network.Packets.Account
         {
             var writer = Begin(SelectServerPacket.PacketId);
             SelectServerPacket.Write(ref writer, index);
+            _session.Outgoing.Commit(writer.Position);
+        }
+
+        /// <summary>
+        /// Seed игрового соединения — тот же ключ, 4 сырых байта big-endian (NetState.cs, AwaitingSeed), — и сразу 0x91:
+        /// сервер сверяет ключ из 0x91 с seed (IncomingAccountPackets.cs, GameLogin). Ответ сервера уже сжат, поэтому
+        /// распаковка включается до отправки.
+        /// </summary>
+        public void SendGameLogin(int authKey, LoginCredentials credentials)
+        {
+            _session.EnableCompression();
+            Span<byte> seed = stackalloc byte[GameLoginPacket.AuthIdLength];
+            var seedWriter = new PacketWriter(seed);
+            seedWriter.Write(authKey);
+            _session.Outgoing.WriteRaw(seed);
+            var writer = Begin(GameLoginPacket.PacketId);
+            GameLoginPacket.Write(ref writer, authKey, credentials);
             _session.Outgoing.Commit(writer.Position);
         }
 

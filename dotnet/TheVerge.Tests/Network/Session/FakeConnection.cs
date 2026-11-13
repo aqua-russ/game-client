@@ -14,6 +14,9 @@ namespace TheVerge.Tests.Network.Session
 
         public List<byte[]> Sent { get; } = new List<byte[]>();
 
+        /// <summary>Была ли включена распаковка в момент каждой отправки (по порядку с <see cref="Sent"/>).</summary>
+        public List<bool> CompressionAtSend { get; } = new List<bool>();
+
         public bool AcceptsSend { get; set; } = true;
 
         /// <summary>false — не копировать отправленное (тест на выделение памяти: копия сама выделяет память).</summary>
@@ -57,6 +60,7 @@ namespace TheVerge.Tests.Network.Session
             if (KeepSent)
             {
                 Sent.Add(data.ToArray());
+                CompressionAtSend.Add(CompressionEnabled);
             }
 
             while (_afterSend.Count > 0)

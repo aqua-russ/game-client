@@ -30,6 +30,15 @@ namespace TheVerge.Tests.Core.Session
             ShardIndex = index;
         }
 
+        public int AuthKey { get; private set; }
+
+        public void SendGameLogin(int authKey, LoginCredentials credentials)
+        {
+            Calls.Add("game");
+            AuthKey = authKey;
+            Credentials = credentials;
+        }
+
         public void SendAccountLogin(LoginCredentials credentials)
         {
             Calls.Add("login");

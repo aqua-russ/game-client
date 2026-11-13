@@ -15,5 +15,11 @@ namespace TheVerge.Core.Ports
 
         /// <summary>Выбор шарда: <paramref name="index"/> — номер шарда из списка сервера (<see cref="ShardEntry.Index"/>).</summary>
         void SendSelectShard(int index);
+
+        /// <summary>
+        /// Вход на игровой сервер — первое, что он получает: ключ из редиректа и логин. Сжатие ответов сервера включается
+        /// здесь же, до отправки: ответ на вход уже сжат.
+        /// </summary>
+        void SendGameLogin(int authKey, LoginCredentials credentials);
     }
 }

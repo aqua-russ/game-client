@@ -107,16 +107,21 @@ namespace TheVerge.Tests.Core.Session
         }
 
         [Test]
-        public void ServerClosesLoginSocketAfterRedirect_NotAnError()
+        public void Redirect_FlowLeavesLoginServer_ForGameServer()
         {
-            _flow.OnShardList(TwoShards());
-            _flow.SelectShard(0);
-            _flow.OnRedirect(new ServerRedirect("127.0.0.1", 2593, 7));
+            // Закрытие логин-соединения сервером после редиректа — не ошибка: сессия к этому времени уже на игровом
+            // соединении (NetworkSession.Attach), см. ShardExchangeTests. Здесь — что вход ушёл с логин-сервера.
+            var connector = new RecordingConnector();
+            var flow = new LoginFlow(_sender, connector, 1);
+            flow.Start("127.0.0.1", 2593, new LoginCredentials("player", "secret"));
+            flow.OnConnected();
+            flow.OnShardList(TwoShards());
+            flow.SelectShard(0);
 
-            _flow.OnDisconnected(DisconnectReason.ServerClosed, string.Empty);
+            flow.OnRedirect(new ServerRedirect("127.0.0.1", 2593, 7));
 
-            Assert.That(_flow.State, Is.Not.EqualTo(LoginState.Failed));
-            Assert.That(_flow.Error.Kind, Is.EqualTo(LoginErrorKind.None));
+            Assert.That(connector.Endpoints.Count, Is.EqualTo(2), "второе подключение — к игровому серверу");
+            Assert.That(flow.Error.Kind, Is.EqualTo(LoginErrorKind.None));
         }
 
         [Test]

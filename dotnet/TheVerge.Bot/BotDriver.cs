@@ -18,7 +18,7 @@ namespace TheVerge.Bot
         }
 
         /// <summary>Цель бота достигнута: дальше вход клиента пока не умеет (растёт с задачами 1.7–1.10).</summary>
-        public static bool IsGoal(LoginFlow flow) => flow.State == LoginState.Redirected;
+        public static bool IsGoal(LoginFlow flow) => flow.State == LoginState.AwaitingCharacterList;
 
         public void Act(LoginFlow flow)
         {

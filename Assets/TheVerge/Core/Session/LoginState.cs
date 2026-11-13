@@ -20,6 +20,12 @@ namespace TheVerge.Core.Session
         /// <summary>Адрес игрового сервера получен (<see cref="LoginFlow.Redirect"/>).</summary>
         Redirected = 5,
 
+        /// <summary>Подключение к игровому серверу по адресу из редиректа.</summary>
+        ConnectingGame = 6,
+
+        /// <summary>Ключ и вход на игровой сервер отправлены, ждём список персонажей.</summary>
+        AwaitingCharacterList = 7,
+
         /// <summary>Вход закончился ошибкой (<see cref="LoginFlow.Error"/>).</summary>
         Failed = 100,
 

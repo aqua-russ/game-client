@@ -40,7 +40,8 @@ namespace TheVerge.Network.Session
 
         /// <summary>
         /// Лог пакетов (PLAN Стадия 1, п. 12): входящие — после нарезки, до обработки; исходящие — каждый пакет, когда тик
-        /// передаёт их в сокет. null — лог выключен, и сессия ничего лишнего не делает.
+        /// передаёт их в сокет. Seed игрового соединения (4 сырых байта перед 0x91) — не пакет и строкой не пишется: он
+        /// повторяет ключ из 0x91. null — лог выключен, и сессия ничего лишнего не делает.
         /// </summary>
         public PacketLogWriter? PacketLog { get; set; }
 
@@ -107,6 +108,9 @@ namespace TheVerge.Network.Session
             CloseDetail = string.Empty;
             _sendFailureReported = false;
         }
+
+        /// <summary>Включить распаковку Huffman на текущем соединении (игровой сокет, до отправки 0x91).</summary>
+        public void EnableCompression() => _connection?.EnableCompression();
 
         public void Dispose() => _connection?.Dispose();
 

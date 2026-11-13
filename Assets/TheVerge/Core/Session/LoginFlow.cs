@@ -60,20 +60,25 @@ namespace TheVerge.Core.Session
 
         public void OnConnected()
         {
-            if (State != LoginState.ConnectingLogin)
+            switch (State)
             {
-                return;
+                case LoginState.ConnectingLogin:
+                    _sender.SendLoginSeed(_seed, ServerLimits.ClientVersion);
+                    _sender.SendAccountLogin(_credentials);
+                    MoveTo(LoginState.AwaitingShardList);
+                    break;
+                case LoginState.ConnectingGame:
+                    _sender.SendGameLogin(Redirect.AuthKey, _credentials);
+                    MoveTo(LoginState.AwaitingCharacterList);
+                    break;
             }
-
-            _sender.SendLoginSeed(_seed, ServerLimits.ClientVersion);
-            _sender.SendAccountLogin(_credentials);
-            MoveTo(LoginState.AwaitingShardList);
         }
 
         public void OnDisconnected(DisconnectReason reason, string detail)
         {
-            // После редиректа сервер закрывает логин-соединение сам (NetState.cs, LoginServer_AwaitingServerSelect).
-            if (IsFinished || State == LoginState.Redirected)
+            // Логин-соединение после редиректа сервер закрывает сам, но к этому времени сессия уже перешла на игровое
+            // соединение (NetworkSession.Attach), и закрытие старого сюда не приходит.
+            if (IsFinished)
             {
                 return;
             }
@@ -131,7 +136,10 @@ namespace TheVerge.Core.Session
             MoveTo(LoginState.AwaitingRedirect);
         }
 
-        /// <summary>Адрес игрового сервера. Логин-соединение после этого сервер закрывает сам.</summary>
+        /// <summary>
+        /// Адрес игрового сервера. Логин-соединение после этого сервер закрывает сам; клиент сразу подключается к игровому
+        /// серверу (новое соединение закрывает прежнее).
+        /// </summary>
         public void OnRedirect(ServerRedirect redirect)
         {
             if (State != LoginState.AwaitingRedirect)
@@ -141,6 +149,8 @@ namespace TheVerge.Core.Session
 
             Redirect = redirect;
             MoveTo(LoginState.Redirected);
+            MoveTo(LoginState.ConnectingGame);
+            _connector.Connect(redirect.Host, redirect.Port);
         }
 
         /// <summary>Пакет пришёл, но разобрать его нельзя (длины не сходятся): ждать дальше нечего — ошибка протокола.</summary>

@@ -106,20 +106,26 @@ namespace TheVerge.Tests.Bot
         }
 
         [Test]
-        public void ShardListAndRedirect_FirstShardChosen_Success()
+        public void FirstShardChosen_Redirect_GameLoginOnNewConnection_Success()
         {
-            // Задача 1.6: бот выбирает первый шард и доходит до адреса игрового сервера (вход на него — задача 1.7).
-            var connection = new FakeConnection();
-            connection.Push(InboundEvent.Connected());
-            connection.Reply(Packet(AccountServerSamples.ServerList(("Remaster UO", 0, 3, new byte[] { 127, 0, 0, 1 }))));
-            connection.Reply(
+            // Задачи 1.6–1.7: бот выбирает первый шард, по редиректу подключается к игровому серверу и шлёт ключ и 0x91.
+            // Дальше (список персонажей) — задача 1.8, поэтому цель бота пока — отправленный вход на игровой сервер.
+            var login = new FakeConnection();
+            login.Push(InboundEvent.Connected());
+            login.Reply(Packet(AccountServerSamples.ServerList(("Remaster UO", 0, 3, new byte[] { 127, 0, 0, 1 }))));
+            login.Reply(
                 Packet(AccountServerSamples.PlayServerAck(new byte[] { 127, 0, 0, 1 }, 2593, 77)),
                 InboundEvent.Closed(ConnectionCloseReason.ServerClosed, string.Empty));
+            var game = new FakeConnection();
+            game.Push(InboundEvent.Connected());
+            game.Reply(InboundEvent.Closed(ConnectionCloseReason.Cancelled, string.Empty));
+            var connections = new System.Collections.Generic.Queue<IConnection>(new IConnection[] { login, game });
 
-            var code = RunWithin(NewRunner(connection), 5000);
+            var code = RunWithin(new BotRunner(() => connections.Dequeue(), new SystemClockForTests(), _log, null), 5000);
 
             Assert.That(code, Is.EqualTo(BotExitCode.Success), LogText());
-            Assert.That(connection.Sent[1], Is.EqualTo(new byte[] { 0xA0, 0x00, 0x00 }));
+            Assert.That(login.Sent[1], Is.EqualTo(new byte[] { 0xA0, 0x00, 0x00 }));
+            Assert.That(game.Sent.Single().Length, Is.EqualTo(4 + 65));
             Assert.That(Infos(), Does.Contain("Remaster UO").And.Contain("127.0.0.1:2593"));
             Assert.That(_log.Errors, Is.Empty);
         }

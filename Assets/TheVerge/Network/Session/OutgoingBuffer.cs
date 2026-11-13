@@ -19,6 +19,7 @@ namespace TheVerge.Network.Session
         private int _reserved;
         private int[] _ends = new int[16];
         private int _count;
+        private int _rawLength;
 
         public ReadOnlySpan<byte> Pending => new ReadOnlySpan<byte>(_buffer, 0, _length);
 
@@ -32,7 +33,7 @@ namespace TheVerge.Network.Session
                 throw new ArgumentOutOfRangeException(nameof(index));
             }
 
-            var start = index == 0 ? 0 : _ends[index - 1];
+            var start = index == 0 ? _rawLength : _ends[index - 1];
             return new ReadOnlySpan<byte>(_buffer, start, _ends[index] - start);
         }
 
@@ -47,6 +48,24 @@ namespace TheVerge.Network.Session
             EnsureCapacity(_length + maxLength);
             _reserved = maxLength;
             return _buffer.AsSpan(_length, maxLength);
+        }
+
+        /// <summary>
+        /// Байты, которые не пакет и не сверяются с матрицей: 4 байта ключа — seed игрового соединения перед 0x91
+        /// (NetState.cs, AwaitingSeed). Сервер ждёт их первыми, поэтому только в начале тика, до пакетов. В
+        /// <see cref="Count"/> и <see cref="PacketAt"/> они не входят, в <see cref="Pending"/> — входят.
+        /// </summary>
+        public void WriteRaw(ReadOnlySpan<byte> bytes)
+        {
+            if (_length > 0)
+            {
+                throw new InvalidOperationException("Сырые байты (ключ игрового соединения) — только первыми в тике, до пакетов.");
+            }
+
+            EnsureCapacity(bytes.Length);
+            bytes.CopyTo(_buffer);
+            _length = bytes.Length;
+            _rawLength = bytes.Length;
         }
 
         public void Commit(int length)
@@ -72,6 +91,7 @@ namespace TheVerge.Network.Session
             _length = 0;
             _reserved = 0;
             _count = 0;
+            _rawLength = 0;
         }
 
         private static void Validate(ReadOnlySpan<byte> packet)
