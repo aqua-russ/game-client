@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using TheVerge.Bot;
+using TheVerge.Core.Chat;
 using TheVerge.Core.Items;
 using TheVerge.Core.Ports;
 using TheVerge.Core.Primitives;
@@ -23,6 +24,7 @@ namespace TheVerge.Tests.Bot
         private FakeClock _clock = null!;
         private RecordingLog _log = null!;
         private RecordingItemSender _sender = null!;
+        private RecordingSpeechSender _speech = null!;
         private BotWorld _world = null!;
 
         [SetUp]
@@ -31,8 +33,10 @@ namespace TheVerge.Tests.Bot
             _clock = new FakeClock { NowMs = 1000 };
             _log = new RecordingLog();
             _sender = new RecordingItemSender();
+            _speech = new RecordingSpeechSender();
             var store = new EntityStore();
-            _world = new BotWorld(store, new WorldEnvironment(), new ContainerContents(store), new ItemCommands(store, _sender, _clock));
+            _world = new BotWorld(store, new WorldEnvironment(), new ContainerContents(store), new ItemCommands(store, _sender, _clock),
+                new SpeechCommands(_speech, _clock));
             store.Reset(new PlayerState(Player, 0x190, new Point3D(1, 1, 0), Direction.North, new MapSize(7168, 4096)));
         }
 
@@ -93,6 +97,44 @@ namespace TheVerge.Tests.Bot
             Assert.That(script.Problem, Does.Contain("не открыл"));
         }
 
+        [Test]
+        public void Say_TextSent()
+        {
+            var script = Script("say:[go 1500 1600");
+
+            script.Step();
+
+            Assert.That(script.IsDone, Is.True);
+            Assert.That(_speech.Sent, Is.EqualTo(new[] { "[go 1500 1600" }));
+        }
+
+        [Test]
+        public void At_WaitsUntilPlayerInCell()
+        {
+            var script = Script("at:1500,1600");
+
+            script.Step();
+            Assert.That(script.IsDone, Is.False);
+
+            _world.Entities.MovePlayerTo(new Point3D(1500, 1600, 5));
+            script.Step();
+
+            Assert.That(script.IsDone, Is.True);
+            Assert.That(Text(), Does.Contain("Персонаж в клетке (1500, 1600, 5)."));
+        }
+
+        [Test]
+        public void At_NotReached_ProblemAfterTimeout()
+        {
+            var script = Script("at:1500,1600");
+
+            script.Step();
+            _clock.NowMs += BotScript.ActionTimeoutMs;
+            script.Step();
+
+            Assert.That(script.Problem, Does.Contain("(1500, 1600)").And.Contain("(1, 1, 0)"));
+        }
+
         private BotScript Script(params string[] actions)
         {
             var parsed = actions.Select(a => BotAction.Parse(a, out _)!).ToList();
@@ -100,6 +142,13 @@ namespace TheVerge.Tests.Bot
         }
 
         private string Text() => string.Join("\n", _log.Entries.Select(e => e.Message));
+
+        private sealed class RecordingSpeechSender : ISpeechSender
+        {
+            public List<string> Sent { get; } = new List<string>();
+
+            public void SendSpeech(string text, ushort hue) => Sent.Add(text);
+        }
 
         private sealed class RecordingItemSender : IItemSender
         {

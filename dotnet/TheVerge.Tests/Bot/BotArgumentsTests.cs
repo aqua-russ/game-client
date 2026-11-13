@@ -40,6 +40,21 @@ namespace TheVerge.Tests.Bot
             Assert.That(parsed.Actions[0].Kind, Is.EqualTo(BotActionKind.UseBackpack));
         }
 
+        [Test]
+        public void Action_SayAndAt()
+        {
+            var parsed = BotArguments.Parse(new[] { "--action", "say:[go 1500 1600", "--action", "at:1500,1600" });
+
+            Assert.That(parsed.Error, Is.Empty);
+            Assert.That(parsed.Actions[0].Kind, Is.EqualTo(BotActionKind.Say));
+            Assert.That(parsed.Actions[0].Argument, Is.EqualTo("[go 1500 1600"));
+            Assert.That(parsed.Actions[1].Kind, Is.EqualTo(BotActionKind.WaitAt));
+        }
+
+        [TestCase("say:")]
+        [TestCase("say:   ")]
+        [TestCase("at:1500")]
+        [TestCase("at:x,y")]
         [TestCase("use")]
         [TestCase("use:sword")]
         [TestCase("fly:away")]

@@ -65,6 +65,10 @@ namespace TheVerge.Bot
         {
             switch (action.Kind)
             {
+                case BotActionKind.Say:
+                    return new SayStep(_world, action.Argument);
+                case BotActionKind.WaitAt:
+                    return new WaitAtStep(_world, _log, action.Argument);
                 default:
                     return new OpenBackpackStep(_world, _log);
             }

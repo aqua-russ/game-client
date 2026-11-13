@@ -29,6 +29,9 @@ namespace TheVerge.Core.Session
         /// <summary>Речь 0x03 и 0xAD, текстовые команды 0x12: не чаще, мс (throttles.json).</summary>
         public const int SpeechThrottleMs = 25;
 
+        /// <summary>Речь длиннее (после обрезки пробелов) сервер молча выбрасывает (IncomingMessagePackets.cs, UnicodeSpeech).</summary>
+        public const int SpeechMaxChars = 128;
+
         /// <summary>Переименование 0x75: не чаще, мс (throttles.json).</summary>
         public const int RenameThrottleMs = 500;
 

@@ -38,6 +38,12 @@ namespace TheVerge.Core.Session
         /// персонажа). ENU — как у классического клиента по умолчанию; тексты cliloc выбирает сам клиент.
         /// </summary>
         public const string Language = "ENU";
+
+        /// <summary>
+        /// Цвет своей речи (0xAD). Сервер приводит его к допустимому (Utility.ClipDyedHue); 0x02B2 — как у ClassicUO по
+        /// умолчанию, сверить после 0.6 (docs/TARGET.md §3.1).
+        /// </summary>
+        public const ushort SpeechHue = 0x02B2;
         /// <summary>
         /// Пауза между ping в мире, мс. Сервер отключает после 30 с без обмена данными (NetState.cs, CheckAlive): треть
         /// предела переживёт два потерянных ping.

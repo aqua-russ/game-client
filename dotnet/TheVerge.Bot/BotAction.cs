@@ -1,3 +1,6 @@
+using System.Globalization;
+using TheVerge.Core.Session;
+
 namespace TheVerge.Bot
 {
     /// <summary>Одно действие бота в мире из --action «вид:значение».</summary>
@@ -29,8 +32,29 @@ namespace TheVerge.Bot
                 return new BotAction(BotActionKind.UseBackpack, argument, text);
             }
 
+            if (kind == "say" && argument.Trim().Length > 0 && argument.Trim().Length <= ServerLimits.SpeechMaxChars)
+            {
+                return new BotAction(BotActionKind.Say, argument, text);
+            }
+
+            if (kind == "at" && TryParseCell(argument, out _, out _))
+            {
+                return new BotAction(BotActionKind.WaitAt, argument, text);
+            }
+
             error = "--action «" + text + "»: непонятное действие. Список действий: --help.";
             return null;
+        }
+
+        /// <summary>Клетка «x,y» из at:x,y.</summary>
+        public static bool TryParseCell(string text, out short x, out short y)
+        {
+            x = 0;
+            y = 0;
+            var parts = text.Split(',');
+            return parts.Length == 2 &&
+                   short.TryParse(parts[0], NumberStyles.None, CultureInfo.InvariantCulture, out x) &&
+                   short.TryParse(parts[1], NumberStyles.None, CultureInfo.InvariantCulture, out y);
         }
     }
 }
