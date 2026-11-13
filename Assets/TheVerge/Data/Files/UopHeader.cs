@@ -22,7 +22,7 @@ namespace TheVerge.Data.Files
             var header = new byte[Length];
             using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
-                if (ReadFully(stream, header) < Length)
+                if (StreamRead.Fully(stream, header) < Length)
                 {
                     return Problem(path, expectedVersion, "файл короче заголовка");
                 }
@@ -36,18 +36,6 @@ namespace TheVerge.Data.Files
 
             var version = BinaryPrimitives.ReadInt32LittleEndian(span.Slice(4));
             return version == expectedVersion ? string.Empty : Problem(path, expectedVersion, "версия " + version);
-        }
-
-        internal static int ReadFully(Stream stream, byte[] buffer)
-        {
-            var total = 0;
-            int read;
-            while (total < buffer.Length && (read = stream.Read(buffer, total, buffer.Length - total)) > 0)
-            {
-                total += read;
-            }
-
-            return total;
         }
 
         private static string Problem(string path, int expectedVersion, string what) =>

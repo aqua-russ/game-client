@@ -41,7 +41,7 @@ namespace TheVerge.Data.Map
             for (var i = 0; i < chunks.Length; i++)
             {
                 stream.Position = chunks[i].Offset;
-                if (UopHeader.ReadFully(stream, buffer) < buffer.Length)
+                if (StreamRead.Fully(stream, buffer) < buffer.Length)
                 {
                     error = Path.GetFileName(fileName) + " повреждён: кусок карты за концом файла.";
                     return null;

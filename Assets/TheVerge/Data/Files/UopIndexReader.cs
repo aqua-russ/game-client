@@ -22,7 +22,7 @@ namespace TheVerge.Data.Files
             var entries = new Dictionary<int, UopEntry>();
             var header = new byte[UopHeader.Length];
             stream.Position = 0;
-            error = UopHeader.ReadFully(stream, header) < UopHeader.Length ? "короче заголовка" : string.Empty;
+            error = StreamRead.Fully(stream, header) < UopHeader.Length ? "короче заголовка" : string.Empty;
             var next = error.Length == 0 ? BinaryPrimitives.ReadInt64LittleEndian(header.AsSpan(12)) : 0;
             var visited = new HashSet<long>();
             var length = stream.Length;
@@ -54,7 +54,7 @@ namespace TheVerge.Data.Files
         {
             var head = new byte[TableHeaderSize];
             stream.Position = position;
-            UopHeader.ReadFully(stream, head);
+            StreamRead.Fully(stream, head);
             var count = BinaryPrimitives.ReadInt32LittleEndian(head);
             var next = BinaryPrimitives.ReadInt64LittleEndian(head.AsSpan(4));
             if (count < 0 || position + TableHeaderSize + (long)count * EntrySize > stream.Length)
@@ -64,7 +64,7 @@ namespace TheVerge.Data.Files
             }
 
             var table = new byte[count * EntrySize];
-            UopHeader.ReadFully(stream, table);
+            StreamRead.Fully(stream, table);
             for (var i = 0; i < count; i++)
             {
                 AddEntry(table.AsSpan(i * EntrySize, EntrySize), hashes, entries);

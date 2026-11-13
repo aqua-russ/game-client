@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using System.IO;
+using TheVerge.Core.Tiles;
 using TheVerge.Data.Files;
 using TheVerge.Data.Map;
 using TheVerge.Data.Tiles;
@@ -55,7 +57,10 @@ namespace TheVerge.Bot
         {
             int x = map.Width / 2, y = map.Height / 2;
             map.TryGetLand(x, y, out var land);
-            return "Карта открыта: клетка (" + x + ", " + y + ") — земля 0x" + land.Id.ToString("X4") + ", Z " + land.Z;
+            var statics = new List<StaticTile>();
+            map.TryGetStatics(x, y, statics);
+            return "Карта открыта: клетка (" + x + ", " + y + ") — земля 0x" + land.Id.ToString("X4") + ", Z " + land.Z +
+                   ", статики: " + statics.Count;
         }
     }
 }

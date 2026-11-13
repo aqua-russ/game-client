@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using TheVerge.Core.Ports;
 using TheVerge.Core.Tiles;
@@ -17,11 +18,13 @@ namespace TheVerge.Data.Map
 
         private readonly MapDefinition _map;
         private readonly LandBlocks _land;
+        private readonly StaticBlocks _statics;
 
-        public MapData(MapDefinition map, LandBlocks land)
+        public MapData(MapDefinition map, LandBlocks land, StaticBlocks statics)
         {
             _map = map;
             _land = land;
+            _statics = statics;
         }
 
         public int Width => _map.Width;
@@ -37,7 +40,10 @@ namespace TheVerge.Data.Map
                 return null;
             }
 
-            return new MapData(files.Definition, new LandBlocks(files.Definition, stream, locator, cacheBlocks));
+            var index = new FileStream(files.IndexPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            var statics = new FileStream(files.StaticsPath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            return new MapData(files.Definition, new LandBlocks(files.Definition, stream, locator, cacheBlocks),
+                new StaticBlocks(files.Definition, index, statics, cacheBlocks));
         }
 
         public bool TryGetLand(int x, int y, out LandTile tile)
@@ -52,7 +58,23 @@ namespace TheVerge.Data.Map
             return true;
         }
 
-        public void Dispose() => _land.Dispose();
+        public bool TryGetStatics(int x, int y, List<StaticTile> result)
+        {
+            result.Clear();
+            if (!Contains(x, y))
+            {
+                return false;
+            }
+
+            _statics.Get(x, y, result);
+            return true;
+        }
+
+        public void Dispose()
+        {
+            _land.Dispose();
+            _statics.Dispose();
+        }
 
         private bool Contains(int x, int y) => x >= 0 && y >= 0 && x < _map.Width && y < _map.Height;
 

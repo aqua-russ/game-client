@@ -107,7 +107,7 @@ namespace TheVerge.Tests.Data.Map
         {
             var file = new MapFileBuilder(TestMap, 7);
             var stream = new CountingStream(new MemoryStream(file.Mul));
-            using (var map = new MapData(TestMap, new LandBlocks(TestMap, stream, LandBlockLocator.Mul(), 16)))
+            using (var map = new MapData(TestMap, new LandBlocks(TestMap, stream, LandBlockLocator.Mul(), 16), NoStatics()))
             {
                 map.TryGetLand(10, 10, out _);
                 Assert.That(stream.BytesRead, Is.LessThanOrEqualTo(MapFileBuilder.BlockSize));
@@ -129,7 +129,7 @@ namespace TheVerge.Tests.Data.Map
         {
             var file = new MapFileBuilder(TestMap, 8);
             var stream = new CountingStream(new MemoryStream(file.Mul));
-            using (var map = new MapData(TestMap, new LandBlocks(TestMap, stream, LandBlockLocator.Mul(), 2)))
+            using (var map = new MapData(TestMap, new LandBlocks(TestMap, stream, LandBlockLocator.Mul(), 2), NoStatics()))
             {
                 map.TryGetLand(0, 0, out _);
                 map.TryGetLand(8, 0, out _);
@@ -197,6 +197,10 @@ namespace TheVerge.Tests.Data.Map
             Assert.That(map, Is.Null);
             Assert.That(error, Does.Contain("map0LegacyMUL.uop"));
         }
+
+        // Индекс из нулей — у каждого блока длина 0, статики нет.
+        private static StaticBlocks NoStatics() =>
+            new StaticBlocks(TestMap, new MemoryStream(new byte[TestMap.BlockCount * 12]), new MemoryStream(), 16);
 
         private MapData OpenMul(MapFileBuilder file) => Open(MapFileKind.Mul, _folder.Bytes("map0.mul", file.Mul));
 
