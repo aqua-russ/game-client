@@ -38,7 +38,7 @@ namespace TheVerge.Bot
             using (var stop = CancellationTokenSource.CreateLinkedTokenSource(interrupt))
             using (var client = new BotClient(_newConnection, _clock, _log, _packetLog, stop.Token, login))
             {
-                var driver = new BotDriver(_log, login, client.World, client.Game, _clock);
+                var driver = new BotDriver(_log, login, client.World, client.Game, client.Entities, _clock);
                 Action<LoginState> onState = state => driver.OnStateChanged(client.Flow, state);
                 Action<int, int> onRetry = (attempt, delayMs) => _log.Info("Повтор входа через " + delayMs / 1000 + " с (попытка " +
                                                                             attempt + " из " + ClientLimits.ReconnectDelaysMs.Length + ")…");

@@ -1,5 +1,6 @@
 using TheVerge.Core.Ports;
 using TheVerge.Core.Session;
+using TheVerge.Core.World;
 
 namespace TheVerge.Bot
 {
@@ -14,12 +15,14 @@ namespace TheVerge.Bot
         private readonly BotLogin _login;
         private readonly WorldEntry _world;
         private readonly GameSession _game;
+        private readonly EntityStore _entities;
         private readonly IClock _clock;
         private LoginState _decided;
         private long _inWorldAt = -1;
 
-        public BotDriver(ILog log, BotLogin login, WorldEntry world, GameSession game, IClock clock)
+        public BotDriver(ILog log, BotLogin login, WorldEntry world, GameSession game, EntityStore entities, IClock clock)
         {
+            _entities = entities;
             _log = log;
             _login = login;
             _world = world;
@@ -102,6 +105,7 @@ namespace TheVerge.Bot
                 return;
             }
 
+            _log.Info("Мир: " + BotWorldSummary.Describe(_entities) + ".");
             _log.Info("Выход из игры" + (_game.LastRttMs >= 0 ? " (задержка до сервера " + _game.LastRttMs + " мс)" : string.Empty) + "…");
             LoggedOut = true;
             _game.Logout();

@@ -1,3 +1,4 @@
+using System.Linq;
 using NUnit.Framework;
 using TheVerge.Core.Primitives;
 using TheVerge.Core.Session;
@@ -47,6 +48,30 @@ namespace TheVerge.Tests.Core.Session
 
             Assert.That(_flow.State, Is.EqualTo(LoginState.Idle));
             Assert.That(_world.Player.Serial.IsValid, Is.False);
+        }
+
+        [Test]
+        public void LoginConfirm_Accepted_PlayerConfirmedRaised()
+        {
+            // По подтверждению входа начинается новый мир со своим персонажем (PLAN Стадия 2, п. 7, 9).
+            var confirmed = new System.Collections.Generic.List<PlayerState>();
+            _world.PlayerConfirmed += confirmed.Add;
+            ChooseCharacter();
+
+            _world.OnLoginConfirm(Player());
+
+            Assert.That(confirmed.Select(p => p.Serial.Value), Is.EqualTo(new[] { 0x3Du }));
+        }
+
+        [Test]
+        public void LoginConfirm_Ignored_PlayerConfirmedNotRaised()
+        {
+            var confirmed = 0;
+            _world.PlayerConfirmed += _ => confirmed++;
+
+            _world.OnLoginConfirm(Player());
+
+            Assert.That(confirmed, Is.EqualTo(0));
         }
 
         [Test]

@@ -42,6 +42,17 @@ namespace TheVerge.Tests.Bot
         }
 
         [Test]
+        public void RecordedLogin_WorldBuiltFromServerPackets()
+        {
+            // В записи сервер прислал своего персонажа (0x1B, 0x20, 0x78 с 7 надетыми предметами) — больше в пустом мире никого.
+            var server = new ReplayServer(ReplayScript.Read(new StringReader(File.ReadAllText(Recorded))));
+
+            Run(server, "Replay");
+
+            Assert.That(Text(), Does.Contain("Мир: мобов 1, предметов 7; свой персонаж — тело 0x0190 в (633, 858, 0), надето 7."));
+        }
+
+        [Test]
         public void Script_TwoConnections_LoginThenGame()
         {
             var script = ReplayScript.Read(new StringReader(File.ReadAllText(Recorded)));

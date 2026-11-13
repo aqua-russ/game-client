@@ -20,6 +20,9 @@ namespace TheVerge.Core.Session
 
         public PlayerState Player { get; private set; }
 
+        /// <summary>Сервер подтвердил вход (0x1B): начинается новый мир с этим персонажем (PLAN Стадия 2, п. 7).</summary>
+        public event System.Action<PlayerState>? PlayerConfirmed;
+
         /// <summary>Сервер подтвердил вход выбранным персонажем; дальше идёт начальный поток мира до <see cref="OnLoginComplete"/>.</summary>
         public void OnLoginConfirm(PlayerState player)
         {
@@ -30,6 +33,7 @@ namespace TheVerge.Core.Session
 
             Player = player;
             _progress.MoveTo(LoginState.WorldLoading);
+            PlayerConfirmed?.Invoke(player);
         }
 
         /// <summary>Начальная загрузка мира кончилась: персонаж в мире. Сервер ждёт язык и дальность обзора клиента.</summary>
