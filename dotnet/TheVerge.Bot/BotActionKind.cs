@@ -19,6 +19,11 @@ namespace TheVerge.Bot
         SeenItem,
 
         /// <summary>dump:&lt;папка&gt; — сказать [DumpVisible, дождаться файла сервера в папке и сверить свой мир с ним.</summary>
-        Dump
+        Dump,
+        /// <summary>
+        /// mapdump:&lt;клеток&gt;,&lt;seed&gt;,&lt;папка&gt;[,all-statics] — сказать [DumpMapData, дождаться файла сервера и сверить
+        /// с ним свои файлы данных (--data): клетки, tiledata, дома и корабли.
+        /// </summary>
+        MapDump
     }
 }

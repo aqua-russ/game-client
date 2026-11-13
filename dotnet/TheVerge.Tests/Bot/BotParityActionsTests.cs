@@ -100,6 +100,17 @@ namespace TheVerge.Tests.Bot
             Assert.That(script.Problem, Does.Contain("hue").And.Contain("0x0000003E"));
         }
 
+        [Test]
+        public void MapDump_WithoutData_ProblemAtOnce_NothingSaid()
+        {
+            var script = Script("mapdump:100,1," + TempDir());
+
+            script.Step();
+
+            Assert.That(script.Problem, Does.Contain("--data"));
+            Assert.That(_speech.Sent, Is.Empty);
+        }
+
         private static string TempDir()
         {
             var dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "verge-dump-" + System.Guid.NewGuid().ToString("N"));

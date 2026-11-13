@@ -13,7 +13,20 @@ namespace TheVerge.Data.Tiles
     /// </summary>
     public static class TileDataReader
     {
+        /// <summary>Таблица, как её видит сервер после запуска: файл (<see cref="ReadFile"/>) и правки сервера.</summary>
         public static TileDataTable? Load(TileDataFormat format, out string error)
+        {
+            var table = ReadFile(format, out error);
+            if (table != null)
+            {
+                ServerTileDataFixes.Apply(table);
+            }
+
+            return table;
+        }
+
+        /// <summary>Только файл — как TileData.Load сервера, без правок, которые сервер делает потом.</summary>
+        public static TileDataTable? ReadFile(TileDataFormat format, out string error)
         {
             byte[] data;
             try

@@ -24,7 +24,7 @@ namespace TheVerge.Bot
         public BotDriver(ILog log, BotLogin login, BotClient client, IClock clock)
         {
             _entities = client.Entities;
-            _script = new BotScript(login.Actions, client.InWorld, log, clock);
+            _script = new BotScript(login.Actions, client.InWorld, log, clock) { Data = login.Data };
             _log = log;
             _login = login;
             _world = client.World;

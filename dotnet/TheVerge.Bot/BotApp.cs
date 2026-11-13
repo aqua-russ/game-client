@@ -61,16 +61,16 @@ namespace TheVerge.Bot
                     return Exit(BotExitCode.BadArguments, "ОШИБКА: " + dataError);
                 }
 
-                return parsed.Mode == BotMode.SelfCheck ? BotSelfCheck.Run(_output) : RunWithSettings(parsed, interrupt);
+                return parsed.Mode == BotMode.SelfCheck ? BotSelfCheck.Run(_output) : RunWithSettings(parsed, data, interrupt);
             }
         }
 
-        private int RunWithSettings(ParsedArguments parsed, CancellationToken interrupt)
+        private int RunWithSettings(ParsedArguments parsed, BotWorldData? data, CancellationToken interrupt)
         {
             var settings = LoadSettings(parsed, out var problem);
             return settings == null
                 ? Exit(BotExitCode.BadArguments, "ОШИБКА: " + problem)
-                : Connect(settings, parsed, interrupt);
+                : Connect(settings, parsed, data, interrupt);
         }
 
         private BotSettings? LoadSettings(ParsedArguments parsed, out string problem)
@@ -115,7 +115,7 @@ namespace TheVerge.Bot
                   "(сервер читает их в Latin-1). Исправьте командой tools/bot/setup.sh.";
         }
 
-        private int Connect(BotSettings settings, ParsedArguments parsed, CancellationToken interrupt)
+        private int Connect(BotSettings settings, ParsedArguments parsed, BotWorldData? data, CancellationToken interrupt)
         {
             var log = new ConsoleLog(_output);
             var clock = new StopwatchClock();
@@ -132,6 +132,7 @@ namespace TheVerge.Bot
                     IdleSeconds = parsed.IdleSeconds,
                     Reconnect = parsed.Reconnect,
                     Actions = parsed.Actions,
+                    Data = data,
                 };
                 var code = new BotRunner(NewConnection, clock, log, packetLog?.Writer).Run(login, interrupt);
                 return Exit(code, string.Empty);

@@ -35,6 +35,9 @@ namespace TheVerge.Bot
 
         public bool IsDone => _index >= _actions.Count;
 
+        /// <summary>Файлы данных из --data — для mapdump; null — их нет.</summary>
+        public BotWorldData? Data { get; set; }
+
         /// <summary>Почему действие не удалось; пусто — всё хорошо.</summary>
         public string Problem { get; private set; } = string.Empty;
 
@@ -86,6 +89,9 @@ namespace TheVerge.Bot
                     return new SeenItemStep(_world, _log, action.Argument);
                 case BotActionKind.Dump:
                     return new DumpStep(_world, _log, _clock, action.Argument);
+                case BotActionKind.MapDump:
+                    MapDumpRequest.TryParse(action.Argument, out var request);
+                    return new MapDumpStep(_world, _log, _clock, Data, request);
                 default:
                     return new OpenBackpackStep(_world, _log);
             }

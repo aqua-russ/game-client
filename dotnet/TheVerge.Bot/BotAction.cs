@@ -59,6 +59,11 @@ namespace TheVerge.Bot
                 return new BotAction(BotActionKind.Dump, argument, text);
             }
 
+            if (kind == "mapdump" && MapDumpRequest.TryParse(argument, out _))
+            {
+                return new BotAction(BotActionKind.MapDump, argument, text);
+            }
+
             error = "--action «" + text + "»: непонятное действие. Список действий: --help.";
             return null;
         }

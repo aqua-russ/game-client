@@ -23,6 +23,7 @@
 | Файл | Что | Зачем | Статус |
 |---|---|---|---|
 | `Custom/TheVerge/Parity/` (`DumpVisibleCommand`, `VisibleObjectsDump`, `ParityObject`, `ParityPlace`) | GM-команда `[DumpVisible`: всё, что сервер считает видимым для вызывающего, — в `Distribution/Logs/parity/visible-<serial>.json` | сверка мира клиента с сервером (PLAN Стадия 2, п. 11); тесты — `Projects/UOContent.Tests/Tests/TheVerge/VisibleObjectsDumpTests.cs` | наш код, только GameMaster, 13 ноября 2026 |
+| `Custom/TheVerge/Parity/` (`DumpMapDataCommand`, `MapDataDump`) | GM-команда `[DumpMapData <клеток> <seed> [all-statics]`: земля и статика случайных клеток (и всех клеток со статикой), вся tiledata, все дома и корабли — в `Distribution/Logs/parity/mapdata-<serial>.json` | сверка чтения файлов данных клиентом (PLAN Стадия 2, п. 11б; `tools/check/map.sh`); тесты — `Projects/UOContent.Tests/Tests/TheVerge/MapDataDumpTests.cs` | наш код, только GameMaster, 13 ноября 2026 |
 | `Custom/MinocSandboxInitializer.cs` | песочница Минока, речевые команды `[minoc:` | прототип клиента | выключена флагом `theverge.sandbox.enable`, команды только для GM ([ADR 0004](adr/0004-sandbox-and-parity-stand.md)); удалить после Стадий 4–7 |
 | `Network/Packets/IncomingAccountPackets.cs` | `DoLogin`: перенос в Минок и вызовы песочницы | прототип | перенос только при включённой песочнице |
 | `Network/Packets/IncomingAccountPackets.cs` | 0xF8: имя читается как UTF-8 | кириллица | ADR 0005 |

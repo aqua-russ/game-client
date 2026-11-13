@@ -27,5 +27,8 @@ namespace TheVerge.Data.Tiles
         public LandTileData Land(int id) => _land[id & (LandTableSize - 1)];
 
         public ItemTileData Item(int id) => _items[id & (ItemTableSize - 1)];
+
+        /// <summary>Заменить запись предмета — только для правок сервера (<see cref="ServerTileDataFixes"/>).</summary>
+        internal void SetItem(int id, ItemTileData item) => _items[id & (ItemTableSize - 1)] = item;
     }
 }

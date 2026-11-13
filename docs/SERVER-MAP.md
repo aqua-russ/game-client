@@ -64,7 +64,7 @@
 | Стадия | Тема | Где на сервере |
 |---|---|---|
 | 1 | вход, список персонажей, создание | `UOContent/Network/Packets/IncomingAccountPackets.cs`, `UOContent/Accounting/AccountHandler.cs`, `Engines/Character Creation/CharacterCreation.cs`, `Server/Network/Packets/OutgoingAccountPackets.cs` |
-| 2 | чтение карты, статики, tiledata, multi | `Server/TileMatrix/`, `Server/TileData.cs`, `Server/Client/MultiData.cs`, `Server/Maps/` |
+| 2 | чтение карты, статики, tiledata, multi | `Server/TileMatrix/`, `Server/TileData.cs`, `Server/Client/MultiData.cs`, `Server/Client/UOPFiles.cs`, `Server/Maps/`; правки tiledata при запуске — запись в `TileData.ItemTable[` в UOContent (`ItemFixes.cs`, `CTF.cs`, `LOSBlocker.cs`, `PotionKeg.cs`; клиент повторяет их — `Data/Tiles/ServerTileDataFixes`) |
 | 2 | отправка мобов и предметов | `OutgoingMobilePackets.cs`, `OutgoingEntityPackets.cs`, `OutgoingItemPackets.cs`; логика «кому что слать» — `Server/Mobiles/Mobile.cs`, `Server/Items/Item.cs` |
 | 3 | можно ли шагнуть и новый Z | `Server/Mobiles/Movement.cs` → `UOContent/Engines/Pathing/Movement.cs` (`MovementImpl`) |
 | 3 | шаг, поворот, скорость | `Mobile.Move` (`Server/Mobiles/Mobile.cs`), `PlayerMobile.ComputeMovementSpeed` (`UOContent/Mobiles/PlayerMobile.cs`), обработчик — `IncomingMovementPackets.cs`, ответы — `OutgoingMovementPackets.cs` |

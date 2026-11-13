@@ -123,7 +123,7 @@ namespace TheVerge.Tests.Data.Tiles
             var format = TileDataFormat.ForLength(path, bytes.Length);
             _folder.Bytes("tiledata.mul", bytes.AsSpan(0, bytes.Length - 1).ToArray());
 
-            var table = TileDataReader.Load(format, out var error);
+            var table = TileDataReader.ReadFile(format, out var error);
 
             Assert.That(table, Is.Null);
             Assert.That(error, Does.Contain("tiledata.mul"));
@@ -133,7 +133,7 @@ namespace TheVerge.Tests.Data.Tiles
         {
             var bytes = file.Build();
             var path = _folder.Bytes("tiledata.mul", bytes);
-            var table = TileDataReader.Load(TileDataFormat.ForLength(path, bytes.Length), out var error);
+            var table = TileDataReader.ReadFile(TileDataFormat.ForLength(path, bytes.Length), out var error);
             Assert.That(error, Is.Empty);
             return table!;
         }

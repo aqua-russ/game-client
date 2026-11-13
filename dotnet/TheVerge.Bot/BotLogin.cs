@@ -36,6 +36,9 @@ namespace TheVerge.Bot
         /// <summary>Действия в мире по очереди (--action); после них — --idle секунд и выход.</summary>
         public IReadOnlyList<BotAction> Actions { get; set; } = new BotAction[0];
 
+        /// <summary>Файлы данных из --data (для mapdump); null — не заданы.</summary>
+        public BotWorldData? Data { get; set; }
+
         public string Endpoint => Host + ":" + Port;
     }
 }
