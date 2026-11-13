@@ -5,6 +5,7 @@ using TheVerge.Core.Ports;
 using TheVerge.Core.Session;
 using TheVerge.Network.Diagnostics;
 using TheVerge.Network.Packets.Account;
+using TheVerge.Network.Packets.Session;
 using TheVerge.Network.Session;
 using TheVerge.Network.Transport;
 
@@ -44,11 +45,15 @@ namespace TheVerge.Bot
                 using (var session = new NetworkSession(dispatcher, _log) { PacketLog = _packetLog })
                 {
                     var flow = new LoginFlow(new AccountSender(session), new ServerConnector(session, _newConnection, stop.Token), NewSeed());
+                    var sessionSender = new SessionSender(session);
+                    var world = new WorldEntry(flow.Progress, sessionSender);
                     AccountHandlers.Register(dispatcher, flow);
+                    SessionHandlers.Register(dispatcher, world, new ServerRequests(sessionSender));
                     session.Observer = flow;
                     _log.Info("Подключение к " + login.Endpoint + "…");
                     flow.Start(login.Host, login.Port, login.Credentials);
-                    var driver = new BotDriver(_log, login);
+                    var driver = new BotDriver(_log, login, world);
+                    flow.StateChanged += state => driver.OnStateChanged(flow, state);
                     RunUntilDone(session, new GameClient(session, _clock), flow, driver, stop);
                     return BotOutcome.Report(flow, driver, login.Endpoint, interrupt.IsCancellationRequested, _log);
                 }

@@ -32,6 +32,12 @@ namespace TheVerge.Core.Session
         /// <summary>Персонаж выбран, ждём вход в мир.</summary>
         EnteringWorld = 9,
 
+        /// <summary>Сервер подтвердил вход (<see cref="WorldEntry.Player"/>), идёт начальная загрузка мира.</summary>
+        WorldLoading = 10,
+
+        /// <summary>Персонаж в мире.</summary>
+        InWorld = 11,
+
         /// <summary>Вход закончился ошибкой (<see cref="LoginFlow.Error"/>).</summary>
         Failed = 100,
 

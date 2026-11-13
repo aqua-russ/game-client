@@ -85,8 +85,9 @@ CREATE=()
 [ "${THEVERGE_BOT_CHECK_CREATE:-}" = "1" ] && CREATE=(--create-character)
 bot --config "$SECRETS" "${CREATE[@]}" > "$LOGS/bot-login.log" 2>&1
 CODE=$?
-if [ "$CODE" -eq 0 ] && grep -q "Игровой сервер: " "$LOGS/bot-login.log" && grep -qE "Выбран персонаж|Создаётся персонаж" "$LOGS/bot-login.log"; then
-  ok "вход с вашим логином: $(grep -o 'Выбран шард «[^»]*»' "$LOGS/bot-login.log" | head -n 1), $(grep -oE 'Игровой сервер: [0-9.]*[0-9]:[0-9]+' "$LOGS/bot-login.log" | head -n 1), $(grep -oE '(Выбран|Создаётся) персонаж «[^»]*»' "$LOGS/bot-login.log" | head -n 1) (код 0)"
+if [ "$CODE" -eq 0 ] && grep -q "Игровой сервер: " "$LOGS/bot-login.log" && grep -qE "Выбран персонаж|Создаётся персонаж" "$LOGS/bot-login.log" \
+    && grep -q "Персонаж в мире" "$LOGS/bot-login.log"; then
+  ok "вход с вашим логином: $(grep -o 'Выбран шард «[^»]*»' "$LOGS/bot-login.log" | head -n 1), $(grep -oE 'Игровой сервер: [0-9.]*[0-9]:[0-9]+' "$LOGS/bot-login.log" | head -n 1), $(grep -oE '(Выбран|Создаётся) персонаж «[^»]*»' "$LOGS/bot-login.log" | head -n 1), персонаж в мире (код 0)"
 elif [ "$CODE" -eq 6 ]; then
   fail "вход с вашим логином: сервер отказал ($(grep -o 'отказал во входе: [^(.]*' "$LOGS/bot-login.log" | head -n 1)). Если причина «сервер не пустил по своей причине» — аккаунт бота не создан: см. PROGRESS.md, «Вопросы пользователю». Лог: Logs/check/bot-login.log"
 elif [ "$CODE" -eq 1 ] && grep -q "нет персонаж" "$LOGS/bot-login.log"; then

@@ -33,5 +33,10 @@ namespace TheVerge.Core.Session
         /// части — одна сессия остаётся одним файлом для фейкового сервера; запись останавливается строкой «#truncated».
         /// </summary>
         public const long PacketLogMaxChars = 64L * 1024 * 1024;
+        /// <summary>
+        /// Язык клиента, который он сообщает серверу после входа (сервер пишет его в Mobile.Language и ставит в речь
+        /// персонажа). ENU — как у классического клиента по умолчанию; тексты cliloc выбирает сам клиент.
+        /// </summary>
+        public const string Language = "ENU";
     }
 }

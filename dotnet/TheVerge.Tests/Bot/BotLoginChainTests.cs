@@ -6,6 +6,7 @@ using TheVerge.Bot;
 using TheVerge.Core.Session;
 using TheVerge.Network.Transport;
 using TheVerge.Tests.Network.Packets.Account;
+using TheVerge.Tests.Network.Packets.Session;
 using TheVerge.Tests.Network.Session;
 using TheVerge.Tests.Network.Transport;
 
@@ -31,8 +32,7 @@ namespace TheVerge.Tests.Bot
         [Test]
         public void FirstShard_GameServer_CharacterChosenByName_Success()
         {
-            // Задачи 1.6–1.8: первый шард, вход на игровой сервер, персонаж по имени из настроек. Вход в мир — задача 1.9,
-            // поэтому цель бота пока — отправленный выбор персонажа.
+            // Задачи 1.6–1.8: первый шард, вход на игровой сервер, персонаж по имени из настроек.
             var (login, game) = LoginAndGame(new[] { "AQua", null, "Борис", null, null });
 
             var code = RunWithin(Runner(login, game), Target(2593, "борис"), 5000);
@@ -44,6 +44,22 @@ namespace TheVerge.Tests.Bot
             Assert.That(game.Sent[1][1 + 4 + 30 + 2 + 4 + 24 + 3], Is.EqualTo(2), "слот Бориса");
             Assert.That(Infos(), Does.Contain("Remaster UO").And.Contain("127.0.0.1:2593").And.Contain("Борис"));
             Assert.That(_log.Errors, Is.Empty);
+        }
+
+        [Test]
+        public void CharacterChosen_EntersWorld_AnswersVersion_SendsLanguageAndRange()
+        {
+            // Задача 1.9: вход в мир. Цель бота — персонаж в мире (ожидание и выход — задача 1.10).
+            var (login, game) = LoginAndGame(new[] { "AQuaruss", null, null, null, null });
+
+            var code = RunWithin(Runner(login, game), Target(2593, "AQuaruss"), 5000);
+
+            Assert.That(code, Is.EqualTo(BotExitCode.Success), LogText());
+            var afterChoice = game.Sent.Skip(2).SelectMany(b => b).ToArray();
+            Assert.That(afterChoice[0], Is.EqualTo(0xBD), "ответ на запрос версии");
+            var languageAndRange = new byte[] { 0xBF, 0x00, 0x09, 0x00, 0x0B, (byte)'E', (byte)'N', (byte)'U', 0x00, 0xC8, 18 };
+            Assert.That(Contains(afterChoice, languageAndRange), Is.True, "язык и сразу за ним дальность обзора");
+            Assert.That(Infos(), Does.Contain("в мире").And.Contain("633"));
         }
 
         [Test]
@@ -82,6 +98,19 @@ namespace TheVerge.Tests.Bot
             Assert.That(Infos(), Does.Contain("Botik"));
         }
 
+        private static bool Contains(byte[] data, byte[] part)
+        {
+            for (var i = 0; i + part.Length <= data.Length; i++)
+            {
+                if (data.Skip(i).Take(part.Length).SequenceEqual(part))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private (FakeConnection Login, FakeConnection Game) LoginAndGame(string?[] characters)
         {
             var localhost = new byte[] { 127, 0, 0, 1 };
@@ -96,6 +125,12 @@ namespace TheVerge.Tests.Bot
             game.Reply(
                 Packet(AccountServerSamples.SupportedFeatures(0x8000_02DF)),
                 Packet(AccountServerSamples.CharacterList(characters, new[] { new AccountServerSamples.City("Britain", "Inn", 1, 2, 3, 0) }, 0)));
+            // На выбор или создание персонажа: запрос версии, подтверждение входа, пакет мира без обработчика, конец загрузки.
+            game.Reply(
+                Packet(new byte[] { 0xBD, 0x00, 0x03 }),
+                Packet(WorldSamples.LoginConfirm(0x3D, 633, 858, 0)),
+                Packet(new byte[] { 0x4F, 0x10 }),
+                Packet(new byte[] { 0x55 }));
             return (login, game);
         }
 

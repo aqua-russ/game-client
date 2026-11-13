@@ -53,6 +53,8 @@ namespace TheVerge.Core.Session
         /// </summary>
         public const int CreationSkillLastClassic = 46;
         public const int CreationSkillMysticism = 55;
+        /// <summary>Дальность обзора, клеток: на запрос клиента сервер всегда отвечает 18 (SetUpdateRange).</summary>
+        public const int UpdateRange = 18;
         /// <summary>Версия клиента (docs/TARGET.md §1, ADR 0002): её клиент шлёт в 0xEF и в ответе 0xBD.</summary>
         public static readonly ClientVersion ClientVersion = new ClientVersion(7, 0, 95, 0);
 

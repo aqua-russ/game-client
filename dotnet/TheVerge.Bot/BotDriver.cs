@@ -12,38 +12,59 @@ namespace TheVerge.Bot
     {
         private readonly ILog _log;
         private readonly BotLogin _login;
-        private LoginState _seen;
+        private readonly WorldEntry _world;
+        private LoginState _decided;
 
-        public BotDriver(ILog log, BotLogin login)
+        public BotDriver(ILog log, BotLogin login, WorldEntry world)
         {
             _log = log;
             _login = login;
+            _world = world;
         }
 
         /// <summary>Почему бот не может идти дальше (нет нужного персонажа); пусто — может.</summary>
         public string Problem { get; private set; } = string.Empty;
 
-        /// <summary>Цель бота достигнута: дальше вход клиента пока не умеет (растёт с задачами 1.9–1.10).</summary>
-        public static bool IsGoal(LoginFlow flow) => flow.State == LoginState.EnteringWorld;
+        /// <summary>Цель бота достигнута: персонаж в мире (ожидание и выход — задача 1.10).</summary>
+        public static bool IsGoal(LoginFlow flow) => flow.State == LoginState.InWorld;
 
+        /// <summary>Принять решение, если вход его ждёт (шард, персонаж). Каждое решение — один раз.</summary>
         public void Act(LoginFlow flow)
         {
-            if (flow.State == _seen)
+            if (flow.State == _decided)
             {
                 return;
             }
 
-            _seen = flow.State;
             switch (flow.State)
             {
                 case LoginState.ShardSelection:
+                    _decided = flow.State;
                     ChooseShard(flow);
                     break;
+                case LoginState.CharacterSelection:
+                    _decided = flow.State;
+                    ChooseCharacter(flow.Characters);
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Докуда дошёл вход — в лог. Подписка на смену состояния, а не опрос после тика: за один тик вход может пройти
+        /// несколько состояний (подтверждение входа и конец загрузки мира приходят вместе).
+        /// </summary>
+        public void OnStateChanged(LoginFlow flow, LoginState state)
+        {
+            switch (state)
+            {
                 case LoginState.ConnectingGame:
                     _log.Info("Игровой сервер: " + flow.Redirect + ".");
                     break;
-                case LoginState.CharacterSelection:
-                    ChooseCharacter(flow.Characters);
+                case LoginState.WorldLoading:
+                    _log.Info("Сервер подтвердил вход: персонаж " + _world.Player + ", карта " + _world.Player.Map + ".");
+                    break;
+                case LoginState.InWorld:
+                    _log.Info("Персонаж в мире.");
                     break;
             }
         }
