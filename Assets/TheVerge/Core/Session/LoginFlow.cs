@@ -17,6 +17,8 @@ namespace TheVerge.Core.Session
         private readonly IServerConnector _connector;
         private readonly int _seed;
         private LoginCredentials _credentials;
+        private string _host = string.Empty;
+        private int _port;
 
         /// <param name="seed">Seed логин-сервера, не 0: нулевой сервер считает мусором и отключает (NetState.cs).</param>
         public LoginFlow(IAccountSender sender, IServerConnector connector, int seed)
@@ -53,6 +55,9 @@ namespace TheVerge.Core.Session
         /// <summary>Список шардов от логин-сервера; пуст, пока не пришёл.</summary>
         public IReadOnlyList<ShardEntry> Shards { get; private set; } = Array.Empty<ShardEntry>();
 
+        /// <summary>Место выбранного шарда в <see cref="Shards"/>; -1 — ещё не выбирали. Остаётся после <see cref="Restart"/>.</summary>
+        public int SelectedShard { get; private set; } = -1;
+
         /// <summary>Адрес игрового сервера и ключ; заполнен с состояния <see cref="LoginState.Redirected"/>.</summary>
         public ServerRedirect Redirect { get; private set; }
 
@@ -63,6 +68,8 @@ namespace TheVerge.Core.Session
                 throw new InvalidOperationException("Вход уже начат (" + State + ").");
             }
 
+            _host = host;
+            _port = port;
             _credentials = credentials;
             MoveTo(LoginState.ConnectingLogin);
             _connector.Connect(host, port);
@@ -106,6 +113,20 @@ namespace TheVerge.Core.Session
         public void OnCharacterRejected(CharacterRejectReason reason) =>
             Fail(new LoginError(LoginErrorKind.CharacterRejected, (int)reason, reason.ToString()));
 
+        /// <summary>
+        /// Начать вход заново после ошибки (повтор, <see cref="Reconnector"/>): с тем же сервером, логином и паролем. Шард и
+        /// персонажа выбирают снова; что было выбрано — <see cref="SelectedShard"/>, <see cref="CharacterSelection.SelectedName"/>.
+        /// </summary>
+        public void Restart()
+        {
+            Progress.Require(LoginState.Failed, "Повтор входа");
+            Progress.Reset();
+            Shards = Array.Empty<ShardEntry>();
+            Redirect = default;
+            Characters.Clear();
+            Start(_host, _port, _credentials);
+        }
+
         /// <summary>Отказ логин-сервера (байт причины — ALRReason сервера). Соединение после него закрывает сервер.</summary>
         public void OnLoginRejected(LoginRejectReason reason)
         {
@@ -143,6 +164,7 @@ namespace TheVerge.Core.Session
                 throw new ArgumentOutOfRangeException(nameof(position), "В списке " + Shards.Count + " шард(ов).");
             }
 
+            SelectedShard = position;
             _sender.SendSelectShard(Shards[position].Index);
             MoveTo(LoginState.AwaitingRedirect);
         }

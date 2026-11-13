@@ -29,6 +29,9 @@ namespace TheVerge.Bot
         /// <summary>Сколько секунд стоять в мире перед выходом (--idle).</summary>
         public int IdleSeconds { get; set; }
 
+        /// <summary>Повторять вход при разрыве или неудачном подключении (--reconnect); по умолчанию — нет, сбой виден сразу.</summary>
+        public bool Reconnect { get; set; }
+
         public string Endpoint => Host + ":" + Port;
     }
 }

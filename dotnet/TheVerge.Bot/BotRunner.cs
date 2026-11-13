@@ -1,5 +1,4 @@
 using System;
-using System.Security.Cryptography;
 using System.Threading;
 using TheVerge.Core.Ports;
 using TheVerge.Core.Session;
@@ -37,11 +36,17 @@ namespace TheVerge.Bot
         public int Run(BotLogin login, CancellationToken interrupt)
         {
             using (var stop = CancellationTokenSource.CreateLinkedTokenSource(interrupt))
-            using (var client = new BotClient(_newConnection, _clock, _log, _packetLog, stop.Token, NewSeed()))
+            using (var client = new BotClient(_newConnection, _clock, _log, _packetLog, stop.Token, login))
             {
                 var driver = new BotDriver(_log, login, client.World, client.Game, _clock);
                 Action<LoginState> onState = state => driver.OnStateChanged(client.Flow, state);
+                Action<int, int> onRetry = (attempt, delayMs) => _log.Info("Повтор входа через " + delayMs / 1000 + " с (попытка " +
+                                                                            attempt + " из " + ClientLimits.ReconnectDelaysMs.Length + ")…");
                 client.Flow.StateChanged += onState;
+                if (client.Reconnector != null)
+                {
+                    client.Reconnector.RetryScheduled += onRetry;
+                }
                 try
                 {
                     _log.Info("Подключение к " + login.Endpoint + "…");
@@ -53,12 +58,13 @@ namespace TheVerge.Bot
                 finally
                 {
                     client.Flow.StateChanged -= onState;
+                    if (client.Reconnector != null)
+                    {
+                        client.Reconnector.RetryScheduled -= onRetry;
+                    }
                 }
             }
         }
-
-        // Seed логин-сервера: любое число, кроме 0 (NetState.cs: нулевой сервер отключает).
-        private static int NewSeed() => RandomNumberGenerator.GetInt32(1, int.MaxValue);
 
         // Решение бота (Act) пишет пакет в исходящие; он уходит в конце следующего тика. Поэтому «готово» проверяется после
         // тика и до решения: соединение закрывается, только когда последний пакет бота уже отправлен.
@@ -67,7 +73,7 @@ namespace TheVerge.Bot
             while (true)
             {
                 client.Core.Tick(_clock.NowMs);
-                var done = client.Flow.IsFinished || driver.Problem.Length > 0;
+                var done = client.IsFinished || driver.Problem.Length > 0;
                 if (done && client.Session.IsClosed)
                 {
                     return;

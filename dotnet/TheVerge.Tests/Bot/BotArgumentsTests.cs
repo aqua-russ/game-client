@@ -31,6 +31,13 @@ namespace TheVerge.Tests.Bot
         }
 
         [Test]
+        public void Reconnect_Flag()
+        {
+            Assert.That(BotArguments.Parse(new[] { "--reconnect" }).Reconnect, Is.True);
+            Assert.That(BotArguments.Parse(new string[0]).Reconnect, Is.False);
+        }
+
+        [Test]
         public void CreateCharacter_Flag()
         {
             Assert.That(BotArguments.Parse(new[] { "--character", "Борис", "--create-character" }).CreateCharacter, Is.True);

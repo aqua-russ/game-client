@@ -20,5 +20,8 @@ namespace TheVerge.Bot
 
         /// <summary>Секунд в мире перед выходом (--idle); по умолчанию 0 — выйти сразу.</summary>
         public int IdleSeconds { get; internal set; }
+
+        /// <summary>Повторять вход с нарастающей паузой (--reconnect).</summary>
+        public bool Reconnect { get; internal set; }
     }
 }

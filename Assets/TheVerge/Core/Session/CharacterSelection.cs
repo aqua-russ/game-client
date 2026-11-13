@@ -26,10 +26,20 @@ namespace TheVerge.Core.Session
 
         public IReadOnlyList<StartingCity> Cities { get; private set; } = Array.Empty<StartingCity>();
 
+        /// <summary>Имя персонажа, которого выбрали или создали последним; пусто — ещё не выбирали.</summary>
+        public string SelectedName { get; private set; } = string.Empty;
+
         /// <summary>Флаги списка персонажей сервера (CharacterListFlags).</summary>
         public int ListFlags { get; private set; }
 
         public void OnSupportedFeatures(uint flags) => SupportedFeatures = flags;
+
+        /// <summary>Забыть список перед новым входом (<see cref="LoginFlow.Restart"/>); выбранное имя остаётся.</summary>
+        internal void Clear()
+        {
+            Slots = Array.Empty<CharacterSlot>();
+            Cities = Array.Empty<StartingCity>();
+        }
 
         /// <summary>Список слотов (вместе с пустыми) и стартовых городов. Ждёт выбора (<see cref="Select"/>).</summary>
         public void OnCharacterList(IReadOnlyList<CharacterSlot> slots, IReadOnlyList<StartingCity> cities, int flags)
@@ -53,6 +63,7 @@ namespace TheVerge.Core.Session
         {
             _progress.Require(LoginState.CharacterSelection, "Выбор персонажа");
             RequireOccupied(slot);
+            SelectedName = Slots[slot].Name;
             _sender.SendPlayCharacter(slot, Slots[slot].Name);
             _progress.MoveTo(LoginState.EnteringWorld);
         }
@@ -87,6 +98,7 @@ namespace TheVerge.Core.Session
                 throw new InvalidOperationException("Свободных слотов нет: сначала удалите персонажа.");
             }
 
+            SelectedName = character.Name;
             _sender.SendCreateCharacter(character, slot);
             _progress.MoveTo(LoginState.EnteringWorld);
         }

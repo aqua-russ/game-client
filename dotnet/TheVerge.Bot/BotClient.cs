@@ -17,19 +17,23 @@ namespace TheVerge.Bot
     internal sealed class BotClient : IDisposable
     {
         public BotClient(Func<IConnection> newConnection, IClock clock, ILog log, PacketLogWriter? packetLog,
-            System.Threading.CancellationToken stop, int seed)
+            System.Threading.CancellationToken stop, BotLogin login)
         {
             var dispatcher = new PacketDispatcher(log);
             Session = new NetworkSession(dispatcher, log) { PacketLog = packetLog };
             var connector = new ServerConnector(Session, newConnection, stop);
-            Flow = new LoginFlow(new AccountSender(Session), connector, seed);
+            Flow = new LoginFlow(new AccountSender(Session), connector, NewSeed());
             var sessionSender = new SessionSender(Session);
             World = new WorldEntry(Flow.Progress, sessionSender);
             Game = new GameSession(Flow.Progress, sessionSender, connector, clock);
             AccountHandlers.Register(dispatcher, Flow);
             SessionHandlers.Register(dispatcher, World, new ServerRequests(sessionSender), Game);
             Session.Observer = Flow;
-            Core = new GameClient(Session, clock, Game, new LoginWatchdog(Flow.Progress));
+            var watchdog = new LoginWatchdog(Flow.Progress);
+            Reconnector = login.Reconnect ? new Reconnector(Flow) : null;
+            Core = Reconnector == null
+                ? new GameClient(Session, clock, Game, watchdog)
+                : new GameClient(Session, clock, Game, watchdog, Reconnector);
         }
 
         public NetworkSession Session { get; }
@@ -41,6 +45,15 @@ namespace TheVerge.Bot
         public GameSession Game { get; }
 
         public GameClient Core { get; }
+
+        /// <summary>Повтор входа; null — без --reconnect.</summary>
+        public Reconnector? Reconnector { get; }
+
+        /// <summary>Вход закончился и повтора не будет.</summary>
+        public bool IsFinished => Flow.IsFinished && (Reconnector == null || !Reconnector.WillRetry);
+
+        // Seed логин-сервера: любое число, кроме 0 (NetState.cs: нулевой сервер отключает).
+        private static int NewSeed() => System.Security.Cryptography.RandomNumberGenerator.GetInt32(1, int.MaxValue);
 
         public void Dispose() => Session.Dispose();
     }

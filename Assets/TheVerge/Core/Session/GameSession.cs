@@ -15,6 +15,7 @@ namespace TheVerge.Core.Session
         private readonly Ports.IClock _clock;
         private long _nextPingAt = -1;
         private long _enteredWorldAt = -1;
+        private LoginState _lastState;
         private long _pingSentAt = -1;
         private byte _sequence;
         private long _logoutRequestedAt;
@@ -36,16 +37,22 @@ namespace TheVerge.Core.Session
 
         public void Update(long now)
         {
-            if (_progress.State == LoginState.InWorld)
+            var state = _progress.State;
+            var entered = state == LoginState.InWorld && _lastState != LoginState.InWorld;
+            _lastState = state;
+            if (state == LoginState.InWorld)
             {
-                if (_enteredWorldAt < 0)
+                if (entered)
                 {
+                    // Каждый вход в мир (и после повтора) — с начала: время в мире и первый ping через интервал.
                     _enteredWorldAt = now;
+                    _nextPingAt = -1;
+                    _pingSentAt = -1;
                 }
 
                 PingIfDue(now);
             }
-            else if (_progress.State == LoginState.LoggingOut && now - _logoutRequestedAt >= ClientLimits.LogoutTimeoutMs)
+            else if (state == LoginState.LoggingOut && now - _logoutRequestedAt >= ClientLimits.LogoutTimeoutMs)
             {
                 // Сервер не ответил на выход — закрываем сами: ждать дальше нечего.
                 Close();

@@ -114,6 +114,32 @@ namespace TheVerge.Tests.Bot
         }
 
         [Test]
+        public void DropInWorld_Reconnect_SameCharacterAgain_ThenLogout()
+        {
+            // Задача 1.11б: с --reconnect разрыв в мире — повтор через ClientLimits.ReconnectDelaysMs[0] тем же персонажем.
+            var (login1, game1) = LoginAndGame(new[] { "First", "AQuaruss", null, null, null }, dropInWorld: true);
+            var (login2, game2) = LoginAndGame(new[] { "First", "AQuaruss", null, null, null });
+
+            var code = RunWithin(Runner(login1, game1, login2, game2), Target(2593, "AQuaruss", reconnect: true), 8000);
+
+            Assert.That(code, Is.EqualTo(BotExitCode.Success), LogText());
+            Assert.That(game2.Sent[1][0], Is.EqualTo(0x5D));
+            Assert.That(game2.Sent[1][1 + 4 + 30 + 2 + 4 + 24 + 3], Is.EqualTo(1), "тот же персонаж");
+            Assert.That(Infos(), Does.Contain("Повтор входа через 1 с"));
+            Assert.That(game2.Sent.Last(), Is.EqualTo(new byte[] { 0xD1, 0x00 }));
+        }
+
+        [Test]
+        public void DropInWorld_NoReconnectFlag_ConnectionLost()
+        {
+            var (login, game) = LoginAndGame(new[] { "AQuaruss", null, null, null, null }, dropInWorld: true);
+
+            var code = RunWithin(Runner(login, game), Target(2593, "AQuaruss", idleSeconds: 60), 5000);
+
+            Assert.That(code, Is.EqualTo(BotExitCode.ConnectionLost), LogText());
+        }
+
+        [Test]
         public void NoCharacterName_FirstOccupiedSlotChosen()
         {
             var (login, game) = LoginAndGame(new[] { null, "AQua", null, null, null });
@@ -162,7 +188,7 @@ namespace TheVerge.Tests.Bot
             return false;
         }
 
-        private (FakeConnection Login, FakeConnection Game) LoginAndGame(string?[] characters, bool rejectCharacter = false)
+        private (FakeConnection Login, FakeConnection Game) LoginAndGame(string?[] characters, bool rejectCharacter = false, bool dropInWorld = false)
         {
             var localhost = new byte[] { 127, 0, 0, 1 };
             var login = new FakeConnection();
@@ -188,6 +214,12 @@ namespace TheVerge.Tests.Bot
                 Packet(WorldSamples.LoginConfirm(0x3D, 633, 858, 0)),
                 Packet(new byte[] { 0x4F, 0x10 }),
                 Packet(new byte[] { 0x55 }));
+            if (dropInWorld)
+            {
+                game.Reply(InboundEvent.Closed(ConnectionCloseReason.ServerClosed, string.Empty)); // разрыв сразу в мире
+                return (login, game);
+            }
+
             game.Reply(); // ответ на версию, язык и дальность — ничего
             game.Reply(Packet(new byte[] { 0xD1, 0x01 })); // на выход — разрешение (SendLogoutAck)
             return (login, game);
@@ -209,8 +241,12 @@ namespace TheVerge.Tests.Bot
 
         private static InboundEvent Packet(byte[] bytes) => InboundEvent.FromPacket(bytes, bytes.Length, new CountingArrayPool());
 
-        private static BotLogin Target(int port, string character = "", bool createCharacter = false, int idleSeconds = 0) =>
-            new BotLogin("127.0.0.1", port, new LoginCredentials("player", Password), character, createCharacter) { IdleSeconds = idleSeconds };
+        private static BotLogin Target(int port, string character = "", bool createCharacter = false, int idleSeconds = 0, bool reconnect = false) =>
+            new BotLogin("127.0.0.1", port, new LoginCredentials("player", Password), character, createCharacter)
+            {
+                IdleSeconds = idleSeconds,
+                Reconnect = reconnect,
+            };
 
         private string LogText() => string.Join("\n", _log.Entries.Select(e => e.Level + ": " + e.Message));
 

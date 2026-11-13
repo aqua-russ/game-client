@@ -134,6 +134,21 @@ namespace TheVerge.Tests.Core.Session
         }
 
         [Test]
+        public void MsInWorld_CountsFromLatestEntry_AfterReconnect()
+        {
+            EnterWorld();
+            _flow.OnDisconnected(DisconnectReason.ServerClosed, string.Empty);
+            _clock.NowMs += 5000;
+            _session.Update(_clock.NowMs);
+            Assert.That(_session.MsInWorld(_clock.NowMs), Is.EqualTo(5000), "после разрыва — сколько был в мире");
+
+            _flow.Restart();
+            EnterWorldAgain();
+
+            Assert.That(_session.MsInWorld(_clock.NowMs + 10), Is.EqualTo(10));
+        }
+
+        [Test]
         public void ServerClosesInWorld_Disconnected()
         {
             EnterWorld();
@@ -145,8 +160,13 @@ namespace TheVerge.Tests.Core.Session
 
         private void EnterWorld()
         {
-            var world = new WorldEntry(_flow.Progress, _sender);
             _flow.Start("127.0.0.1", 2593, new LoginCredentials("player", "secret"));
+            EnterWorldAgain();
+        }
+
+        private void EnterWorldAgain()
+        {
+            var world = new WorldEntry(_flow.Progress, _sender);
             _flow.OnConnected();
             _flow.OnShardList(new[] { new ShardEntry(0, "Shard", 0, 0, "127.0.0.1") });
             _flow.SelectShard(0);

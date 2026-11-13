@@ -29,6 +29,14 @@ namespace TheVerge.Core.Session
             StateChanged?.Invoke(state);
         }
 
+        /// <summary>Начать вход заново (повтор после ошибки, <see cref="LoginFlow.Restart"/>): состояние Idle, ошибки нет.</summary>
+        public void Reset()
+        {
+            Error = LoginError.None;
+            State = LoginState.Idle;
+            StateChanged?.Invoke(State);
+        }
+
         public void Fail(LoginError error)
         {
             if (IsFinished)

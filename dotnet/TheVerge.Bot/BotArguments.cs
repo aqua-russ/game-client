@@ -35,6 +35,9 @@ namespace TheVerge.Bot
                 case "-h":
                     parsed.Mode = BotMode.Help;
                     return string.Empty;
+                case "--reconnect":
+                    parsed.Reconnect = true;
+                    return string.Empty;
                 case "--create-character":
                     parsed.CreateCharacter = true;
                     return string.Empty;

@@ -47,5 +47,10 @@ namespace TheVerge.Core.Session
         public const int LogoutTimeoutMs = 5000;
         /// <summary>Сколько ждать ответа сервера во время входа (список, редирект, вход в мир), мс; дальше — ошибка.</summary>
         public const int ServerResponseTimeoutMs = 30000;
+        /// <summary>
+        /// Паузы перед повторами входа, мс (не удалось подключиться, разрыв в мире): нарастают вдвое; сколько пауз, столько
+        /// попыток. Дольше 16 с человек решит сам.
+        /// </summary>
+        public static readonly int[] ReconnectDelaysMs = { 1000, 2000, 4000, 8000, 16000 };
     }
 }

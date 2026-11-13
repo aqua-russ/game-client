@@ -119,6 +119,7 @@ namespace TheVerge.Bot
                 var login = new BotLogin(settings.Host, settings.Port, credentials, settings.Character, parsed.CreateCharacter)
                 {
                     IdleSeconds = parsed.IdleSeconds,
+                    Reconnect = parsed.Reconnect,
                 };
                 var code = new BotRunner(NewConnection, clock, log, packetLog?.Writer).Run(login, interrupt);
                 return Exit(code, string.Empty);
