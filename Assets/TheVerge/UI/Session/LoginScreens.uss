@@ -1,0 +1,152 @@
+:root {
+    --color-backdrop: #1b1f24;
+    --color-card: #eceff3;
+    --color-card-border: #c5ccd6;
+    --color-text: #1d232b;
+    --color-muted: #5b6573;
+    --color-hint: #a5521a;
+    --color-accent: #2f6fd0;
+    --color-danger: #b8322a;
+    --color-on-accent: #ffffff;
+}
+
+.screens-root {
+    flex-grow: 1;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--color-backdrop);
+}
+
+.screens-root--in-world {
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.hidden {
+    display: none;
+}
+
+.card {
+    width: 560px;
+    max-height: 96%;
+    padding: 20px 24px;
+    background-color: var(--color-card);
+    border-width: 1px;
+    border-color: var(--color-card-border);
+    border-radius: 8px;
+}
+
+.card Label {
+    color: var(--color-text);
+}
+
+.title {
+    font-size: 22px;
+    -unity-font-style: bold;
+    margin-bottom: 12px;
+}
+
+.section {
+    -unity-font-style: bold;
+    margin-top: 10px;
+    margin-left: 4px;
+}
+
+.card .hint {
+    color: var(--color-hint);
+    white-space: normal;
+    margin: 2px 4px;
+}
+
+.card .total {
+    color: var(--color-muted);
+    margin: 2px 4px;
+}
+
+.message {
+    white-space: normal;
+    margin: 6px 4px;
+}
+
+.status {
+    font-size: 16px;
+    white-space: normal;
+    margin-bottom: 16px;
+}
+
+.list {
+    max-height: 260px;
+    margin-bottom: 6px;
+}
+
+.list-item {
+    height: 32px;
+    -unity-text-align: middle-left;
+}
+
+.list-item--empty {
+    color: var(--color-muted);
+}
+
+.list-item--selected {
+    background-color: var(--color-accent);
+    color: var(--color-on-accent);
+}
+
+.button-row {
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin-top: 10px;
+}
+
+.primary-button {
+    background-color: var(--color-accent);
+    color: var(--color-on-accent);
+}
+
+.danger-button {
+    background-color: var(--color-danger);
+    color: var(--color-on-accent);
+}
+
+.confirm {
+    margin-top: 12px;
+    padding: 10px;
+    border-width: 1px;
+    border-color: var(--color-danger);
+    border-radius: 6px;
+}
+
+.create-scroll {
+    flex-shrink: 1;
+}
+
+.skill-row {
+    flex-direction: row;
+}
+
+.skill-choice {
+    flex-grow: 1;
+}
+
+.skill-value {
+    width: 90px;
+}
+
+.world-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    flex-direction: row;
+    align-items: center;
+    padding: 6px 12px;
+    background-color: var(--color-card);
+    border-bottom-width: 1px;
+    border-color: var(--color-card-border);
+}
+
+.world-status {
+    flex-grow: 1;
+    font-size: 16px;
+    color: var(--color-text);
+}

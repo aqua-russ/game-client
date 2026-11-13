@@ -24,19 +24,31 @@ namespace TheVerge.Core.Session
 
         public override string ToString() => Username + " (пароль скрыт)";
 
-        private static void Require(string value, string name)
+        /// <summary>Что не так с логином или паролем для сервера; пусто — можно отправлять. Значения поля не содержит.</summary>
+        public static string Problem(string value)
         {
             if (string.IsNullOrEmpty(value) || value.Length > ServerLimits.CredentialMaxChars)
             {
-                throw new ArgumentException("Поле должно быть длиной от 1 до " + ServerLimits.CredentialMaxChars + " символов.", name);
+                return "Поле должно быть длиной от 1 до " + ServerLimits.CredentialMaxChars + " символов.";
             }
 
             foreach (var c in value)
             {
                 if (c > ServerLimits.MaxLatin1Char)
                 {
-                    throw new ArgumentException("В поле есть буква вне Latin-1: сервер прочитал бы её иначе.", name);
+                    return "В поле есть буква вне Latin-1: сервер прочитал бы её иначе.";
                 }
+            }
+
+            return string.Empty;
+        }
+
+        private static void Require(string value, string name)
+        {
+            var problem = Problem(value);
+            if (problem.Length > 0)
+            {
+                throw new ArgumentException(problem, name);
             }
         }
     }

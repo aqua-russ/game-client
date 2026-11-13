@@ -1,0 +1,91 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="LoginScreens.uss" />
+    <ui:VisualElement name="screensRoot" class="screens-root">
+        <ui:VisualElement name="loginPanel" class="card">
+            <ui:Label text="The Verge — вход" class="title" />
+            <ui:TextField name="addressField" label="Сервер" />
+            <ui:TextField name="usernameField" label="Логин" />
+            <ui:TextField name="passwordField" label="Пароль" password="true" />
+            <ui:Label name="loginProblem" class="hint" />
+            <ui:Label name="loginMessage" class="message" />
+            <ui:VisualElement class="button-row">
+                <ui:Button name="loginButton" text="Войти" class="primary-button" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="waitingPanel" class="card hidden">
+            <ui:Label name="waitingStatus" class="status" />
+            <ui:VisualElement class="button-row">
+                <ui:Button name="waitingCancel" text="Отмена" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="shardsPanel" class="card hidden">
+            <ui:Label text="Выберите шард" class="title" />
+            <ui:ScrollView name="shardsList" class="list" />
+            <ui:VisualElement class="button-row">
+                <ui:Button name="shardsBack" text="Назад" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="charactersPanel" class="card hidden">
+            <ui:Label text="Персонажи" class="title" />
+            <ui:ScrollView name="charactersList" class="list" />
+            <ui:Label name="charactersMessage" class="message" />
+            <ui:Label name="createHint" class="hint" />
+            <ui:VisualElement class="button-row">
+                <ui:Button name="enterButton" text="Войти в мир" class="primary-button" />
+                <ui:Button name="createButton" text="Создать" />
+                <ui:Button name="deleteButton" text="Удалить" />
+                <ui:Button name="charactersBack" text="Назад" />
+            </ui:VisualElement>
+            <ui:VisualElement name="deleteConfirm" class="confirm hidden">
+                <ui:Label name="deleteConfirmText" class="message" />
+                <ui:VisualElement class="button-row">
+                    <ui:Button name="deleteYes" text="Удалить" class="danger-button" />
+                    <ui:Button name="deleteNo" text="Отмена" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="createPanel" class="card hidden">
+            <ui:Label text="Новый персонаж" class="title" />
+            <ui:ScrollView name="createScroll" class="create-scroll">
+                <ui:TextField name="nameField" label="Имя" />
+                <ui:Toggle name="femaleToggle" label="Женский" />
+                <ui:Label name="nameHint" class="hint" />
+                <ui:Label text="Статы" class="section" />
+                <ui:IntegerField name="strengthField" label="Сила" />
+                <ui:IntegerField name="dexterityField" label="Ловкость" />
+                <ui:IntegerField name="intelligenceField" label="Интеллект" />
+                <ui:Label name="statsTotal" class="total" />
+                <ui:Label name="statsHint" class="hint" />
+                <ui:Label text="Навыки" class="section" />
+                <ui:VisualElement class="skill-row">
+                    <ui:DropdownField name="skill0" class="skill-choice" />
+                    <ui:IntegerField name="skillValue0" class="skill-value" />
+                </ui:VisualElement>
+                <ui:VisualElement class="skill-row">
+                    <ui:DropdownField name="skill1" class="skill-choice" />
+                    <ui:IntegerField name="skillValue1" class="skill-value" />
+                </ui:VisualElement>
+                <ui:VisualElement class="skill-row">
+                    <ui:DropdownField name="skill2" class="skill-choice" />
+                    <ui:IntegerField name="skillValue2" class="skill-value" />
+                </ui:VisualElement>
+                <ui:VisualElement class="skill-row">
+                    <ui:DropdownField name="skill3" class="skill-choice" />
+                    <ui:IntegerField name="skillValue3" class="skill-value" />
+                </ui:VisualElement>
+                <ui:Label name="skillsTotal" class="total" />
+                <ui:Label name="skillsHint" class="hint" />
+                <ui:DropdownField name="cityField" label="Город" />
+                <ui:Label name="cityHint" class="hint" />
+            </ui:ScrollView>
+            <ui:VisualElement class="button-row">
+                <ui:Button name="createConfirm" text="Создать" class="primary-button" />
+                <ui:Button name="createCancel" text="Отмена" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="worldPanel" class="world-bar hidden">
+            <ui:Label name="worldStatus" class="world-status" />
+            <ui:Button name="logoutButton" text="Выйти" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

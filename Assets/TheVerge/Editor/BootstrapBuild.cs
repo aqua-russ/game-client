@@ -3,12 +3,15 @@ using TheVerge.Bootstrap;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace TheVerge.Editor
 {
     public static class BootstrapBuild
     {
         private const string ScenePath = "Assets/TheVerge/Scenes/Bootstrap.unity";
+        private const string ScreensLayoutPath = "Assets/TheVerge/UI/Session/LoginScreens.uxml";
+        private const string ThemePath = "Assets/TheVerge/UI/TheVergeTheme.tss";
 
         [MenuItem("The Verge/Prepare Bootstrap Scene")]
         public static void Prepare()
@@ -43,6 +46,7 @@ namespace TheVerge.Editor
 
             // 3. Создаем объект GameBootstrap с точкой входа
             var bootstrapObject = new GameObject("GameBootstrap", typeof(GameBootstrap));
+            AssignUi(bootstrapObject.GetComponent<GameBootstrap>());
 
             EditorSceneManager.SaveScene(scene, ScenePath);
             EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(ScenePath, true) };
@@ -50,6 +54,16 @@ namespace TheVerge.Editor
             AssetDatabase.Refresh();
 
             Debug.Log("[BootstrapBuild] 3D-сцена Bootstrap.unity успешно создана!");
+        }
+
+        // Ссылки на разметку экранов входа и тему UI Toolkit: по ним GameBootstrap строит интерфейс.
+        private static void AssignUi(GameBootstrap bootstrap)
+        {
+            var serialized = new SerializedObject(bootstrap);
+            serialized.FindProperty("_screensLayout").objectReferenceValue =
+                AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(ScreensLayoutPath);
+            serialized.FindProperty("_theme").objectReferenceValue = AssetDatabase.LoadAssetAtPath<ThemeStyleSheet>(ThemePath);
+            serialized.ApplyModifiedPropertiesWithoutUndo();
         }
     }
 }

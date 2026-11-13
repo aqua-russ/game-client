@@ -1,5 +1,6 @@
 using TheVerge.Core.Ports;
 using TheVerge.Core.Session;
+using TheVerge.Core.Session.Screens;
 
 namespace TheVerge.Bot
 {
@@ -31,7 +32,7 @@ namespace TheVerge.Bot
             switch (error.Kind)
             {
                 case LoginErrorKind.LoginDenied:
-                    log.Error("Сервер отказал во входе: " + RejectText((LoginRejectReason)error.Code) + ".");
+                    log.Error("Сервер отказал во входе: " + LoginErrorText.Reject((LoginRejectReason)error.Code) + ".");
                     return BotExitCode.LoginRejected;
                 case LoginErrorKind.ConnectFailed when error.Code == (int)DisconnectReason.ConnectTimeout:
                     log.Error("Сервер " + endpoint + " не ответил на подключение вовремя. Запущен ли сервер, верен ли адрес?");
@@ -40,7 +41,7 @@ namespace TheVerge.Bot
                     log.Error("Не удалось подключиться к " + endpoint + detail + ". Запущен ли сервер, верны ли адрес и порт?");
                     return BotExitCode.ConnectFailed;
                 case LoginErrorKind.CharacterRejected:
-                    log.Error("Сервер не пустил персонажа: " + CharacterRejectText((CharacterRejectReason)error.Code) + ".");
+                    log.Error("Сервер не пустил персонажа: " + LoginErrorText.CharacterReject((CharacterRejectReason)error.Code) + ".");
                     return BotExitCode.LoginRejected;
                 case LoginErrorKind.Timeout:
                     log.Error("Сервер не ответил вовремя" + detail + ": бот не ждёт молча, соединение закрыто.");
@@ -58,33 +59,6 @@ namespace TheVerge.Bot
                 default:
                     log.Error("Вход закончился без известной причины (" + error + "): ошибка бота.");
                     return BotExitCode.InternalError;
-            }
-        }
-
-        private static string CharacterRejectText(CharacterRejectReason reason) =>
-            reason == CharacterRejectReason.CharInWorld
-                ? "другой персонаж этого аккаунта уже в мире (подождите, пока он выйдет)"
-                : "код " + (int)reason;
-
-        private static string RejectText(LoginRejectReason reason)
-        {
-            switch (reason)
-            {
-                case LoginRejectReason.Invalid:
-                    return "нет такого аккаунта";
-                case LoginRejectReason.InUse:
-                    return "аккаунт уже в игре";
-                case LoginRejectReason.Blocked:
-                    return "аккаунт заблокирован";
-                case LoginRejectReason.BadPassword:
-                    return "неверный пароль";
-                case LoginRejectReason.Idle:
-                    return "клиент слишком долго молчал";
-                case LoginRejectReason.BadCommunication:
-                    return "сервер не пустил по своей причине (например, с этого адреса нельзя создать ещё один аккаунт: " +
-                           "accountHandler.maxAccountsPerIP), подробности — в консоли сервера";
-                default:
-                    return "код " + (int)reason;
             }
         }
     }

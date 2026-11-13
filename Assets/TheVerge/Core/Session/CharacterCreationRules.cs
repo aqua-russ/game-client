@@ -23,8 +23,8 @@ namespace TheVerge.Core.Session
             return problem.Length == 0 ? ValidateSkills(character.Skills) : problem;
         }
 
-        // Как сервер: CharacterCreation.SetName обрезает пробелы по краям, затем NameVerification.ValidatePlayerName.
-        private static string ValidateName(string name)
+        /// <summary>Имя (как сервер: CharacterCreation.SetName обрезает пробелы по краям, затем ValidatePlayerName).</summary>
+        public static string ValidateName(string name)
         {
             var trimmed = (name ?? string.Empty).Trim();
             if (trimmed.Length < ServerLimits.NameMinChars || trimmed.Length > ServerLimits.NameMaxChars)
@@ -48,7 +48,8 @@ namespace TheVerge.Core.Session
             return string.Empty;
         }
 
-        private static string ValidateStats(int str, int dex, int intel)
+        /// <summary>Три стата: каждый в пределах и сумма как у сервера.</summary>
+        public static string ValidateStats(int str, int dex, int intel)
         {
             if (!InRange(str) || !InRange(dex) || !InRange(intel))
             {
@@ -60,7 +61,8 @@ namespace TheVerge.Core.Session
                 : "сумма статов должна быть " + ServerLimits.CreationStatTotal + ", а не " + (str + dex + intel);
         }
 
-        private static string ValidateSkills((int Skill, int Value)[] skills)
+        /// <summary>Навыки: число, разрешённые номера, значения, повторы и сумма.</summary>
+        public static string ValidateSkills((int Skill, int Value)[] skills)
         {
             if (skills == null || skills.Length != ServerLimits.CreationSkillCount)
             {
@@ -91,27 +93,30 @@ namespace TheVerge.Core.Session
             var (skill, value) = skills[i];
             if (!IsAllowedSkill(skill))
             {
-                return "навык " + skill + " нельзя выбрать при создании в эре UOR";
+                return "навык " + Describe(skill) + " нельзя выбрать при создании в эре UOR";
             }
 
             if (value < 0 || value > ServerLimits.CreationSkillMax)
             {
-                return "навык " + skill + ": значение от 0 до " + ServerLimits.CreationSkillMax;
+                return "навык " + Describe(skill) + ": значение от 0 до " + ServerLimits.CreationSkillMax;
             }
 
             for (var j = i + 1; j < skills.Length; j++)
             {
                 if (skills[j].Value > 0 && skills[j].Skill == skill)
                 {
-                    return "навык " + skill + " выбран дважды";
+                    return "навык " + Describe(skill) + " выбран дважды";
                 }
             }
 
             return string.Empty;
         }
 
-        private static bool IsAllowedSkill(int skill) =>
+        /// <summary>Навык можно выбрать при создании (ValidateSkills сервера).</summary>
+        public static bool IsAllowedSkill(int skill) =>
             (skill >= 0 && skill <= ServerLimits.CreationSkillLastClassic) || skill == ServerLimits.CreationSkillMysticism;
+
+        private static string Describe(int skill) => SkillNames.Name(skill) + " (" + skill + ")";
 
         private static bool InRange(int stat) => stat >= ServerLimits.CreationStatMin && stat <= ServerLimits.CreationStatMax;
     }

@@ -52,5 +52,8 @@ namespace TheVerge.Core.Session
         /// попыток. Дольше 16 с человек решит сам.
         /// </summary>
         public static readonly int[] ReconnectDelaysMs = { 1000, 2000, 4000, 8000, 16000 };
+
+        /// <summary>Адрес логин-сервера на экране входа по умолчанию — локальный стенд (AGENTS.md §1).</summary>
+        public const string DefaultServerAddress = "127.0.0.1:2593";
     }
 }

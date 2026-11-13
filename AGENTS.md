@@ -101,7 +101,7 @@ The Verge/                         ← корень репо = Unity-проек�
 └── Assets/TheVerge/
     ├── Core/
     │   ├── Primitives/    Serial, Point3D, Direction, Layer, Hue …
-    │   ├── Session/       GameClient (Tick), конечный автомат логина
+    │   ├── Session/       GameClient (Tick), конечный автомат логина; Screens/ — модель экранов входа (ADR 0017)
     │   ├── World/         EntityStore (по Serial), Mobile, Item, пространственный индекс
     │   ├── Movement/      очередь шагов, предсказание, проверка проходимости
     │   ├── <Domain>/      Combat, Items, Gumps, Chat, Skills … — по стадиям плана
