@@ -9,6 +9,9 @@ namespace TheVerge.Bot
         /// <summary>Что сказать, если ответа сервера не дождались.</summary>
         string TimeoutProblem { get; }
 
+        /// <summary>Действие невозможно (не ждать конца времени); пусто — всё идёт своим чередом.</summary>
+        string Failure { get; }
+
         /// <summary>Отписаться от событий мира.</summary>
         void Finish();
     }

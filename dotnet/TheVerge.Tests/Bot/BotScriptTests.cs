@@ -5,6 +5,7 @@ using TheVerge.Bot;
 using TheVerge.Core.Chat;
 using TheVerge.Core.Items;
 using TheVerge.Core.Ports;
+using TheVerge.Core.Targeting;
 using TheVerge.Core.Primitives;
 using TheVerge.Core.World;
 using TheVerge.Tests.Core.Session;
@@ -25,6 +26,7 @@ namespace TheVerge.Tests.Bot
         private RecordingLog _log = null!;
         private RecordingItemSender _sender = null!;
         private RecordingSpeechSender _speech = null!;
+        private RecordingTargetSender _targets = null!;
         private BotWorld _world = null!;
 
         [SetUp]
@@ -34,9 +36,10 @@ namespace TheVerge.Tests.Bot
             _log = new RecordingLog();
             _sender = new RecordingItemSender();
             _speech = new RecordingSpeechSender();
+            _targets = new RecordingTargetSender();
             var store = new EntityStore();
             _world = new BotWorld(store, new WorldEnvironment(), new ContainerContents(store), new ItemCommands(store, _sender, _clock),
-                new SpeechCommands(_speech, _clock));
+                new SpeechCommands(_speech, _clock), new TargetCursor(_targets));
             store.Reset(new PlayerState(Player, 0x190, new Point3D(1, 1, 0), Direction.North, new MapSize(7168, 4096)));
         }
 
@@ -135,6 +138,87 @@ namespace TheVerge.Tests.Bot
             Assert.That(script.Problem, Does.Contain("(1500, 1600)").And.Contain("(1, 1, 0)"));
         }
 
+        [Test]
+        public void TargetHere_WaitsForCursor_AnswersPlayersCell()
+        {
+            var script = Script("target:here");
+
+            script.Step();
+            Assert.That(_targets.Responses, Is.Empty, "курсора ещё нет");
+
+            _world.Target.OnRequest(true, 42, 0);
+            script.Step();
+
+            Assert.That(script.IsDone, Is.True);
+            var r = _targets.Responses.Single();
+            Assert.That(r.Kind, Is.EqualTo(TargetKind.Location));
+            Assert.That(r.CursorId, Is.EqualTo(42));
+            Assert.That(r.Position, Is.EqualTo(new Point3D(1, 1, 0)));
+            Assert.That(r.Graphic, Is.EqualTo((ushort)0), "земля");
+        }
+
+        [Test]
+        public void TargetSelf_AnswersPlayerSerial()
+        {
+            var script = Script("target:self");
+            _world.Target.OnRequest(false, 5, 0);
+
+            script.Step();
+
+            Assert.That(_targets.Responses.Single().Serial, Is.EqualTo(Player));
+        }
+
+        [Test]
+        public void TargetCell_LocationNotAllowed_Problem()
+        {
+            var script = Script("target:1500,1600,-5");
+            _world.Target.OnRequest(false, 5, 0);
+
+            script.Step();
+
+            Assert.That(script.Problem, Does.Contain("только объект"));
+            Assert.That(_targets.Responses, Is.Empty);
+        }
+
+        [Test]
+        public void TargetCancel_SendsCancel()
+        {
+            var script = Script("target:cancel");
+            _world.Target.OnRequest(true, 5, 0);
+
+            script.Step();
+
+            Assert.That(_targets.Responses.Single().Position.X, Is.EqualTo(-1));
+        }
+
+        [Test]
+        public void TargetNoCursor_ProblemAfterTimeout()
+        {
+            var script = Script("target:here");
+
+            script.Step();
+            _clock.NowMs += BotScript.ActionTimeoutMs;
+            script.Step();
+
+            Assert.That(script.Problem, Does.Contain("курсор"));
+        }
+
+        [Test]
+        public void Seen_WaitsForItemOnGroundAtFeet()
+        {
+            var script = Script("seen:0x09D0");
+            _world.Entities.PlaceInWorld(new Serial(0x40000700), new ItemInfo(0x09D0, 1, new Point3D(2, 1, 0), 0, 0, 0));
+
+            script.Step();
+            Assert.That(script.IsDone, Is.False, "яблоко в соседней клетке");
+
+            _world.Entities.PlaceInWorld(new Serial(0x40000701), new ItemInfo(0x09D0, 1, new Point3D(1, 1, 0), 0, 0, 0));
+            script.Step();
+
+            Assert.That(script.IsDone, Is.True);
+            Assert.That(Text(), Does.Contain("Предмет 0x09D0 на земле: 0x40000701 в (1, 1, 0)."));
+        }
+
         private BotScript Script(params string[] actions)
         {
             var parsed = actions.Select(a => BotAction.Parse(a, out _)!).ToList();
@@ -142,6 +226,13 @@ namespace TheVerge.Tests.Bot
         }
 
         private string Text() => string.Join("\n", _log.Entries.Select(e => e.Message));
+
+        private sealed class RecordingTargetSender : ITargetSender
+        {
+            public List<TargetResponse> Responses { get; } = new List<TargetResponse>();
+
+            public void SendTarget(in TargetResponse response) => Responses.Add(response);
+        }
 
         private sealed class RecordingSpeechSender : ISpeechSender
         {

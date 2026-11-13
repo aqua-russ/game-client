@@ -51,6 +51,22 @@ namespace TheVerge.Tests.Bot
             Assert.That(parsed.Actions[1].Kind, Is.EqualTo(BotActionKind.WaitAt));
         }
 
+        [TestCase("target:here", BotActionKind.Target)]
+        [TestCase("target:self", BotActionKind.Target)]
+        [TestCase("target:cancel", BotActionKind.Target)]
+        [TestCase("target:1500,1600,-5", BotActionKind.Target)]
+        [TestCase("seen:0x09D0", BotActionKind.SeenItem)]
+        public void Action_TargetAndSeen(string text, BotActionKind kind)
+        {
+            var parsed = BotArguments.Parse(new[] { "--action", text });
+
+            Assert.That(parsed.Error, Is.Empty);
+            Assert.That(parsed.Actions[0].Kind, Is.EqualTo(kind));
+        }
+
+        [TestCase("target:")]
+        [TestCase("target:1500,1600")]
+        [TestCase("seen:apple")]
         [TestCase("say:")]
         [TestCase("say:   ")]
         [TestCase("at:1500")]

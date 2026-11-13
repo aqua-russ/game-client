@@ -53,6 +53,12 @@ namespace TheVerge.Bot
                 _step = null;
                 _index++;
             }
+            else if (_step.Failure.Length > 0)
+            {
+                Problem = _actions[_index].Text + ": " + _step.Failure;
+                _step.Finish();
+                _step = null;
+            }
             else if (_clock.NowMs - _startedAt >= ActionTimeoutMs)
             {
                 Problem = _actions[_index].Text + ": " + _step.TimeoutProblem;
@@ -69,6 +75,10 @@ namespace TheVerge.Bot
                     return new SayStep(_world, action.Argument);
                 case BotActionKind.WaitAt:
                     return new WaitAtStep(_world, _log, action.Argument);
+                case BotActionKind.Target:
+                    return new TargetStep(_world, _log, action.Argument);
+                case BotActionKind.SeenItem:
+                    return new SeenItemStep(_world, _log, action.Argument);
                 default:
                     return new OpenBackpackStep(_world, _log);
             }

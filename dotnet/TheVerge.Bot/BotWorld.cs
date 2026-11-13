@@ -1,5 +1,6 @@
 using TheVerge.Core.Chat;
 using TheVerge.Core.Items;
+using TheVerge.Core.Targeting;
 using TheVerge.Core.World;
 
 namespace TheVerge.Bot
@@ -8,8 +9,9 @@ namespace TheVerge.Bot
     public sealed class BotWorld
     {
         public BotWorld(EntityStore entities, WorldEnvironment environment, ContainerContents containers, ItemCommands items,
-            SpeechCommands speech)
+            SpeechCommands speech, TargetCursor target)
         {
+            Target = target;
             Speech = speech;
             Entities = entities;
             Environment = environment;
@@ -26,5 +28,7 @@ namespace TheVerge.Bot
         public ItemCommands Items { get; }
 
         public SpeechCommands Speech { get; }
+
+        public TargetCursor Target { get; }
     }
 }

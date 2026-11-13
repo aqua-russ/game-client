@@ -21,6 +21,8 @@ namespace TheVerge.Bot
             "персонаж не оказался в клетке (" + _x + ", " + _y + ") за " + BotScript.ActionTimeoutMs / 1000 + " с, он в " +
             (_world.Entities.Player?.Position.ToString() ?? "неизвестно где") + ".";
 
+        public string Failure => string.Empty;
+
         public bool Poll()
         {
             var player = _world.Entities.Player;

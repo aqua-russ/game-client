@@ -1,6 +1,7 @@
 using System;
 using TheVerge.Core.Chat;
 using TheVerge.Core.Items;
+using TheVerge.Core.Targeting;
 using TheVerge.Core.Ports;
 using TheVerge.Core.Session;
 using TheVerge.Core.World;
@@ -9,6 +10,7 @@ using TheVerge.Network.Packets.Account;
 using TheVerge.Network.Packets.Chat;
 using TheVerge.Network.Packets.Items;
 using TheVerge.Network.Packets.Session;
+using TheVerge.Network.Packets.Targeting;
 using TheVerge.Network.Packets.World;
 using TheVerge.Network.Session;
 using TheVerge.Network.Transport;
@@ -75,7 +77,9 @@ namespace TheVerge.Bot
             WorldHandlers.Register(dispatcher, entities, environment);
             ItemHandlers.Register(dispatcher, containers);
             var items = new ItemCommands(entities, new ItemSender(session), clock);
-            return new BotWorld(entities, environment, containers, items, new SpeechCommands(new SpeechSender(session), clock));
+            var target = new TargetCursor(new TargetSender(session));
+            TargetHandlers.Register(dispatcher, target);
+            return new BotWorld(entities, environment, containers, items, new SpeechCommands(new SpeechSender(session), clock), target);
         }
 
         // Seed логин-сервера: любое число, кроме 0 (NetState.cs: нулевой сервер отключает).

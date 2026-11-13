@@ -23,6 +23,8 @@ namespace TheVerge.Bot
             ? "сервер не открыл рюкзак за " + BotScript.ActionTimeoutMs / 1000 + " с."
             : "у персонажа не видно рюкзака: открыть нечего.";
 
+        public string Failure => string.Empty;
+
         public bool Poll()
         {
             if (!_backpack.IsValid)

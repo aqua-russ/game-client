@@ -16,6 +16,8 @@ namespace TheVerge.Bot
 
         public string TimeoutProblem => "очередь речи полна: фраза не ушла.";
 
+        public string Failure => string.Empty;
+
         public bool Poll()
         {
             var result = _world.Speech.Say(_text);

@@ -1,4 +1,5 @@
 using System.Globalization;
+using TheVerge.Core.Primitives;
 using TheVerge.Core.Session;
 
 namespace TheVerge.Bot
@@ -42,8 +43,41 @@ namespace TheVerge.Bot
                 return new BotAction(BotActionKind.WaitAt, argument, text);
             }
 
+            if (kind == "target" && (argument == "here" || argument == "self" || argument == "cancel" || TryParsePoint(argument, out _)))
+            {
+                return new BotAction(BotActionKind.Target, argument, text);
+            }
+
+            if (kind == "seen" && TryParseGraphic(argument, out _))
+            {
+                return new BotAction(BotActionKind.SeenItem, argument, text);
+            }
+
             error = "--action «" + text + "»: непонятное действие. Список действий: --help.";
             return null;
+        }
+
+        /// <summary>Клетка с высотой «x,y,z» из target:x,y,z.</summary>
+        public static bool TryParsePoint(string text, out Point3D point)
+        {
+            point = Point3D.Zero;
+            var parts = text.Split(',');
+            if (parts.Length != 3 || !TryParseCell(parts[0] + "," + parts[1], out var x, out var y) ||
+                !sbyte.TryParse(parts[2], NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var z))
+            {
+                return false;
+            }
+
+            point = new Point3D(x, y, z);
+            return true;
+        }
+
+        /// <summary>Графика «0x09D0» из seen:0x09D0.</summary>
+        public static bool TryParseGraphic(string text, out ushort graphic)
+        {
+            graphic = 0;
+            return text.StartsWith("0x", System.StringComparison.OrdinalIgnoreCase) &&
+                   ushort.TryParse(text.Substring(2), NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture, out graphic);
         }
 
         /// <summary>Клетка «x,y» из at:x,y.</summary>
