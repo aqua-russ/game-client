@@ -54,6 +54,8 @@ namespace TheVerge.Bot
                     return Value(args, ref i, v => parsed.Overrides.Character = v);
                 case "--config":
                     return Value(args, ref i, v => parsed.ConfigPath = v);
+                case "--data":
+                    return Value(args, ref i, v => parsed.DataFolder = v);
                 case "--port":
                     return ReadPort(args, ref i, parsed.Overrides);
                 case "--idle":

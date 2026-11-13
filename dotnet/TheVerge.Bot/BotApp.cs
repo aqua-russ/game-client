@@ -47,13 +47,21 @@ namespace TheVerge.Bot
                 return Exit(BotExitCode.BadArguments, "ОШИБКА: " + parsed.Error);
             }
 
-            switch (parsed.Mode)
+            if (parsed.Mode == BotMode.Help)
             {
-                case BotMode.Help:
-                    _output.Write(BotUsage.Text);
-                    return BotExitCode.Success;
-                case BotMode.SelfCheck:
-                    return BotSelfCheck.Run(_output);
+                _output.Write(BotUsage.Text);
+                return BotExitCode.Success;
+            }
+
+            var dataError = BotData.Detect(parsed.DataFolder, _output, out _);
+            if (dataError.Length > 0)
+            {
+                return Exit(BotExitCode.BadArguments, "ОШИБКА: " + dataError);
+            }
+
+            if (parsed.Mode == BotMode.SelfCheck)
+            {
+                return BotSelfCheck.Run(_output);
             }
 
             var settings = LoadSettings(parsed, out var problem);

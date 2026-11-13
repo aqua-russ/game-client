@@ -106,7 +106,8 @@
 
 | Настройка | dev-стенд (сейчас) | parity-стенд (для критериев стадий) |
 |---|---|---|
-| Данные `Data/ClientData` | **заглушка** (карты-копии, ~300 статиков, пустой multi) | полная установка классического клиента UO ([ADR 0003](adr/0003-world-data.md)); версия файлов: *пока не установлены* |
+| Данные (`dataDirectories`) | **заглушка** `Data/ClientData` (карты-копии, ~300 статиков, пустой multi) — до решения пользователя переключить свой сервер | полная установка классического клиента UO ([ADR 0003](adr/0003-world-data.md)); версия файлов **7.0.118.46** (установлены 13 ноября 2026, копия — `remaster/uo-data/Ultima Online Classic`, вне git): карта UOP, tiledata — 64-битные флаги, дома — `MultiCollection.uop` |
+| Версия клиента для сервера (`clientData.clientVersion`) | 7.0.95.0 | 7.0.95.0: иначе сервер берёт версию из `client.exe` в папке данных и требует её от клиентов (`ClientVerification.cs`) |
 | `theverge.sandbox.enable` | False | False |
 | `speedhack_detection` | **True** | True |
 | `clientVerification.invalidClientResponse` | Warn | Kick |

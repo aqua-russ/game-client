@@ -28,5 +28,8 @@ namespace TheVerge.Bot
 
         /// <summary>Повторять вход с нарастающей паузой (--reconnect).</summary>
         public bool Reconnect { get; internal set; }
+
+        /// <summary>Папка файлов данных UO (--data); null — файлы не нужны.</summary>
+        public string? DataFolder { get; internal set; }
     }
 }
