@@ -15,6 +15,7 @@ namespace TheVerge.Network.Packets.Account
             dispatcher.Register(CharacterListHandler.PacketId, new CharacterListHandler(flow.Progress, flow.Characters).Handle);
             dispatcher.Register(CharacterListUpdateHandler.PacketId, new CharacterListUpdateHandler(flow.Progress, flow.Characters).Handle);
             dispatcher.Register(DeleteResultHandler.PacketId, new DeleteResultHandler(flow.Characters).Handle);
+            dispatcher.Register(PopupMessageHandler.PacketId, new PopupMessageHandler(flow).Handle);
         }
     }
 }

@@ -125,6 +125,15 @@ namespace TheVerge.Tests.Core.Session
         }
 
         [Test]
+        public void MsInWorld_FromFirstTickInWorld_MinusOneBefore()
+        {
+            Assert.That(_session.MsInWorld(5000), Is.EqualTo(-1));
+            EnterWorld();
+
+            Assert.That(_session.MsInWorld(_clock.NowMs + 1234), Is.EqualTo(1234));
+        }
+
+        [Test]
         public void ServerClosesInWorld_Disconnected()
         {
             EnterWorld();

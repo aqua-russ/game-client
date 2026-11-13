@@ -29,7 +29,7 @@ namespace TheVerge.Bot
             AccountHandlers.Register(dispatcher, Flow);
             SessionHandlers.Register(dispatcher, World, new ServerRequests(sessionSender), Game);
             Session.Observer = Flow;
-            Core = new GameClient(Session, clock, Game);
+            Core = new GameClient(Session, clock, Game, new LoginWatchdog(Flow.Progress));
         }
 
         public NetworkSession Session { get; }

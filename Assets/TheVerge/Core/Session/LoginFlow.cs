@@ -102,6 +102,10 @@ namespace TheVerge.Core.Session
             Fail(new LoginError(KindOf(reason), (int)reason, detail));
         }
 
+        /// <summary>Игровой сервер не пустил персонажа в мир (другой персонаж аккаунта уже в мире).</summary>
+        public void OnCharacterRejected(CharacterRejectReason reason) =>
+            Fail(new LoginError(LoginErrorKind.CharacterRejected, (int)reason, reason.ToString()));
+
         /// <summary>Отказ логин-сервера (байт причины — ALRReason сервера). Соединение после него закрывает сервер.</summary>
         public void OnLoginRejected(LoginRejectReason reason)
         {

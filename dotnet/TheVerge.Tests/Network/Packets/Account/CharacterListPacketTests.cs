@@ -93,6 +93,19 @@ namespace TheVerge.Tests.Network.Packets.Account
         }
 
         [Test]
+        public void PopupMessage_CharInWorld_CharacterRejected()
+        {
+            var flow = GameLoginSent();
+            Dispatch(flow, AccountServerSamples.CharacterList(new[] { "AQua", null, null, null, null }, TwoCities, 0));
+            flow.Characters.Select(0);
+
+            Dispatch(flow, new byte[] { 0x53, 0x05 }); // SendPopupMessage(PMMessage.CharInWorld)
+
+            Assert.That(flow.Error.Kind, Is.EqualTo(LoginErrorKind.CharacterRejected));
+            Assert.That((CharacterRejectReason)flow.Error.Code, Is.EqualTo(CharacterRejectReason.CharInWorld));
+        }
+
+        [Test]
         public void PlayCharacter_73Bytes_SlotAndFeluccaFlag_WhereServerReads()
         {
             var bytes = PacketBytes.Write((ref PacketWriter w) => PlayCharacterPacket.Write(ref w, 3, "Борис"));

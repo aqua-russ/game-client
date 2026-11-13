@@ -65,6 +65,7 @@
 | Задержка действий | 500 мс | `actionDelay` (по умолчанию для pre-AoS) |
 | Бег при нулевой выносливости | запрещён | `stamina.cannotRunWhenFatigued` = True |
 | Максимум стата | 100 | `stats.statMax` |
+| Выгнать «неверный клиент» | через 20 с после проверки версии | `clientVerification.kickDelay` (`ClientVerification.cs`); по этому времени клиент подсказывает причину разрыва |
 | Дальность обзора | 18 клеток: на 0xC8 клиента сервер всегда отвечает 18 | `IncomingPlayerPackets.cs`, `SetUpdateRange` |
 
 ### 3.1. Настройки клиента
@@ -82,6 +83,7 @@
 | Язык клиента (0xBF 0x0B после входа в мир) | ENU (`ClientLimits.Language`) | как у классического клиента по умолчанию; сервер пишет его в `Mobile.Language`, тексты cliloc выбирает сам клиент |
 | Ping в мире (0x73) | раз в 10 с (`ClientLimits.PingIntervalMs`) | сервер отключает после 30 с без обмена данными (`NetState.Network.cs`: `NextActivityCheck`; `NetState.cs`, `CheckAlive`); треть предела переживёт два потерянных ping; после 0.6 — сверить с ClassicUO |
 | Ожидание ответа на выход (0xD1) | 5 с (`ClientLimits.LogoutTimeoutMs`) | дальше клиент закрывает соединение сам |
+| Ожидание ответа сервера во время входа | 30 с (`ClientLimits.ServerResponseTimeoutMs`) | список шардов, редирект, список персонажей, вход и загрузка мира; дальше — ошибка `Timeout`, клиент не ждёт молча; пока выбирает человек — не считается |
 | Бот: пауза между тиками | 16 мс (`BotRunner.TickIntervalMs`) | как кадр Unity при 60 FPS |
 | Бот: файлов лога пакетов | 20 последних (`PacketLogFiles.KeepCount`) | `Logs/packets/`, не в git; старые бот удаляет сам |
 

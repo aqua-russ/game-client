@@ -89,6 +89,31 @@ namespace TheVerge.Tests.Bot
         }
 
         [Test]
+        public void CharacterRejected_CharInWorld_Code6_ReasonInWords()
+        {
+            var (login, game) = LoginAndGame(new[] { "AQuaruss", null, null, null, null }, rejectCharacter: true);
+
+            var code = RunWithin(Runner(login, game), Target(2593, "AQuaruss"), 5000);
+
+            Assert.That(code, Is.EqualTo(BotExitCode.LoginRejected), LogText());
+            Assert.That(_log.Errors.Single(), Does.Contain("уже в мире"));
+        }
+
+        [Test]
+        public void ServerSilentAfterLogin_TimeoutError_NotHang()
+        {
+            var login = new FakeConnection();
+            login.Push(InboundEvent.Connected());
+            var queue = new System.Collections.Generic.Queue<IConnection>(new IConnection[] { login });
+            var runner = new BotRunner(() => queue.Dequeue(), new SteppingClock(1000), _log, null);
+
+            var code = RunWithin(runner, Target(2593), 5000);
+
+            Assert.That(code, Is.EqualTo(BotExitCode.ConnectionLost), LogText());
+            Assert.That(_log.Errors.Single(), Does.Contain("не ответил"));
+        }
+
+        [Test]
         public void NoCharacterName_FirstOccupiedSlotChosen()
         {
             var (login, game) = LoginAndGame(new[] { null, "AQua", null, null, null });
@@ -137,7 +162,7 @@ namespace TheVerge.Tests.Bot
             return false;
         }
 
-        private (FakeConnection Login, FakeConnection Game) LoginAndGame(string?[] characters)
+        private (FakeConnection Login, FakeConnection Game) LoginAndGame(string?[] characters, bool rejectCharacter = false)
         {
             var localhost = new byte[] { 127, 0, 0, 1 };
             var login = new FakeConnection();
@@ -151,6 +176,12 @@ namespace TheVerge.Tests.Bot
             game.Reply(
                 Packet(AccountServerSamples.SupportedFeatures(0x8000_02DF)),
                 Packet(AccountServerSamples.CharacterList(characters, new[] { new AccountServerSamples.City("Britain", "Inn", 1, 2, 3, 0) }, 0)));
+            if (rejectCharacter)
+            {
+                game.Reply(Packet(new byte[] { 0xBD, 0x00, 0x03 }), Packet(new byte[] { 0x53, 0x05 }));
+                return (login, game);
+            }
+
             // На выбор или создание персонажа: запрос версии, подтверждение входа, пакет мира без обработчика, конец загрузки.
             game.Reply(
                 Packet(new byte[] { 0xBD, 0x00, 0x03 }),
@@ -190,6 +221,20 @@ namespace TheVerge.Tests.Bot
             private readonly System.Diagnostics.Stopwatch _watch = System.Diagnostics.Stopwatch.StartNew();
 
             public long NowMs => _watch.ElapsedMilliseconds;
+        }
+
+        /// <summary>Часы, которые на каждый вопрос уходят вперёд: таймауты в десятки секунд проходят за миллисекунды.</summary>
+        private sealed class SteppingClock : TheVerge.Core.Ports.IClock
+        {
+            private readonly long _step;
+            private long _now;
+
+            public SteppingClock(long step)
+            {
+                _step = step;
+            }
+
+            public long NowMs => _now += _step;
         }
     }
 }

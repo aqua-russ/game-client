@@ -45,5 +45,7 @@ namespace TheVerge.Core.Session
         public const int PingIntervalMs = 10000;
         /// <summary>Сколько ждать ответа сервера на выход, мс; дальше клиент закрывает соединение сам.</summary>
         public const int LogoutTimeoutMs = 5000;
+        /// <summary>Сколько ждать ответа сервера во время входа (список, редирект, вход в мир), мс; дальше — ошибка.</summary>
+        public const int ServerResponseTimeoutMs = 30000;
     }
 }

@@ -47,7 +47,8 @@ namespace TheVerge.Bot
                     _log.Info("Подключение к " + login.Endpoint + "…");
                     client.Flow.Start(login.Host, login.Port, login.Credentials);
                     RunUntilDone(client, driver, stop);
-                    return BotOutcome.Report(client.Flow, driver, login.Endpoint, interrupt.IsCancellationRequested, _log);
+                    var msInWorld = client.Game.MsInWorld(_clock.NowMs);
+                    return BotOutcome.Report(client.Flow, driver, login.Endpoint, interrupt.IsCancellationRequested, msInWorld, _log);
                 }
                 finally
                 {

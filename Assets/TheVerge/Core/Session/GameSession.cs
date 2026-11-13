@@ -14,6 +14,7 @@ namespace TheVerge.Core.Session
         private readonly IServerConnector _connector;
         private readonly Ports.IClock _clock;
         private long _nextPingAt = -1;
+        private long _enteredWorldAt = -1;
         private long _pingSentAt = -1;
         private byte _sequence;
         private long _logoutRequestedAt;
@@ -30,10 +31,18 @@ namespace TheVerge.Core.Session
         /// <summary>Последняя измеренная задержка до сервера, мс; -1 — ещё не измерена.</summary>
         public long LastRttMs { get; private set; } = -1;
 
+        /// <summary>Сколько мс персонаж в мире (с первого тика в мире) к моменту <paramref name="now"/>; -1 — не входил.</summary>
+        public long MsInWorld(long now) => _enteredWorldAt < 0 ? -1 : now - _enteredWorldAt;
+
         public void Update(long now)
         {
             if (_progress.State == LoginState.InWorld)
             {
+                if (_enteredWorldAt < 0)
+                {
+                    _enteredWorldAt = now;
+                }
+
                 PingIfDue(now);
             }
             else if (_progress.State == LoginState.LoggingOut && now - _logoutRequestedAt >= ClientLimits.LogoutTimeoutMs)

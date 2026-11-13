@@ -16,5 +16,11 @@ namespace TheVerge.Core.Session
 
         /// <summary>Сервер прислал поток, который клиент не понимает.</summary>
         ProtocolError = 4,
+
+        /// <summary>Игровой сервер не пустил персонажа в мир; код — <see cref="CharacterRejectReason"/>.</summary>
+        CharacterRejected = 5,
+
+        /// <summary>Сервер не ответил вовремя (ClientLimits.ServerResponseTimeoutMs): клиент не ждёт молча.</summary>
+        Timeout = 6,
     }
 }
