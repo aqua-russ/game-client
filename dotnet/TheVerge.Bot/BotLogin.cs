@@ -26,6 +26,9 @@ namespace TheVerge.Bot
         /// <summary>Персонажа с именем <see cref="Character"/> нет — создать его (--create-character).</summary>
         public bool CreateCharacter { get; }
 
+        /// <summary>Сколько секунд стоять в мире перед выходом (--idle).</summary>
+        public int IdleSeconds { get; set; }
+
         public string Endpoint => Host + ":" + Port;
     }
 }

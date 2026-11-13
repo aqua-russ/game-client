@@ -22,6 +22,15 @@ namespace TheVerge.Tests.Bot
         }
 
         [Test]
+        public void Idle_SecondsOrError()
+        {
+            Assert.That(BotArguments.Parse(new[] { "--idle", "35" }).IdleSeconds, Is.EqualTo(35));
+            Assert.That(BotArguments.Parse(new string[0]).IdleSeconds, Is.EqualTo(0));
+            Assert.That(BotArguments.Parse(new[] { "--idle", "-1" }).Error, Does.Contain("--idle"));
+            Assert.That(BotArguments.Parse(new[] { "--idle", "abc" }).Error, Does.Contain("--idle"));
+        }
+
+        [Test]
         public void CreateCharacter_Flag()
         {
             Assert.That(BotArguments.Parse(new[] { "--character", "Борис", "--create-character" }).CreateCharacter, Is.True);

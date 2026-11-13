@@ -38,6 +38,9 @@ namespace TheVerge.Core.Session
         /// <summary>Персонаж в мире.</summary>
         InWorld = 11,
 
+        /// <summary>Выход запрошен, ждём ответа сервера; затем клиент закрывает соединение.</summary>
+        LoggingOut = 12,
+
         /// <summary>Вход закончился ошибкой (<see cref="LoginFlow.Error"/>).</summary>
         Failed = 100,
 

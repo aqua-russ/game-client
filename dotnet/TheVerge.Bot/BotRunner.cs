@@ -4,9 +4,6 @@ using System.Threading;
 using TheVerge.Core.Ports;
 using TheVerge.Core.Session;
 using TheVerge.Network.Diagnostics;
-using TheVerge.Network.Packets.Account;
-using TheVerge.Network.Packets.Session;
-using TheVerge.Network.Session;
 using TheVerge.Network.Transport;
 
 namespace TheVerge.Bot
@@ -40,22 +37,21 @@ namespace TheVerge.Bot
         public int Run(BotLogin login, CancellationToken interrupt)
         {
             using (var stop = CancellationTokenSource.CreateLinkedTokenSource(interrupt))
+            using (var client = new BotClient(_newConnection, _clock, _log, _packetLog, stop.Token, NewSeed()))
             {
-                var dispatcher = new PacketDispatcher(_log);
-                using (var session = new NetworkSession(dispatcher, _log) { PacketLog = _packetLog })
+                var driver = new BotDriver(_log, login, client.World, client.Game, _clock);
+                Action<LoginState> onState = state => driver.OnStateChanged(client.Flow, state);
+                client.Flow.StateChanged += onState;
+                try
                 {
-                    var flow = new LoginFlow(new AccountSender(session), new ServerConnector(session, _newConnection, stop.Token), NewSeed());
-                    var sessionSender = new SessionSender(session);
-                    var world = new WorldEntry(flow.Progress, sessionSender);
-                    AccountHandlers.Register(dispatcher, flow);
-                    SessionHandlers.Register(dispatcher, world, new ServerRequests(sessionSender));
-                    session.Observer = flow;
                     _log.Info("Подключение к " + login.Endpoint + "…");
-                    flow.Start(login.Host, login.Port, login.Credentials);
-                    var driver = new BotDriver(_log, login, world);
-                    flow.StateChanged += state => driver.OnStateChanged(flow, state);
-                    RunUntilDone(session, new GameClient(session, _clock), flow, driver, stop);
-                    return BotOutcome.Report(flow, driver, login.Endpoint, interrupt.IsCancellationRequested, _log);
+                    client.Flow.Start(login.Host, login.Port, login.Credentials);
+                    RunUntilDone(client, driver, stop);
+                    return BotOutcome.Report(client.Flow, driver, login.Endpoint, interrupt.IsCancellationRequested, _log);
+                }
+                finally
+                {
+                    client.Flow.StateChanged -= onState;
                 }
             }
         }
@@ -65,20 +61,20 @@ namespace TheVerge.Bot
 
         // Решение бота (Act) пишет пакет в исходящие; он уходит в конце следующего тика. Поэтому «готово» проверяется после
         // тика и до решения: соединение закрывается, только когда последний пакет бота уже отправлен.
-        private void RunUntilDone(NetworkSession session, GameClient client, LoginFlow flow, BotDriver driver, CancellationTokenSource stop)
+        private void RunUntilDone(BotClient client, BotDriver driver, CancellationTokenSource stop)
         {
             while (true)
             {
-                client.Tick(_clock.NowMs);
-                var done = flow.IsFinished || BotDriver.IsGoal(flow) || driver.Problem.Length > 0;
-                if (done && session.IsClosed)
+                client.Core.Tick(_clock.NowMs);
+                var done = client.Flow.IsFinished || driver.Problem.Length > 0;
+                if (done && client.Session.IsClosed)
                 {
                     return;
                 }
 
                 if (!done)
                 {
-                    driver.Act(flow);
+                    driver.Act(client.Flow);
                 }
                 else if (!stop.IsCancellationRequested)
                 {

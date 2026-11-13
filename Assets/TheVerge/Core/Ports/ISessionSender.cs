@@ -3,8 +3,8 @@ using TheVerge.Core.Session;
 namespace TheVerge.Core.Ports
 {
     /// <summary>
-    /// Отправка служебных пакетов игровой сессии (ADR 0008 п. 1): ответ на запрос версии, язык, дальность обзора; в задаче
-    /// 1.10 — ping и выход. Реализация — Network/Packets/Session/SessionSender.
+    /// Отправка служебных пакетов игровой сессии (ADR 0008 п. 1): ответ на запрос версии, язык, дальность обзора, ping,
+    /// выход. Реализация — Network/Packets/Session/SessionSender.
     /// </summary>
     public interface ISessionSender
     {
@@ -14,5 +14,9 @@ namespace TheVerge.Core.Ports
         void SendLanguage(string language);
 
         void SendViewRange(int range);
+
+        void SendPing(byte sequence);
+
+        void SendLogout();
     }
 }

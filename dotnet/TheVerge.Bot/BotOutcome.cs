@@ -21,6 +21,9 @@ namespace TheVerge.Bot
                 case LoginErrorKind.None when interrupted:
                     log.Info("Остановлено по Ctrl+C: соединение закрыто.");
                     return BotExitCode.Interrupted;
+                case LoginErrorKind.None when driver.LoggedOut:
+                    log.Info("Вышел из игры: соединение закрыто ботом.");
+                    return BotExitCode.Success;
                 case LoginErrorKind.None:
                     log.Info("Готово: соединение закрыто ботом.");
                     return BotExitCode.Success;

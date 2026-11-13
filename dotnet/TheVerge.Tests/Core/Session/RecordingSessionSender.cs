@@ -14,5 +14,9 @@ namespace TheVerge.Tests.Core.Session
         public void SendLanguage(string language) => Calls.Add("language " + language);
 
         public void SendViewRange(int range) => Calls.Add("range " + range);
+
+        public void SendPing(byte sequence) => Calls.Add("ping " + sequence);
+
+        public void SendLogout() => Calls.Add("logout");
     }
 }

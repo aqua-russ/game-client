@@ -5,18 +5,21 @@ namespace TheVerge.Core.Session
     /// <summary>
     /// Ядро клиента (AGENTS.md §2.3; ADR 0013 п. 3, 7). Один <see cref="Tick"/> на кадр Unity или шаг цикла бота, всегда
     /// в одном потоке: разбирает пришедшее по порядку, пока не вышел бюджет тика (ClientLimits.TickBudgetMs), но не
-    /// меньше одного события за тик, а в конце отправляет накопленное за тик одним вызовом. Номеров пакетов ядро
+    /// меньше одного события за тик, затем даёт время таймерам (<see cref="ITickHandler"/>: ping, ожидания), а в конце
+    /// отправляет накопленное за тик одним вызовом. Номеров пакетов ядро
     /// не знает: разбор — за портом <see cref="INetworkSession"/>.
     /// </summary>
     public sealed class GameClient
     {
         private readonly INetworkSession _network;
         private readonly IClock _clock;
+        private readonly ITickHandler[] _timers;
 
-        public GameClient(INetworkSession network, IClock clock)
+        public GameClient(INetworkSession network, IClock clock, params ITickHandler[] timers)
         {
             _network = network;
             _clock = clock;
+            _timers = timers;
         }
 
         /// <summary>
@@ -34,6 +37,11 @@ namespace TheVerge.Core.Session
                 {
                     break;
                 }
+            }
+
+            for (var i = 0; i < _timers.Length; i++)
+            {
+                _timers[i].Update(now);
             }
 
             _network.Flush();

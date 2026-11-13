@@ -25,6 +25,33 @@ namespace TheVerge.Tests.Network.Session
         }
 
         [Test]
+        public void Disconnect_ClosesCurrentConnection_AsRequestedByClient()
+        {
+            // Выход из игры (PLAN Стадия 1, п. 10): после ответа сервера на 0xD1 соединение закрывает клиент.
+            var session = NewSession();
+            var connector = new ServerConnector(session, NewConnection, CancellationToken.None);
+            connector.Connect("127.0.0.1", 2593);
+            _made[0].Push(InboundEvent.Connected());
+            session.ProcessNext();
+
+            connector.Disconnect();
+            while (session.ProcessNext())
+            {
+            }
+
+            Assert.That(_observer.Events, Is.EqualTo(new[] { "connected", "Requested:" }));
+            Assert.That(_made[0].Send(new byte[] { 1 }), Is.False, "после закрытия отправка не проходит");
+        }
+
+        [Test]
+        public void Disconnect_WithoutConnection_Nothing()
+        {
+            var connector = new ServerConnector(NewSession(), NewConnection, CancellationToken.None);
+
+            Assert.DoesNotThrow(new System.Action(() => connector.Disconnect()));
+        }
+
+        [Test]
         public void Connect_NewConnectionConnectedAndUsedBySession()
         {
             var session = NewSession();

@@ -5,7 +5,7 @@ namespace TheVerge.Bot
 {
     /// <summary>
     /// Решения бота во время входа — то, что в игре делает человек: выбрать шард (первый в списке) и персонажа (по имени
-    /// из настроек или первого; с --create-character — создать). Вызывается после каждого тика, поэтому выбор уходит
+    /// из настроек или первого; с --create-character — создать), постоять в мире --idle секунд и выйти. Вызывается после каждого тика, поэтому выбор уходит
     /// серверу в конце следующего тика. Пишет в лог, докуда дошёл вход. Выбрать нельзя — <see cref="Problem"/>.
     /// </summary>
     internal sealed class BotDriver
@@ -13,24 +13,35 @@ namespace TheVerge.Bot
         private readonly ILog _log;
         private readonly BotLogin _login;
         private readonly WorldEntry _world;
+        private readonly GameSession _game;
+        private readonly IClock _clock;
         private LoginState _decided;
+        private long _inWorldAt = -1;
 
-        public BotDriver(ILog log, BotLogin login, WorldEntry world)
+        public BotDriver(ILog log, BotLogin login, WorldEntry world, GameSession game, IClock clock)
         {
             _log = log;
             _login = login;
             _world = world;
+            _game = game;
+            _clock = clock;
         }
+
+        /// <summary>Бот попросил выйти из игры (после --idle секунд в мире).</summary>
+        public bool LoggedOut { get; private set; }
 
         /// <summary>Почему бот не может идти дальше (нет нужного персонажа); пусто — может.</summary>
         public string Problem { get; private set; } = string.Empty;
 
-        /// <summary>Цель бота достигнута: персонаж в мире (ожидание и выход — задача 1.10).</summary>
-        public static bool IsGoal(LoginFlow flow) => flow.State == LoginState.InWorld;
-
-        /// <summary>Принять решение, если вход его ждёт (шард, персонаж). Каждое решение — один раз.</summary>
+        /// <summary>Принять решение, если вход его ждёт (шард, персонаж, выход из мира). Каждое решение — один раз.</summary>
         public void Act(LoginFlow flow)
         {
+            if (flow.State == LoginState.InWorld)
+            {
+                LeaveWhenIdle();
+                return;
+            }
+
             if (flow.State == _decided)
             {
                 return;
@@ -67,6 +78,27 @@ namespace TheVerge.Bot
                     _log.Info("Персонаж в мире.");
                     break;
             }
+        }
+
+        private void LeaveWhenIdle()
+        {
+            if (_inWorldAt < 0)
+            {
+                _inWorldAt = _clock.NowMs;
+                if (_login.IdleSeconds > 0)
+                {
+                    _log.Info("Стою в мире " + _login.IdleSeconds + " с.");
+                }
+            }
+
+            if (_clock.NowMs - _inWorldAt < _login.IdleSeconds * 1000L)
+            {
+                return;
+            }
+
+            _log.Info("Выход из игры" + (_game.LastRttMs >= 0 ? " (задержка до сервера " + _game.LastRttMs + " мс)" : string.Empty) + "…");
+            LoggedOut = true;
+            _game.Logout();
         }
 
         private void ChooseShard(LoginFlow flow)

@@ -38,5 +38,12 @@ namespace TheVerge.Core.Session
         /// персонажа). ENU — как у классического клиента по умолчанию; тексты cliloc выбирает сам клиент.
         /// </summary>
         public const string Language = "ENU";
+        /// <summary>
+        /// Пауза между ping в мире, мс. Сервер отключает после 30 с без обмена данными (NetState.cs, CheckAlive): треть
+        /// предела переживёт два потерянных ping.
+        /// </summary>
+        public const int PingIntervalMs = 10000;
+        /// <summary>Сколько ждать ответа сервера на выход, мс; дальше клиент закрывает соединение сам.</summary>
+        public const int LogoutTimeoutMs = 5000;
     }
 }

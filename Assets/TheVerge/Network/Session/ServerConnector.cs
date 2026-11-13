@@ -15,6 +15,7 @@ namespace TheVerge.Network.Session
         private readonly NetworkSession _session;
         private readonly Func<IConnection> _newConnection;
         private readonly CancellationToken _cancellation;
+        private CancellationTokenSource? _current;
 
         /// <param name="cancellation">Отмена закрывает текущее соединение (Ctrl+C бота, выход из игры).</param>
         public ServerConnector(NetworkSession session, Func<IConnection> newConnection, CancellationToken cancellation)
@@ -24,11 +25,16 @@ namespace TheVerge.Network.Session
             _cancellation = cancellation;
         }
 
+        /// <summary>Закрыть текущее соединение: его отмена даёт событие закрытия «по просьбе клиента».</summary>
+        public void Disconnect() => _current?.Cancel();
+
         public void Connect(string host, int port)
         {
             var connection = _newConnection();
             _session.Attach(connection);
-            connection.Connect(host, port, _cancellation);
+            // Прежний источник отмены не освобождается: его токен ещё может слушать фоновый поток закрытого соединения.
+            _current = CancellationTokenSource.CreateLinkedTokenSource(_cancellation);
+            connection.Connect(host, port, _current.Token);
         }
     }
 }

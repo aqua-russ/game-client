@@ -7,5 +7,8 @@ namespace TheVerge.Core.Ports
     public interface IServerConnector
     {
         void Connect(string host, int port);
+
+        /// <summary>Закрыть текущее соединение (выход из игры). Итог — закрытие «по просьбе клиента» в IConnectionObserver.</summary>
+        void Disconnect();
     }
 }

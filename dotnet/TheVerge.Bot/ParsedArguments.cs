@@ -17,5 +17,8 @@ namespace TheVerge.Bot
 
         /// <summary>Персонажа из --character нет — создать (--create-character).</summary>
         public bool CreateCharacter { get; internal set; }
+
+        /// <summary>Секунд в мире перед выходом (--idle); по умолчанию 0 — выйти сразу.</summary>
+        public int IdleSeconds { get; internal set; }
     }
 }

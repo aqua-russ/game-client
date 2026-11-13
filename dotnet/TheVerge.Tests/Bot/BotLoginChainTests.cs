@@ -49,7 +49,7 @@ namespace TheVerge.Tests.Bot
         [Test]
         public void CharacterChosen_EntersWorld_AnswersVersion_SendsLanguageAndRange()
         {
-            // Задача 1.9: вход в мир. Цель бота — персонаж в мире (ожидание и выход — задача 1.10).
+            // Задача 1.9: вход в мир.
             var (login, game) = LoginAndGame(new[] { "AQuaruss", null, null, null, null });
 
             var code = RunWithin(Runner(login, game), Target(2593, "AQuaruss"), 5000);
@@ -60,6 +60,32 @@ namespace TheVerge.Tests.Bot
             var languageAndRange = new byte[] { 0xBF, 0x00, 0x09, 0x00, 0x0B, (byte)'E', (byte)'N', (byte)'U', 0x00, 0xC8, 18 };
             Assert.That(Contains(afterChoice, languageAndRange), Is.True, "язык и сразу за ним дальность обзора");
             Assert.That(Infos(), Does.Contain("в мире").And.Contain("633"));
+        }
+
+        [Test]
+        public void InWorld_IdleZero_LogsOutAtOnce_ServerAck_Success()
+        {
+            // Задача 1.10: в мире бот ждёт --idle секунд (здесь 0) и выходит: 0xD1 → 0xD1 0x01 → соединение закрыл бот.
+            var (login, game) = LoginAndGame(new[] { "AQuaruss", null, null, null, null });
+
+            var code = RunWithin(Runner(login, game), Target(2593, "AQuaruss"), 5000);
+
+            Assert.That(code, Is.EqualTo(BotExitCode.Success), LogText());
+            Assert.That(game.Sent.Last(), Is.EqualTo(new byte[] { 0xD1, 0x00 }));
+            Assert.That(Infos(), Does.Contain("Вышел из игры"));
+            Assert.That(_log.Errors, Is.Empty);
+        }
+
+        [Test]
+        public void InWorld_IdleOneSecond_LogoutNotBefore()
+        {
+            var (login, game) = LoginAndGame(new[] { "AQuaruss", null, null, null, null });
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+
+            var code = RunWithin(Runner(login, game), Target(2593, "AQuaruss", idleSeconds: 1), 5000);
+
+            Assert.That(code, Is.EqualTo(BotExitCode.Success), LogText());
+            Assert.That(watch.ElapsedMilliseconds, Is.GreaterThanOrEqualTo(1000));
         }
 
         [Test]
@@ -131,6 +157,8 @@ namespace TheVerge.Tests.Bot
                 Packet(WorldSamples.LoginConfirm(0x3D, 633, 858, 0)),
                 Packet(new byte[] { 0x4F, 0x10 }),
                 Packet(new byte[] { 0x55 }));
+            game.Reply(); // ответ на версию, язык и дальность — ничего
+            game.Reply(Packet(new byte[] { 0xD1, 0x01 })); // на выход — разрешение (SendLogoutAck)
             return (login, game);
         }
 
@@ -150,8 +178,8 @@ namespace TheVerge.Tests.Bot
 
         private static InboundEvent Packet(byte[] bytes) => InboundEvent.FromPacket(bytes, bytes.Length, new CountingArrayPool());
 
-        private static BotLogin Target(int port, string character = "", bool createCharacter = false) =>
-            new BotLogin("127.0.0.1", port, new LoginCredentials("player", Password), character, createCharacter);
+        private static BotLogin Target(int port, string character = "", bool createCharacter = false, int idleSeconds = 0) =>
+            new BotLogin("127.0.0.1", port, new LoginCredentials("player", Password), character, createCharacter) { IdleSeconds = idleSeconds };
 
         private string LogText() => string.Join("\n", _log.Entries.Select(e => e.Level + ": " + e.Message));
 

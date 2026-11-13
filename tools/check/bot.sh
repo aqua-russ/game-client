@@ -38,7 +38,7 @@ expect_code() { # что проверяем, ожидаемый код, лог, 
   if [ "$got" -eq "$want" ]; then ok "$what (код $got)"; else fail "$what: код $got, ждали $want. Лог: Logs/check/$log"; tail -n 5 "$LOGS/$log"; fi
 }
 
-echo "1/6 Сборка бота…"
+echo "1/7 Сборка бота…"
 if ! dotnet build dotnet/TheVerge.Bot -nologo -v:q -tl:off > "$LOGS/bot-build.log" 2>&1; then
   echo "ОШИБКА: бот не собрался. Лог: Logs/check/bot-build.log"; exit 1
 fi
@@ -56,7 +56,7 @@ printf '{"login":"%s","password":"%s"}\n' "$LOGIN" "$PASSWORD" > "$TMP/bot.json"
 printf '{"login":"botcheck"}\n' > "$TMP/nopass.json"
 chmod 600 "$TMP/bot.json" "$TMP/nopass.json"
 
-echo "2/6 Скрытый ввод пароля и Ctrl+C (сервер не нужен)…"
+echo "2/7 Скрытый ввод пароля и Ctrl+C (сервер не нужен)…"
 expect_code "пароль спрошен и не показан на экране" 2 bot-password.log \
   python3 "$PTY" --secret "$PASSWORD" --answer "Пароль=$PASSWORD" -- dotnet "$BOT_DLL" --config "$TMP/nopass.json" --no-packet-log --port 1
 expect_code "setup.sh: пароль не показан, файл записан" 0 bot-setup.log \
@@ -67,7 +67,7 @@ MODE="$(python3 -c "import os,stat,sys; print(oct(stat.S_IMODE(os.stat(sys.argv[
 expect_code "Ctrl+C во время подключения" 130 bot-ctrl-c.log \
   python3 "$PTY" --ctrl-c-after 1.5 -- dotnet "$BOT_DLL" --config "$TMP/bot.json" --no-packet-log --host 10.255.255.1
 
-echo "3/6 Запуск сервера (до 90 с)…"
+echo "3/7 Запуск сервера (до 90 с)…"
 (cd "$SERVER_DIR" && exec dotnet ModernUO.dll > "$LOGS/server.log" 2>&1 < /dev/null) &
 SERVER_PID=$!
 for _ in $(seq 1 90); do grep -q "Listening: " "$LOGS/server.log" 2>/dev/null && break; kill -0 "$SERVER_PID" 2>/dev/null || break; sleep 1; done
@@ -77,7 +77,7 @@ fi
 grep -q "Manual allowlist loaded" "$LOGS/server.log" && ok "сервер запущен, список исключений 127.0.0.1 включён" \
   || fail "сервер запущен, но список исключений не включён (нет ip-allowlist.json с enabled: true — шаблон ConfigurationTemplates/theverge)"
 
-echo "4/6 Бот против сервера…"
+echo "4/7 Бот против сервера…"
 # Сначала вход с настоящим паролем, потом неверный: при автосоздании аккаунта неверный пароль первым создал бы
 # аккаунт со случайным паролем.
 # THEVERGE_BOT_CHECK_CREATE=1 — создать персонажа, если его нет (для чистого стенда в среде агента; ваш аккаунт так не трогается).
@@ -86,8 +86,8 @@ CREATE=()
 bot --config "$SECRETS" "${CREATE[@]}" > "$LOGS/bot-login.log" 2>&1
 CODE=$?
 if [ "$CODE" -eq 0 ] && grep -q "Игровой сервер: " "$LOGS/bot-login.log" && grep -qE "Выбран персонаж|Создаётся персонаж" "$LOGS/bot-login.log" \
-    && grep -q "Персонаж в мире" "$LOGS/bot-login.log"; then
-  ok "вход с вашим логином: $(grep -o 'Выбран шард «[^»]*»' "$LOGS/bot-login.log" | head -n 1), $(grep -oE 'Игровой сервер: [0-9.]*[0-9]:[0-9]+' "$LOGS/bot-login.log" | head -n 1), $(grep -oE '(Выбран|Создаётся) персонаж «[^»]*»' "$LOGS/bot-login.log" | head -n 1), персонаж в мире (код 0)"
+    && grep -q "Персонаж в мире" "$LOGS/bot-login.log" && grep -q "Вышел из игры" "$LOGS/bot-login.log"; then
+  ok "вход с вашим логином: $(grep -o 'Выбран шард «[^»]*»' "$LOGS/bot-login.log" | head -n 1), $(grep -oE 'Игровой сервер: [0-9.]*[0-9]:[0-9]+' "$LOGS/bot-login.log" | head -n 1), $(grep -oE '(Выбран|Создаётся) персонаж «[^»]*»' "$LOGS/bot-login.log" | head -n 1), персонаж в мире, вышел (код 0)"
 elif [ "$CODE" -eq 6 ]; then
   fail "вход с вашим логином: сервер отказал ($(grep -o 'отказал во входе: [^(.]*' "$LOGS/bot-login.log" | head -n 1)). Если причина «сервер не пустил по своей причине» — аккаунт бота не создан: см. PROGRESS.md, «Вопросы пользователю». Лог: Logs/check/bot-login.log"
 elif [ "$CODE" -eq 1 ] && grep -q "нет персонаж" "$LOGS/bot-login.log"; then
@@ -112,11 +112,21 @@ if [ -n "$NEWEST" ] && grep -q "CONNECTED" "$NEWEST" && grep -q "0xEF" "$NEWEST"
 else fail "в логе пакетов нет CONNECTED, 0xEF, 0x80 и CLOSED"; fi
 if grep -q "$PASSWORD" "$LOGS/bot-run.log" ${NEWEST:+"$NEWEST"}; then fail "пароль попал на экран или в лог"; else ok "пароля нет ни на экране, ни в логе"; fi
 
-echo "5/6 Молчаливое подключение на 7 с, затем бот…"
+echo "5/7 В мире 35 с — дольше, чем сервер ждёт без обмена данными (30 с), — выход и сразу вход снова…"
+if grep -q "Вышел из игры" "$LOGS/bot-login.log"; then
+  expect_code "35 с в мире без разрыва, выход" 0 bot-idle.log bot --config "$SECRETS" --idle 35 --no-packet-log
+  grep -q "Вышел из игры" "$LOGS/bot-idle.log" && ok "ping держит соединение: $(grep -o 'задержка до сервера [0-9]* мс' "$LOGS/bot-idle.log" | head -n 1)" \
+    || fail "после 35 с в мире нет выхода. Лог: Logs/check/bot-idle.log"
+  expect_code "сразу после выхода — вход снова" 0 bot-relogin.log bot --config "$SECRETS" --no-packet-log
+else
+  fail "пропущено: вход с вашим логином не удался (шаг 4)"
+fi
+
+echo "6/7 Молчаливое подключение на 7 с, затем бот…"
 python3 -c "import socket,time; s=socket.create_connection(('127.0.0.1',2593)); time.sleep(7); s.close()"
 expect_code "после молчаливого подключения сервер по-прежнему отвечает боту (127.0.0.1 не заблокирован)" 6 bot-after-silent.log bot --config "$TMP/bot.json" --no-packet-log
 
-echo "6/6 Остановка сервера, затем бот…"
+echo "7/7 Остановка сервера, затем бот…"
 stop_server
 expect_code "сервер остановлен — бот честно сообщает, что не подключился" 2 bot-no-server.log bot --config "$TMP/bot.json" --no-packet-log
 

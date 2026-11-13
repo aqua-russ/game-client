@@ -8,6 +8,10 @@ namespace TheVerge.Tests.Core.Session
     {
         public List<string> Endpoints { get; } = new List<string>();
 
+        public int Disconnects { get; private set; }
+
         public void Connect(string host, int port) => Endpoints.Add(host + ":" + port);
+
+        public void Disconnect() => Disconnects++;
     }
 }

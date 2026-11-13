@@ -89,7 +89,8 @@ namespace TheVerge.Tests.Network.Packets.Session
             var flow = new LoginFlow(new RecordingAccountSender(), new RecordingConnector(), 1);
             var sessionSender = new SessionSender(session);
             var world = new WorldEntry(flow.Progress, sessionSender);
-            SessionHandlers.Register(dispatcher, world, new ServerRequests(sessionSender));
+            SessionHandlers.Register(dispatcher, world, new ServerRequests(sessionSender),
+                new GameSession(flow.Progress, sessionSender, new RecordingConnector(), new FakeClock()));
             flow.Start("127.0.0.1", 2593, new LoginCredentials("player", "secret"));
             flow.OnConnected();
             flow.OnShardList(new[] { new ShardEntry(0, "Shard", 0, 0, "127.0.0.1") });

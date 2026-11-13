@@ -18,6 +18,21 @@ namespace TheVerge.Tests.Core.Session
         }
 
         [Test]
+        public void Tick_TimersAfterPacketsBeforeSend_WithFrameTime()
+        {
+            // Таймер (ping) пишет пакет — он уходит в том же тике (GameSession, PLAN Стадия 1, п. 10).
+            var clock = new FakeClock { NowMs = 40 };
+            var network = new FakeNetworkSession(clock);
+            network.Push(1, 0);
+            var timer = new RecordingTimer(network);
+            var client = new GameClient(network, clock, timer);
+
+            client.Tick(40);
+
+            Assert.That(network.Calls, Is.EqualTo(new[] { "обработал 1", "таймер 40", "отправил" }));
+        }
+
+        [Test]
         public void Tick_ProcessesInOrderOfArrival_ThenSendsOnce()
         {
             var clock = new FakeClock();
@@ -113,6 +128,18 @@ namespace TheVerge.Tests.Core.Session
             {
                 "обработал 1", "обработал 2", "обработал 3", "отправил", "обработал 4", "отправил",
             }));
+        }
+
+        private sealed class RecordingTimer : ITickHandler
+        {
+            private readonly FakeNetworkSession _network;
+
+            public RecordingTimer(FakeNetworkSession network)
+            {
+                _network = network;
+            }
+
+            public void Update(long now) => _network.Calls.Add("таймер " + now);
         }
     }
 }

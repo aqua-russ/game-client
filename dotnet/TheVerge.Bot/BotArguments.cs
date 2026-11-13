@@ -53,6 +53,8 @@ namespace TheVerge.Bot
                     return Value(args, ref i, v => parsed.ConfigPath = v);
                 case "--port":
                     return ReadPort(args, ref i, parsed.Overrides);
+                case "--idle":
+                    return ReadIdle(args, ref i, parsed);
                 default:
                     return "неизвестный параметр «" + args[i] + "». Список параметров: --help.";
             }
@@ -74,6 +76,17 @@ namespace TheVerge.Bot
         {
             var error = Value(args, ref i, v => overrides.Port = ParsePort(v));
             return error.Length == 0 && overrides.Port == null ? "--port: нужен номер порта от 1 до 65535." : error;
+        }
+
+        private static string ReadIdle(string[] args, ref int i, ParsedArguments parsed)
+        {
+            var valid = true;
+            var error = Value(args, ref i, v =>
+            {
+                valid = int.TryParse(v, NumberStyles.None, CultureInfo.InvariantCulture, out var seconds);
+                parsed.IdleSeconds = seconds;
+            });
+            return error.Length == 0 && !valid ? "--idle: нужно число секунд, 0 или больше." : error;
         }
 
         private static int? ParsePort(string text) =>

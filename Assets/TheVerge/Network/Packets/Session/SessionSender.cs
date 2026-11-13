@@ -30,11 +30,28 @@ namespace TheVerge.Network.Packets.Session
             _session.Outgoing.Commit(writer.Position);
         }
 
+        public void SendPing(byte sequence)
+        {
+            var writer = Begin(PingPacket.PacketId);
+            PingPacket.Write(ref writer, sequence);
+            _session.Outgoing.Commit(writer.Position);
+        }
+
+        public void SendLogout()
+        {
+            var writer = Begin(LogoutPacket.PacketId);
+            LogoutPacket.Write(ref writer);
+            _session.Outgoing.Commit(writer.Position);
+        }
+
         public void SendViewRange(int range)
         {
-            var writer = new PacketWriter(_session.Outgoing.Reserve(PacketTable.Get(PacketDirection.ClientToServer, ViewRangePacket.PacketId).FixedLength));
+            var writer = Begin(ViewRangePacket.PacketId);
             ViewRangePacket.Write(ref writer, range);
             _session.Outgoing.Commit(writer.Position);
         }
+
+        private PacketWriter Begin(byte fixedLengthId) =>
+            new PacketWriter(_session.Outgoing.Reserve(PacketTable.Get(PacketDirection.ClientToServer, fixedLengthId).FixedLength));
     }
 }
