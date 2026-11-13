@@ -107,6 +107,7 @@
 | `clientVerification.invalidClientResponse` | Warn | Kick |
 | `serverListing.address` / `autoDetect` | 127.0.0.1 / False | 127.0.0.1 / False |
 | Аккаунты | GM и игрок | GM (подготовка сцены) и игрок (тесты движения и боя) |
+| Автосоздание аккаунта при первом входе (`accountHandler.enableAutoAccountCreation`) | да: удобно для разработки, бот входит без подготовки | да (как на dev-стенде); на открытом сервере — выключить (`docs/TECH-DEBT.md` §3) |
 | Аккаунтов с одного адреса (`accountHandler.maxAccountsPerIP`) | 10: бот, тестовые аккаунты и нагрузочные проверки входят с 127.0.0.1 | 10 (решить перед нагрузочным тестированием) |
 | Ручной список исключений (`ip-allowlist.json`, `ip-allowlist-theverge.txt`) | включён: 127.0.0.1 | выключен |
 

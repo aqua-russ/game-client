@@ -22,6 +22,7 @@
 | Песочница Минока и команды `[minoc:` (клиент их больше не шлёт: старая сеть удалена в 0.9) | `Custom/MinocSandboxInitializer.cs` + перехваты в `IncomingAccountPackets`, `IncomingMessagePackets`, `IncomingEntityPackets` | удалить целиком | после Стадий 4–7 |
 | Нет комментариев `// THE VERGE:` в ранних правках движка | `SpanWriter.cs`, `OutgoingAccountPackets.cs`, `OutgoingMobilePackets.cs` | добавить комментарии | при следующей правке сервера |
 | Снята проверка запрещённых слов в именах | `Misc/NameVerification.cs` | вернуть (с поддержкой кириллицы) | перед открытым тестом |
+| Автосоздание аккаунта при входе с неизвестным логином (решение пользователя 13 ноября 2026: оставить на время разработки — на нём держатся `bot.sh` и `stage1-long.sh`) | `modernuo.json` и шаблон `ConfigurationTemplates/theverge/modernuo.json`: `accountHandler.enableAutoAccountCreation = True` | выключить (`False`), аккаунты бота и тестовые создавать заранее; решить, как игроки регистрируются | перед открытым тестом |
 | Нет 7-дневного запрета на удаление персонажа | `Accounting/AccountHandler.cs` | вернуть `RestrictDeletion = true` | перед открытым тестом |
 | Заглушка данных мира | `Distribution/Data/ClientData/` | положить полную установку клиента (ADR 0003) | задача 0.2 |
 | Реакция на неверную версию клиента | `modernuo.json`: `Warn` | для parity-проверок — `Kick` (`TARGET.md` §5); бот с `Kick` проверен 13 ноября 2026 на копии сервера: 32 с в мире без разрыва | при сборке parity-стенда (задача 0.2) |
