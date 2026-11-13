@@ -16,17 +16,19 @@ namespace TheVerge.Bot
         private readonly WorldEntry _world;
         private readonly GameSession _game;
         private readonly EntityStore _entities;
+        private readonly BotScript _script;
         private readonly IClock _clock;
         private LoginState _decided;
         private long _inWorldAt = -1;
 
-        public BotDriver(ILog log, BotLogin login, WorldEntry world, GameSession game, EntityStore entities, IClock clock)
+        public BotDriver(ILog log, BotLogin login, BotClient client, IClock clock)
         {
-            _entities = entities;
+            _entities = client.Entities;
+            _script = new BotScript(login.Actions, client.InWorld, log, clock);
             _log = log;
             _login = login;
-            _world = world;
-            _game = game;
+            _world = client.World;
+            _game = client.Game;
             _clock = clock;
         }
 
@@ -41,7 +43,7 @@ namespace TheVerge.Bot
         {
             if (flow.State == LoginState.InWorld)
             {
-                LeaveWhenIdle();
+                RunScriptThenLeave();
                 return;
             }
 
@@ -87,6 +89,18 @@ namespace TheVerge.Bot
                     _log.Info("Персонаж в мире.");
                     break;
             }
+        }
+
+        private void RunScriptThenLeave()
+        {
+            if (!_script.IsDone)
+            {
+                _script.Step();
+                Problem = _script.Problem;
+                return;
+            }
+
+            LeaveWhenIdle();
         }
 
         private void LeaveWhenIdle()

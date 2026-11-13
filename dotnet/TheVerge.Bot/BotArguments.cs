@@ -58,6 +58,8 @@ namespace TheVerge.Bot
                     return ReadPort(args, ref i, parsed.Overrides);
                 case "--idle":
                     return ReadIdle(args, ref i, parsed);
+                case "--action":
+                    return ReadAction(args, ref i, parsed);
                 default:
                     return "неизвестный параметр «" + args[i] + "». Список параметров: --help.";
             }
@@ -90,6 +92,20 @@ namespace TheVerge.Bot
                 parsed.IdleSeconds = seconds;
             });
             return error.Length == 0 && !valid ? "--idle: нужно число секунд, 0 или больше." : error;
+        }
+
+        private static string ReadAction(string[] args, ref int i, ParsedArguments parsed)
+        {
+            var problem = string.Empty;
+            var error = Value(args, ref i, v =>
+            {
+                var action = BotAction.Parse(v, out problem);
+                if (action != null)
+                {
+                    parsed.Actions.Add(action);
+                }
+            });
+            return error.Length > 0 ? error : problem;
         }
 
         private static int? ParsePort(string text) =>

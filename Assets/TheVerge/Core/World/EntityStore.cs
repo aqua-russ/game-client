@@ -169,6 +169,7 @@ namespace TheVerge.Core.World
             item.Apply(info);
             item.Place = ItemPlace.Container;
             item.GridIndex = gridIndex;
+            item.PendingRemoval = false;
             item.Container = parent;
             parent.AddContent(item);
             ItemChanged?.Invoke(item);
@@ -205,7 +206,7 @@ namespace TheVerge.Core.World
             item.Place = ItemPlace.Equipped;
             item.Layer = layer;
             item.Owner = mobile;
-            item.PendingUnequip = false;
+            item.PendingRemoval = false;
             mobile.SetSlot(layer, item);
             ItemChanged?.Invoke(item);
             return WorldResult.Applied;

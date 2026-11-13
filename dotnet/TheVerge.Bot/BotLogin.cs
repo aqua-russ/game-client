@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using TheVerge.Core.Session;
 
 namespace TheVerge.Bot
@@ -31,6 +32,9 @@ namespace TheVerge.Bot
 
         /// <summary>Повторять вход при разрыве или неудачном подключении (--reconnect); по умолчанию — нет, сбой виден сразу.</summary>
         public bool Reconnect { get; set; }
+
+        /// <summary>Действия в мире по очереди (--action); после них — --idle секунд и выход.</summary>
+        public IReadOnlyList<BotAction> Actions { get; set; } = new BotAction[0];
 
         public string Endpoint => Host + ":" + Port;
     }

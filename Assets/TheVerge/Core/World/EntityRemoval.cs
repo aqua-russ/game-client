@@ -66,7 +66,7 @@ namespace TheVerge.Core.World
             for (var i = 1; i < Mobile.SlotCount; i++)
             {
                 var item = mobile.GetEquipped((Layer)i);
-                if (item != null && item.PendingUnequip)
+                if (item != null && item.PendingRemoval)
                 {
                     RemoveItem(item, removed);
                 }

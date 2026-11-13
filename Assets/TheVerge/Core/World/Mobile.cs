@@ -61,7 +61,7 @@ namespace TheVerge.Core.World
             {
                 if (item != null)
                 {
-                    item.PendingUnequip = true;
+                    item.PendingRemoval = true;
                 }
             }
         }

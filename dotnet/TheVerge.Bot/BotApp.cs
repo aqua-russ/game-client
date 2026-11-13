@@ -120,6 +120,7 @@ namespace TheVerge.Bot
                 {
                     IdleSeconds = parsed.IdleSeconds,
                     Reconnect = parsed.Reconnect,
+                    Actions = parsed.Actions,
                 };
                 var code = new BotRunner(NewConnection, clock, log, packetLog?.Writer).Run(login, interrupt);
                 return Exit(code, string.Empty);

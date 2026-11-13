@@ -50,8 +50,8 @@ namespace TheVerge.Core.World
 
         public IReadOnlyList<Item> Contents => (IReadOnlyList<Item>?)_contents ?? Array.Empty<Item>();
 
-        /// <summary>Отмечен к снятию при обновлении надетого (0x78): кого пакет не повторил, тот снят.</summary>
-        internal bool PendingUnequip { get; set; }
+        /// <summary>Отмечен к удалению при полном списке (надетое 0x78, содержимое 0x3C): кого список не повторил, тот удалён.</summary>
+        internal bool PendingRemoval { get; set; }
 
         public override string ToString() => "предмет " + Serial + " 0x" + Graphic.ToString("X4") + " " + Place;
 

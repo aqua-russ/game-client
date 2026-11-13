@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace TheVerge.Bot
 {
     /// <summary>Разобранная командная строка бота. <see cref="Error"/> не пуст — параметры неверны, бот не запускается.</summary>
@@ -20,6 +22,9 @@ namespace TheVerge.Bot
 
         /// <summary>Секунд в мире перед выходом (--idle); по умолчанию 0 — выйти сразу.</summary>
         public int IdleSeconds { get; internal set; }
+
+        /// <summary>Действия в мире по очереди (--action, можно несколько).</summary>
+        public List<BotAction> Actions { get; } = new List<BotAction>();
 
         /// <summary>Повторять вход с нарастающей паузой (--reconnect).</summary>
         public bool Reconnect { get; internal set; }

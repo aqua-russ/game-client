@@ -31,6 +31,25 @@ namespace TheVerge.Tests.Bot
         }
 
         [Test]
+        public void Action_RepeatedInOrder()
+        {
+            var parsed = BotArguments.Parse(new[] { "--action", "use:backpack", "--action", "use:backpack" });
+
+            Assert.That(parsed.Error, Is.Empty);
+            Assert.That(parsed.Actions.Count, Is.EqualTo(2));
+            Assert.That(parsed.Actions[0].Kind, Is.EqualTo(BotActionKind.UseBackpack));
+        }
+
+        [TestCase("use")]
+        [TestCase("use:sword")]
+        [TestCase("fly:away")]
+        [TestCase("")]
+        public void Action_Unknown_Error(string text)
+        {
+            Assert.That(BotArguments.Parse(new[] { "--action", text }).Error, Does.Contain("--action"));
+        }
+
+        [Test]
         public void Reconnect_Flag()
         {
             Assert.That(BotArguments.Parse(new[] { "--reconnect" }).Reconnect, Is.True);

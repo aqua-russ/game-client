@@ -1,9 +1,11 @@
 using System;
+using TheVerge.Core.Items;
 using TheVerge.Core.Ports;
 using TheVerge.Core.Session;
 using TheVerge.Core.World;
 using TheVerge.Network.Diagnostics;
 using TheVerge.Network.Packets.Account;
+using TheVerge.Network.Packets.Items;
 using TheVerge.Network.Packets.Session;
 using TheVerge.Network.Packets.World;
 using TheVerge.Network.Session;
@@ -30,9 +32,11 @@ namespace TheVerge.Bot
             Game = new GameSession(Flow.Progress, sessionSender, connector, clock);
             AccountHandlers.Register(dispatcher, Flow);
             SessionHandlers.Register(dispatcher, World, new ServerRequests(sessionSender), Game);
-            Entities = new EntityStore();
-            Environment = new WorldEnvironment();
-            WorldHandlers.Register(dispatcher, Entities, Environment);
+            var entities = new EntityStore();
+            var containers = new ContainerContents(entities);
+            InWorld = new BotWorld(entities, new WorldEnvironment(), containers, new ItemCommands(entities, new ItemSender(Session), clock));
+            WorldHandlers.Register(dispatcher, entities, InWorld.Environment);
+            ItemHandlers.Register(dispatcher, containers);
             World.PlayerConfirmed += Entities.Reset;
             Session.Observer = Flow;
             var watchdog = new LoginWatchdog(Flow.Progress);
@@ -50,11 +54,11 @@ namespace TheVerge.Bot
 
         public GameSession Game { get; }
 
-        /// <summary>Мир: мобы и предметы, которые прислал сервер (PLAN Стадия 2).</summary>
-        public EntityStore Entities { get; }
+        /// <summary>Мир (PLAN Стадия 2): объекты, окружение, контейнеры и действия с предметами.</summary>
+        public BotWorld InWorld { get; }
 
-        /// <summary>Свет, сезон, время, погода, патчи карт (PLAN Стадия 2, п. 9).</summary>
-        public WorldEnvironment Environment { get; }
+        /// <summary>Мобы и предметы, которые прислал сервер.</summary>
+        public EntityStore Entities => InWorld.Entities;
 
         public GameClient Core { get; }
 
