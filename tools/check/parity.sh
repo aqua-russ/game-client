@@ -18,19 +18,9 @@
 # Подробности — Logs/check/parity-*.log, лог сервера — Logs/check/parity-server.log.
 set -u
 cd "$(dirname "$0")/../.." || exit 1
-ROOT="$(pwd)"
-LOGS="$ROOT/Logs/check"
-SERVER_DIR="${THEVERGE_SERVER_DIR:-$ROOT/../../server/ModernUO/Distribution}"
-BOT_DLL="$ROOT/dotnet/bin/TheVerge.Bot/Debug/net10.0/TheVerge.Bot.dll"
-DATA="${1:-}"
-[ -z "$DATA" ] && [ -d "$ROOT/../../uo-data/Ultima Online Classic" ] && DATA="$ROOT/../../uo-data/Ultima Online Classic"
-TMP="$(mktemp -d)"
-COPY="$TMP/server"
-PARITY="$COPY/Logs/parity"
-SERVER_PID=""
-FAILED=0
-mkdir -p "$LOGS"
-export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1
+CHECK=parity
+. tools/check/server-copy.sh
+DATA="$(default_data "${1:-}")"
 
 # Точки Фелуккы (Distribution/Data/Locations/felucca.json и карта настоящих файлов): центр Британии, первый уровень
 # Despise (высота 39 под землёй), море у Трисинка (вода, высота -5; корабль — в 47 клетках от неё), пустая сухая земля.
@@ -39,25 +29,6 @@ DUNGEON="5501 570 59"
 WATER="2183 2800 -5"
 SHIP="2230 2800 -5"
 HOUSE="1228 1705 0"
-
-ok() { echo "  ОК: $1"; }
-fail() { echo "  ОШИБКА: $1"; FAILED=1; }
-port_open() { python3 -c "import socket,sys; s=socket.socket(); s.settimeout(1); sys.exit(s.connect_ex(('127.0.0.1',2593)))"; }
-saves_print() { [ -d "$SERVER_DIR/Saves" ] && (cd "$SERVER_DIR/Saves" && find . -type f -exec ls -ln {} + 2>/dev/null | awk '{print $5, $6, $7, $8, $9}' | sort | cksum) || echo "нет"; }
-stop_server() {
-  [ -z "$SERVER_PID" ] && return
-  kill -INT "$SERVER_PID" 2>/dev/null
-  for _ in $(seq 1 60); do kill -0 "$SERVER_PID" 2>/dev/null || break; sleep 0.5; done
-  if kill -0 "$SERVER_PID" 2>/dev/null; then
-    echo "  ВНИМАНИЕ: копия сервера не остановилась сама за 30 с — остановлена принудительно (ваши данные не затронуты)."
-    pkill -9 -P "$SERVER_PID" 2>/dev/null; kill -9 "$SERVER_PID" 2>/dev/null
-  fi
-  wait "$SERVER_PID" 2>/dev/null
-  SERVER_PID=""
-}
-cleanup() { stop_server; rm -rf "$TMP"; }
-trap cleanup EXIT
-bot() { dotnet "$BOT_DLL" "$@"; }
 
 # Действия бота: список для одного запуска.
 ACTIONS=()
@@ -70,44 +41,15 @@ spawn() {
 }
 
 echo "1/5 Сборка бота и временная копия сервера…"
-if ! dotnet build dotnet/TheVerge.Bot -nologo -v:q -tl:off > "$LOGS/parity-build.log" 2>&1; then
-  echo "ОШИБКА: бот не собрался. Лог: Logs/check/parity-build.log"; exit 1
-fi
-[ -f "$SERVER_DIR/ModernUO.dll" ] || { echo "ОШИБКА: нет собранного сервера в $SERVER_DIR. Соберите: в папке server/ModernUO выполните dotnet build -c Release"; exit 1; }
-grep -aq "ParityPlace" "$SERVER_DIR/Assemblies/UOContent.dll" 2>/dev/null \
-  || { echo "ОШИБКА: в собранном сервере нет команды [ParityPlace. Соберите заново: в папке server/ModernUO выполните dotnet build -c Release"; exit 1; }
-if port_open; then
-  echo "ОШИБКА: сервер уже запущен (порт 2593 занят). Остановите его (Ctrl+C в его окне) и запустите проверку снова."; exit 1
-fi
-SAVES_BEFORE="$(saves_print)"
-mkdir -p "$COPY"
-rsync -a --exclude Saves --exclude Logs --exclude Backups --exclude Archives --exclude temp "$SERVER_DIR/" "$COPY/"
-python3 - "$COPY/Configuration/modernuo.json" "$DATA" <<'PY'
-import json, os, sys
-path, data = sys.argv[1], sys.argv[2]
-config = json.load(open(path))
-if data:
-    config["dataDirectories"] = [os.path.abspath(data)]
-config.setdefault("settings", {})["clientData.clientVersion"] = "7.0.95.0"
-json.dump(config, open(path, "w"), indent=2)
-PY
+copy_build_bot
+copy_check_server ParityPlace
+copy_make "$DATA"
 ok "копия сервера с пустым миром${DATA:+, файлы данных: $DATA}"
 
-OWNER="parity$(python3 -c 'import secrets; print(secrets.token_hex(3))')"
-PASSWORD="check-$(python3 -c 'import secrets; print(secrets.token_hex(6))')"
-printf '{"login":"%s","password":"%s","character":"Paritygm"}\n' "$OWNER" "$PASSWORD" > "$TMP/gm.json"
-printf '{"login":"%sp","password":"%s","character":"Parityplayer"}\n' "$OWNER" "$PASSWORD" > "$TMP/player.json"
-chmod 600 "$TMP/gm.json" "$TMP/player.json"
+copy_accounts parity Paritygm Parityplayer
 
 echo "2/5 Запуск копии сервера (до 90 с)…"
-: > "$LOGS/parity-server.log"
-(cd "$COPY" && exec python3 "$ROOT/tools/check/pty_server.py" --log "$LOGS/parity-server.log" \
-  --answer "owner account now=y" --answer "Input Username=$OWNER" --answer "Input Password=$PASSWORD" -- dotnet ModernUO.dll) &
-SERVER_PID=$!
-for _ in $(seq 1 90); do grep -aq "Listening: " "$LOGS/parity-server.log" 2>/dev/null && break; kill -0 "$SERVER_PID" 2>/dev/null || break; sleep 1; done
-if ! grep -aq "Listening: " "$LOGS/parity-server.log"; then
-  echo "ОШИБКА: копия сервера не запустилась. Лог: Logs/check/parity-server.log"; tail -n 15 "$LOGS/parity-server.log"; exit 1
-fi
+copy_start
 ok "сервер запущен, временный владелец создан"
 
 echo "3/5 Бот-GM сверяет мир в пяти точках и в отдельных случаях (около минуты)…"
@@ -169,5 +111,5 @@ PLACED_AFTER="$(grep -ac 'Parity place:' "$LOGS/parity-server.log")"
 if [ "$PLACED_BEFORE" -eq 2 ] && [ "$PLACED_AFTER" -eq 2 ]; then ok "GM поставил дом и корабль, у игрока команда не сработала"; else fail "команд [ParityPlace на сервере: до игрока $PLACED_BEFORE, после $PLACED_AFTER (ждали 2 и 2). Лог: Logs/check/parity-server.log"; fi
 
 stop_server
-if [ "$(saves_print)" = "$SAVES_BEFORE" ]; then ok "ваши Saves не изменились"; else fail "ваши Saves изменились"; fi
+copy_saves_check "ваши Saves не изменились" "ваши Saves изменились"
 if [ "$FAILED" -eq 0 ]; then echo "ОК"; else echo "ОШИБКА: см. сообщения выше."; exit 1; fi
