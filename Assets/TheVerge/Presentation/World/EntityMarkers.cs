@@ -16,6 +16,7 @@ namespace TheVerge.Presentation.World
     public sealed class EntityMarkers : IDisposable
     {
         private const float MobileRadius = 0.35f;
+        private const float PlayerRadius = 0.5f;
         private const float ItemSide = 0.4f;
 
         private sealed class Marker
@@ -76,7 +77,10 @@ namespace TheVerge.Presentation.World
         private void OnMobile(Mobile mobile)
         {
             var marker = Take(mobile.Serial, true);
-            marker.Renderer.sharedMaterial = mobile.Serial == _world.PlayerSerial ? _materials.Player : _materials.Mobile;
+            var isPlayer = mobile.Serial == _world.PlayerSerial;
+            marker.Renderer.sharedMaterial = isPlayer ? _materials.Player : _materials.Mobile;
+            // Свой цилиндр шире остальных: если на клетке стоит ещё кто-то, голубой виден вокруг него.
+            marker.Object.transform.localScale = MobileScale(isPlayer ? PlayerRadius : MobileRadius);
             Place(marker, mobile.Position, SceneLimits.MobileHeight);
         }
 
@@ -98,6 +102,10 @@ namespace TheVerge.Presentation.World
             ReleaseAll();
             Sync();
         }
+
+        // Цилиндр Unity высотой 2 м: половина высоты — масштаб по Y.
+        private static Vector3 MobileScale(float radius) =>
+            new Vector3(radius * 2f, CellSpace.Height(SceneLimits.MobileHeight) / 2f, radius * 2f);
 
         private static void Place(Marker marker, Point3D position, int heightZ)
         {
@@ -150,9 +158,8 @@ namespace TheVerge.Presentation.World
             UnityEngine.Object.Destroy(gameObject.GetComponent<Collider>());
             gameObject.name = mobile ? "Mobile" : "Item";
             gameObject.transform.SetParent(_root, false);
-            // Цилиндр Unity высотой 2 м: половина высоты — масштаб по Y.
             gameObject.transform.localScale = mobile
-                ? new Vector3(MobileRadius * 2f, CellSpace.Height(SceneLimits.MobileHeight) / 2f, MobileRadius * 2f)
+                ? MobileScale(MobileRadius)
                 : new Vector3(ItemSide, CellSpace.Height(SceneLimits.ItemHeight), ItemSide);
             var renderer = gameObject.GetComponent<Renderer>();
             renderer.sharedMaterial = mobile ? _materials.Mobile : _materials.Item;
