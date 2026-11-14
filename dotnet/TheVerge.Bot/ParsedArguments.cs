@@ -31,5 +31,11 @@ namespace TheVerge.Bot
 
         /// <summary>Папка файлов данных UO (--data); null — файлы не нужны.</summary>
         public string? DataFolder { get; internal set; }
+
+        /// <summary>Запись посредника для --convert-capture.</summary>
+        public string CapturePath { get; internal set; } = string.Empty;
+
+        /// <summary>Куда записать лог пакетов для --convert-capture.</summary>
+        public string CaptureLogPath { get; internal set; } = string.Empty;
     }
 }

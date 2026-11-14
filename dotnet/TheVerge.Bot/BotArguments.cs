@@ -62,6 +62,8 @@ namespace TheVerge.Bot
                     return ReadIdle(args, ref i, parsed);
                 case "--action":
                     return ReadAction(args, ref i, parsed);
+                case "--convert-capture":
+                    return ReadCapture(args, ref i, parsed);
                 default:
                     return "неизвестный параметр «" + args[i] + "». Список параметров: --help.";
             }
@@ -108,6 +110,19 @@ namespace TheVerge.Bot
                 }
             });
             return error.Length > 0 ? error : problem;
+        }
+
+        private static string ReadCapture(string[] args, ref int i, ParsedArguments parsed)
+        {
+            if (i + 2 >= args.Length)
+            {
+                return "после --convert-capture нужны два пути: запись посредника и файл лога.";
+            }
+
+            parsed.Mode = BotMode.ConvertCapture;
+            parsed.CapturePath = args[++i];
+            parsed.CaptureLogPath = args[++i];
+            return string.Empty;
         }
 
         private static int? ParsePort(string text) =>

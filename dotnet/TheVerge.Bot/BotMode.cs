@@ -9,5 +9,8 @@ namespace TheVerge.Bot
         SelfCheck = 1,
 
         Help = 2,
+
+        /// <summary>Перевести запись посредника в лог пакетов (--convert-capture, tools/golden/record.sh).</summary>
+        ConvertCapture = 3,
     }
 }

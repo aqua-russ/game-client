@@ -53,6 +53,11 @@ namespace TheVerge.Bot
                 return BotExitCode.Success;
             }
 
+            if (parsed.Mode == BotMode.ConvertCapture)
+            {
+                return CaptureCommand.Run(parsed.CapturePath, parsed.CaptureLogPath, _output);
+            }
+
             var dataError = BotData.Load(parsed.DataFolder, _output, out var data);
             using (data)
             {
