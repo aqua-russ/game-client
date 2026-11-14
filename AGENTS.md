@@ -23,6 +23,7 @@
 | Что поставить и как запускать проверки (Mac, среда агента) | `docs/DEV-ENV.md` | — |
 | Все правки сервера ModernUO | `docs/server-patches.md` | — |
 | Лицензии: ModernUO, ClassicUO, файлы данных UO, пакеты NuGet — что можно брать | `docs/LICENSES.md` | — |
+| Свой мир: эскизы карты и их анализ (после Стадий 0–8) | `docs/world/` (`vetla-map-review.md`, исходники — `source/`) | — |
 | Решения и их причины | `docs/adr/NNNN-название.md` | новое решение — новый ADR |
 | Мир в 3D, весь контент свой, номера сервера | [ADR 0015](docs/adr/0015-3d-client.md), [ADR 0014](docs/adr/0014-own-assets-server-numbers.md), §4.4 этого файла | — |
 | Как пишем код: сначала тест, потом реализация | [ADR 0010](docs/adr/0010-test-first-development.md), §6 этого файла | — |
