@@ -145,6 +145,26 @@ namespace TheVerge.Tests.Bot
         }
 
         [Test]
+        public void DeathOf_CorpseBeforeGhostBody_WaitsForBodyChange()
+        {
+            _world.Entities.UpdateMobile(Other, new MobileInfo(0x190, new Point3D(11, 10, 0), Direction.North, 0, 0, 1));
+            var script = Script("deathof:0x0190");
+            script.Step();
+            PlaceCorpse(0x190);
+            _world.Corpses!.Set(Corpse, new[] { new CorpseItem(Layer.Hair, Hair) });
+            _journal.OnDeath(Other, Corpse);
+
+            script.Step();
+            Assert.That(script.IsDone, Is.False, "тело призрака приходит отдельным пакетом — ждём его");
+
+            _world.Entities.UpdateMobile(Other, new MobileInfo(0x192, new Point3D(11, 10, 0), Direction.North, 0, 0, 1));
+            script.Step();
+
+            Assert.That(script.IsDone, Is.True, script.Problem);
+            Assert.That(Text(), Does.Contain("стал призраком (тело 0x0192)"));
+        }
+
+        [Test]
         public void DeathOf_BodyAlreadyChanged_TakesLastDeathFromJournal()
         {
             _world.Entities.UpdateMobile(Other, new MobileInfo(0x192, new Point3D(11, 10, 0), Direction.North, 0, 0, 1));

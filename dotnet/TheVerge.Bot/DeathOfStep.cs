@@ -9,7 +9,8 @@ namespace TheVerge.Bot
     /// <summary>
     /// deathof:0xТЕЛО (PLAN Стадия 4, п. 9): увидеть смерть ближайшего другого моба с этим телом — анимация смерти 0xAF
     /// (убитый, труп), труп в мире; в лог — вещи трупа по слоям (0x89; сервер шлёт их только для трупов людей, раньше 0xAF)
-    /// и что стало с мобом: удалён (NPC) или призрак (игрок, если его видно — GM видит).
+    /// и что стало с мобом: удалён (NPC) или призрак (игрок, если его видно — GM видит). Тело призрака сервер присылает
+    /// отдельным обновлением моба, которое может прийти позже трупа, — шаг его ждёт.
     /// </summary>
     internal sealed class DeathOfStep : IBotStep
     {
@@ -17,6 +18,7 @@ namespace TheVerge.Bot
         private readonly ILog _log;
         private readonly ushort _body;
         private Serial _target;
+        private bool _corpseSeen;
 
         public DeathOfStep(BotWorld world, ILog log, string body)
         {
@@ -28,8 +30,9 @@ namespace TheVerge.Bot
 
         public int TimeoutMs => BotScript.DeathTimeoutMs;
 
-        public string TimeoutProblem =>
-            "анимации смерти (0xAF) " + _target + " с трупом в мире нет за " + BotScript.DeathTimeoutMs / 1000 + " с.";
+        public string TimeoutProblem => _corpseSeen
+            ? "труп " + _target + " есть, но тело моба не сменилось на призрака за " + BotScript.DeathTimeoutMs / 1000 + " с."
+            : "анимации смерти (0xAF) " + _target + " с трупом в мире нет за " + BotScript.DeathTimeoutMs / 1000 + " с.";
 
         public string Failure { get; private set; }
 
@@ -48,6 +51,13 @@ namespace TheVerge.Bot
             var corpseSerial = DeathRecords.CorpseOf(_world.Combat.Log, _target);
             var corpse = corpseSerial == Serial.Zero ? null : _world.Entities.FindItem(corpseSerial);
             if (corpse == null)
+            {
+                return false;
+            }
+
+            _corpseSeen = true;
+            var mobile = _world.Entities.FindMobile(_target);
+            if (mobile != null && !mobile.IsGhost)
             {
                 return false;
             }
@@ -99,9 +109,7 @@ namespace TheVerge.Bot
         private string Fate()
         {
             var mobile = _world.Entities.FindMobile(_target);
-            return mobile == null ? "моб удалён"
-                : mobile.IsGhost ? "моб стал призраком (тело 0x" + mobile.Body.ToString("X4") + ")"
-                : "моб пока с прежним телом 0x" + mobile.Body.ToString("X4");
+            return mobile == null ? "моб удалён" : "моб стал призраком (тело 0x" + mobile.Body.ToString("X4") + ")";
         }
     }
 }
