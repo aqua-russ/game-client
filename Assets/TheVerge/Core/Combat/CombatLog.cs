@@ -6,7 +6,8 @@ using TheVerge.Core.Session;
 namespace TheVerge.Core.Combat
 {
     /// <summary>
-    /// Журнал боя (PLAN Стадия 4, п. 8): замахи, анимации, урон, эффекты и звуки в том порядке, в каком их прислал сервер.
+    /// Журнал боя (PLAN Стадия 4, п. 8–9): замахи, анимации, урон, эффекты, звуки и смерти в том порядке, в каком их прислал
+    /// сервер.
     /// Кольцо фиксированного размера: полное — старое вытесняется; ячейки переиспользуются — новой памяти не берёт.
     /// Окно журнала в Unity — задача 4.11.
     /// </summary>
@@ -101,6 +102,14 @@ namespace TheVerge.Core.Combat
             ref var e = ref Next(CombatEventKind.Sound);
             e.Value = sound;
             e.Position = position;
+            Publish(e);
+        }
+
+        public void OnDeath(Serial killed, Serial corpse)
+        {
+            ref var e = ref Next(CombatEventKind.Death);
+            e.Source = killed;
+            e.Target = corpse;
             Publish(e);
         }
 

@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using TheVerge.Core.Ports;
 using TheVerge.Core.Primitives;
 using TheVerge.Core.World;
@@ -8,7 +6,7 @@ namespace TheVerge.Bot
 {
     /// <summary>
     /// fight:0xТЕЛО (PLAN Стадия 4, п. 7): боевая стойка (0x72, ждём ответа сервера), атака ближайшего моба с этим телом
-    /// (0x05), противник — по 0xAA сервера, смерть — моб исчез и рядом лёг его труп (0x2006, количество = тело, Corpse.cs).
+    /// (0x05), противник — по 0xAA сервера, смерть — анимация смерти 0xAF с трупом (п. 9), труп (0x2006) в мире, моб исчез.
     /// В лог — ход боя: здоровье противника и бота, после смерти — журнал боя (<see cref="CombatLogReport"/>). Бой долгий —
     /// свой срок <see cref="BotScript.FightTimeoutMs"/>.
     /// </summary>
@@ -19,7 +17,6 @@ namespace TheVerge.Bot
         private readonly BotWorld _world;
         private readonly ILog _log;
         private readonly ushort _body;
-        private readonly List<Item> _items = new List<Item>();
         private Serial _target;
         private Serial _combatant;
         private Point3D _lastPosition;
@@ -48,7 +45,7 @@ namespace TheVerge.Bot
                 var after = " за " + BotScript.FightTimeoutMs / 1000 + " с.";
                 return !_attacked ? "сервер не включил боевую стойку" + after
                     : !_combatantSeen ? "сервер не назвал " + _target + " противником (0xAA)" + after
-                    : _gone ? "противник пропал из виду, а его трупа (0x2006) рядом нет" + after
+                    : _gone ? "противник пропал из виду, а анимации смерти (0xAF) с трупом нет" + after
                     : "противник не умер" + after + " Здоровье противника " + _targetHits + ".";
             }
         }
@@ -83,17 +80,7 @@ namespace TheVerge.Bot
 
         private bool PickTarget()
         {
-            var player = _world.Entities.Player!;
-            Mobile? nearest = null;
-            foreach (var mobile in _world.Entities.Mobiles)
-            {
-                if (mobile.Serial != player.Serial && mobile.Body == _body &&
-                    (nearest == null || Distance(player, mobile) < Distance(player, nearest)))
-                {
-                    nearest = mobile;
-                }
-            }
-
+            var nearest = NearbyMobiles.Nearest(_world.Entities, _body);
             if (nearest == null)
             {
                 Failure = "моба с телом 0x" + _body.ToString("X4") + " рядом нет.";
@@ -177,7 +164,7 @@ namespace TheVerge.Bot
                 return false;
             }
 
-            _log.Info("Противник " + _target + " убит: труп " + corpse.Serial + " в " + corpse.Position + ".");
+            _log.Info("Противник " + _target + " убит: труп " + corpse.Serial + " в " + corpse.Position + " (анимация смерти 0xAF).");
             _log.Info(_lowestPlayerHits.Maximum > 0
                 ? "Бот получил урон: здоровье опускалось до " + _lowestPlayerHits + "."
                 : "Бот урона не получил.");
@@ -185,18 +172,12 @@ namespace TheVerge.Bot
             return true;
         }
 
+        /// <summary>Труп противника — из анимации смерти сервера (0xAF: убитый, труп), если он уже в мире.</summary>
         private Item? FindCorpse()
         {
-            _world.Entities.Spatial.QueryItems(_lastPosition.X, _lastPosition.Y, 1, _items);
-            foreach (var item in _items)
-            {
-                if (item.Graphic == CorpseGraphic && item.Amount == _body)
-                {
-                    return item;
-                }
-            }
-
-            return null;
+            var corpse = DeathRecords.CorpseOf(_world.Combat!.Log, _target);
+            var item = corpse == Serial.Zero ? null : _world.Entities.FindItem(corpse);
+            return item != null && item.Graphic == CorpseGraphic ? item : null;
         }
 
         private void LogHits(string who, Vital hits, ref Vital last)
@@ -210,7 +191,5 @@ namespace TheVerge.Bot
             _log.Info(who + ": здоровье " + hits + ".");
         }
 
-        private static int Distance(Mobile a, Mobile b) =>
-            Math.Max(Math.Abs(a.Position.X - b.Position.X), Math.Abs(a.Position.Y - b.Position.Y));
     }
 }

@@ -14,11 +14,17 @@ namespace TheVerge.Core.Combat
 
         public event Action? CombatantChanged;
 
+        /// <summary>Сервер сообщил о своей смерти (0x2C, Mobile.OnDeath: SendDeathStatus) — экран смерти покажет Unity.</summary>
+        public event Action? Died;
+
         public bool WarMode { get; private set; }
 
         public Serial Combatant { get; private set; }
 
         public bool HasCombatant => Combatant != Serial.Zero;
+
+        /// <summary>Сколько раз за вход сервер сообщил о своей смерти (0x2C). Жив ли сейчас — по телу (<see cref="World.Mobile.IsGhost"/>).</summary>
+        public int Deaths { get; private set; }
 
         public void OnWarMode(bool warMode)
         {
@@ -38,11 +44,19 @@ namespace TheVerge.Core.Combat
             }
         }
 
+        /// <summary>0x2C: свой персонаж умер. Ответ клиента сервер игнорирует (DeathStatusResponse) — не шлём.</summary>
+        public void OnDeathStatus()
+        {
+            Deaths++;
+            Died?.Invoke();
+        }
+
         /// <summary>Новый вход: стойку и противника сервер пришлёт заново (IncomingAccountPackets: SendSetWarMode при входе).</summary>
         public void Reset()
         {
             WarMode = false;
             Combatant = Serial.Zero;
+            Deaths = 0;
         }
     }
 }

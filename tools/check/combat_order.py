@@ -3,7 +3,7 @@
 
   combat_order.py <лог бота> <лог пакетов .tsv>
 
-Из лога пакетов берутся пакеты сервера 0x2F, 0x6E, 0x0B, 0x54, 0x70, 0xC0, 0xC7 и сами, по байтам (раскладка — как пишет
+Из лога пакетов берутся пакеты сервера 0x2F, 0x6E, 0x0B, 0x54, 0x70, 0xC0, 0xC7, 0xAF и сами, по байтам (раскладка — как пишет
 сервер: OutgoingCombatPackets.cs, OutgoingMobilePackets.cs, OutgoingDamagePackets.cs, OutgoingEffectPackets.cs),
 превращаются в те же строки, что пишет бот («замах 0x… → 0x…», «анимация 0x… действие N», …). Строки журнала бота
 («Журнал боя: +… с …») должны совпасть с началом этого списка — те же события в том же порядке. Печатает итог;
@@ -49,6 +49,8 @@ def describe(b):
         return "замах %s → %s" % (serial(b, 2), serial(b, 6))
     if pid == 0x6E:
         return "анимация %s действие %d" % (serial(b, 1), s16(b, 5))
+    if pid == 0xAF:
+        return "смерть %s труп %s" % (serial(b, 1), serial(b, 5))
     if pid == 0x0B:
         return "урон %s: %d" % (serial(b, 1), u16(b, 5))
     if pid == 0x54:

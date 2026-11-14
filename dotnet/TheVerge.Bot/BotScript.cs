@@ -16,6 +16,9 @@ namespace TheVerge.Bot
         /// <summary>Сколько ждать конца боя (fight:), мс: крыса с 6 здоровья умирает за несколько ударов, но бой не мгновенный.</summary>
         public const int FightTimeoutMs = 60000;
 
+        /// <summary>Сколько ждать своей смерти или воскрешения (dead, alive) и чужой смерти (deathof), мс: это делает GM-бот.</summary>
+        public const int DeathTimeoutMs = 60000;
+
         /// <summary>
         /// Сколько ждать после [DumpVisible, прежде чем сверять: пакеты, которые сервер отправил до команды, должны дойти.
         /// </summary>
@@ -106,6 +109,12 @@ namespace TheVerge.Bot
                     return new BandageStep(_world, _log);
                 case BotActionKind.Fight:
                     return new FightStep(_world, _log, action.Argument);
+                case BotActionKind.Dead:
+                    return new DeathStep(_world, _log);
+                case BotActionKind.Alive:
+                    return new AliveStep(_world, _log);
+                case BotActionKind.DeathOf:
+                    return new DeathOfStep(_world, _log, action.Argument);
                 default:
                     return new OpenBackpackStep(_world, _log);
             }

@@ -40,5 +40,8 @@ namespace TheVerge.Bot
 
         /// <summary>Стойка и атака (Стадия 4, п. 7); null — не подключены (тесты, которым они не нужны).</summary>
         public BotCombat? Combat { get; init; }
+
+        /// <summary>Вещи трупов по слоям (Стадия 4, п. 9, 0x89); null — не подключены.</summary>
+        public CorpseEquipment? Corpses { get; init; }
     }
 }

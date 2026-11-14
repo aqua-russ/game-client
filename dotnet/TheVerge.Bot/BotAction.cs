@@ -18,6 +18,9 @@ namespace TheVerge.Bot
 
         public string Argument { get; }
 
+        /// <summary>Приставка моба в прицеле: target:mob:0xТЕЛО.</summary>
+        public const string MobilePrefix = "mob:";
+
         /// <summary>Как действие записано в командной строке — для лога.</summary>
         public string Text { get; }
 
@@ -27,7 +30,7 @@ namespace TheVerge.Bot
             var colon = text.IndexOf(':');
             var kind = colon < 0 ? text : text.Substring(0, colon);
             var argument = colon < 0 ? string.Empty : text.Substring(colon + 1);
-            var parsed = WorldKind(kind, argument) ?? ParityKind(kind, argument);
+            var parsed = WorldKind(kind, argument) ?? CombatKind(kind, argument) ?? ParityKind(kind, argument);
             error = parsed == null ? "--action «" + text + "»: непонятное действие. Список действий: --help." : string.Empty;
             return parsed == null ? null : new BotAction(parsed.Value, argument, text);
         }
@@ -48,14 +51,30 @@ namespace TheVerge.Bot
                 case "at" when TryParseCell(argument, out _, out _):
                     return BotActionKind.WaitAt;
                 case "target" when argument == "here" || argument == "self" || argument == "cancel" ||
-                                   TryParsePoint(argument, out _) || TryParseGraphic(argument, out _):
+                                   TryParsePoint(argument, out _) || TryParseGraphic(argument, out _) || TryParseMobileBody(argument, out _):
                     return BotActionKind.Target;
                 case "seen" when SeenItemStep.TryParse(argument, out _, out _):
                     return BotActionKind.SeenItem;
                 case "seenmob" when TryParseGraphic(argument, out _):
                     return BotActionKind.SeenMobile;
+                default:
+                    return null;
+            }
+        }
+
+        /// <summary>Бой и смерть (Стадия 4, п. 7, 9).</summary>
+        private static BotActionKind? CombatKind(string kind, string argument)
+        {
+            switch (kind)
+            {
                 case "fight" when TryParseGraphic(argument, out _):
                     return BotActionKind.Fight;
+                case "deathof" when TryParseGraphic(argument, out _):
+                    return BotActionKind.DeathOf;
+                case "dead" when argument.Length == 0:
+                    return BotActionKind.Dead;
+                case "alive" when argument.Length == 0:
+                    return BotActionKind.Alive;
                 default:
                     return null;
             }
@@ -90,6 +109,13 @@ namespace TheVerge.Bot
 
             point = new Point3D(x, y, z);
             return true;
+        }
+
+        /// <summary>Тело моба «mob:0x0190» из target:mob:0x0190.</summary>
+        public static bool TryParseMobileBody(string text, out ushort body)
+        {
+            body = 0;
+            return text.StartsWith(MobilePrefix, System.StringComparison.Ordinal) && TryParseGraphic(text.Substring(MobilePrefix.Length), out body);
         }
 
         /// <summary>Графика «0x09D0» из seen:0x09D0.</summary>

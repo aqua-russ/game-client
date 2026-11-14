@@ -23,7 +23,7 @@ namespace TheVerge.Tests.Network.Fuzz
 {
     /// <summary>
     /// Устойчивость мира (PLAN Стадия 2, п. 14; критерий «фаззинг новых парсеров: 1 млн входов без падений и зависаний»).
-    /// Пакеты мира, контейнеров, прицела, состояния мобов, боя и боевых событий (Стадия 4, п. 4, 7, 8) — случайные байты и пакеты из небольшого набора серийников (чтобы попадать в уже
+    /// Пакеты мира, контейнеров, прицела, состояния мобов, боя, боевых событий и смерти (Стадия 4, п. 4, 7–9) — случайные байты и пакеты из небольшого набора серийников (чтобы попадать в уже
     /// известные объекты: вложенность, циклы, перенос, удаление). Падение допустимо одно — «пакет короче, чем нужно»
     /// (PacketDispatcher ловит его сам). После — мир цел: связи взаимны, циклов нет, поиск рядом совпадает с перебором;
     /// журнал боя не больше своего размера, события в нём по порядку.
@@ -37,6 +37,7 @@ namespace TheVerge.Tests.Network.Fuzz
         {
             0x78, 0x20, 0x77, 0x2E, 0x1D, 0xF3, 0x76, 0x24, 0x3C, 0x25, 0x6C, 0x4F, 0x4E, 0xBC, 0x5B, 0x65, 0x54, 0x6D,
             0x11, 0xA1, 0xA2, 0xA3, 0x2D, 0x17, 0x72, 0xAA, 0x2F, 0x6E, 0x0B, 0x70, 0xC0, 0xC7,
+            0xAF, 0x2C, 0x89,
         };
 
         [Test]
@@ -83,6 +84,7 @@ namespace TheVerge.Tests.Network.Fuzz
             StatusHandlers.Register(dispatcher, new MobileStatusUpdates(store));
             CombatHandlers.Register(dispatcher, new CombatState());
             CombatLogHandlers.Register(dispatcher, log);
+            CorpseHandlers.Register(dispatcher, new CorpseEquipment(store));
             return dispatcher;
         }
 

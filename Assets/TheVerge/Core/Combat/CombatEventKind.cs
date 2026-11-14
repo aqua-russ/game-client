@@ -17,5 +17,8 @@ namespace TheVerge.Core.Combat
 
         /// <summary>0x54: звук <see cref="CombatEvent.Value"/> в точке <see cref="CombatEvent.Position"/>.</summary>
         Sound,
+
+        /// <summary>0xAF: смерть моба <see cref="CombatEvent.Source"/>, его труп — <see cref="CombatEvent.Target"/> (0 — трупа нет).</summary>
+        Death,
     }
 }

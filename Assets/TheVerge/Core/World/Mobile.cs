@@ -22,6 +22,9 @@ namespace TheVerge.Core.World
 
         public ushort Body { get; private set; }
 
+        /// <summary>Призрак: тело призрака по серверу (<see cref="Bodies.IsGhost"/>); клиент смерть не предсказывает.</summary>
+        public bool IsGhost => Bodies.IsGhost(Body);
+
         public Point3D Position { get; private set; }
 
         public Direction Direction { get; private set; }

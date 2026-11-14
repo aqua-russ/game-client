@@ -17,7 +17,8 @@ namespace TheVerge.Tests.Bot
 {
     /// <summary>
     /// fight:0xТЕЛО (PLAN Стадия 4, п. 7): бот просит боевую стойку, ждёт её от сервера (0x72), атакует моба с этим телом
-    /// (0x05), ждёт, что сервер назовёт его противником (0xAA), и ждёт его смерти — моб исчезает из мира. Бой долгий —
+    /// (0x05), ждёт, что сервер назовёт его противником (0xAA), и ждёт его смерти — анимация смерти 0xAF с трупом, труп
+    /// в мире, моб исчез (п. 9). Бой долгий —
     /// у шага свой срок (<see cref="BotScript.FightTimeoutMs"/>), а не общие 10 с.
     /// </summary>
     public sealed class BotFightTests
@@ -81,9 +82,10 @@ namespace TheVerge.Tests.Bot
 
             _world.Entities.Remove(Rat);
             script.Step();
-            Assert.That(script.IsDone, Is.False, "моб пропал, а трупа ещё нет — мог просто уйти из виду");
+            Assert.That(script.IsDone, Is.False, "моб пропал, а анимации смерти и трупа нет — мог просто уйти из виду");
 
             _world.Entities.PlaceInWorld(Corpse, new ItemInfo(CorpseGraphic, 0xEE, new Point3D(11, 10, 0), 0, 0, 0));
+            _journal.OnDeath(Rat, Corpse);
             script.Step();
 
             Assert.That(script.IsDone, Is.True, script.Problem);
@@ -99,6 +101,7 @@ namespace TheVerge.Tests.Bot
             Assert.That(text, Does.Contain("Журнал боя: +1.500 с урон 0x0000003E: 2"));
             Assert.That(text, Does.Contain("Журнал боя: +1.500 с звук 0x01A4 в (11, 10, 0)"));
             Assert.That(text, Does.Contain("Журнал боя: +1.500 с эффект Moving 0x36D4 0x0000003E → 0x00000100"));
+            Assert.That(text, Does.Contain("Журнал боя: +1.500 с смерть 0x00000100 труп 0x40000900"));
             Assert.That(text, Does.Contain("замахов бота по противнику 1, анимаций бота 1, противника 1, урона 1, эффектов 1, звуков 1"));
         }
 
@@ -117,7 +120,7 @@ namespace TheVerge.Tests.Bot
         }
 
         [Test]
-        public void Fight_CorpseOfOtherBody_NotDeath()
+        public void Fight_CorpseWithoutDeathAnimation_NotDeath()
         {
             _combat.OnWarMode(true);
             var script = Script("fight:0x00EE");
@@ -125,10 +128,10 @@ namespace TheVerge.Tests.Bot
             _combat.OnCombatant(Rat);
             _world.Entities.Remove(Rat);
 
-            _world.Entities.PlaceInWorld(Corpse, new ItemInfo(CorpseGraphic, 0x190, new Point3D(11, 10, 0), 0, 0, 0));
+            _world.Entities.PlaceInWorld(Corpse, new ItemInfo(CorpseGraphic, 0xEE, new Point3D(11, 10, 0), 0, 0, 0));
             script.Step();
 
-            Assert.That(script.IsDone, Is.False);
+            Assert.That(script.IsDone, Is.False, "смерть — по анимации смерти 0xAF сервера, а не по трупу рядом");
         }
 
         [Test]

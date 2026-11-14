@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Проверки Стадии 4 на настоящем сервере (PLAN Стадия 4: 4.4 состояние мобов, 4.6 прицел, 4.7 стойка и атака,
-# 4.8 журнал боя).
+# 4.8 журнал боя, 4.9 смерть и воскрешение).
 # Печатает «ОК» или «ОШИБКА».
 #
 #   tools/check/combat.sh [<папка с файлами данных>]
@@ -18,6 +18,10 @@
 # труп, крыса тоже бьёт игрока.
 # 4.8: журнал боя бота из того же боя: свои замахи (сервер шлёт замах только атакующему), анимации бота и крысы; события
 # журнала совпадают по порядку с пакетами сервера в логе пакетов бота (tools/check/combat_order.py).
+# 4.9 (сценарий death-res): бот-игрок ждёт своей смерти; бот-GM даёт ему волосы и бороду ([set), убивает ([kill),
+# видит анимацию смерти и труп с вещами по слоям, воскрешает ([res). Игрок видит статус смерти, тело призрака, свой труп
+# с волосами и бородой по слоям, после воскрешения — живое тело и здоровье; ответ на статус смерти он не шлёт.
+# Сценарий combat-basic — раздел 4.7 (бой с крысой до её смерти).
 # Ваш сервер должен быть остановлен (порт 2593 свободен) и собран (dotnet build -c Release в server/ModernUO).
 # Подробности — Logs/check/combat-*.log, лог сервера — Logs/check/combat-server.log.
 set -u
@@ -55,7 +59,7 @@ cleanup() { stop_server; rm -rf "$TMP"; }
 trap cleanup EXIT
 bot() { dotnet "$BOT_DLL" "$@"; }
 
-echo "1/7 Сборка бота и временная копия сервера…"
+echo "1/8 Сборка бота и временная копия сервера…"
 if ! dotnet build dotnet/TheVerge.Bot -nologo -v:q -tl:off > "$LOGS/combat-build.log" 2>&1; then
   echo "ОШИБКА: бот не собрался. Лог: Logs/check/combat-build.log"; exit 1
 fi
@@ -85,7 +89,7 @@ printf '{"login":"%s","password":"%s","character":"Combatgm"}\n' "$OWNER" "$PASS
 printf '{"login":"%sp","password":"%s","character":"Combatplayer"}\n' "$OWNER" "$PASSWORD" > "$TMP/player.json"
 chmod 600 "$TMP/gm.json" "$TMP/player.json"
 
-echo "2/7 Запуск копии сервера (до 90 с)…"
+echo "2/8 Запуск копии сервера (до 90 с)…"
 : > "$LOGS/combat-server.log"
 (cd "$COPY" && exec python3 "$ROOT/tools/check/pty_server.py" --log "$LOGS/combat-server.log" \
   --answer "owner account now=y" --answer "Input Username=$OWNER" --answer "Input Password=$PASSWORD" -- dotnet ModernUO.dll) &
@@ -96,7 +100,7 @@ if ! grep -aq "Listening: " "$LOGS/combat-server.log"; then
 fi
 ok "сервер запущен, временный владелец создан"
 
-echo "3/7 4.4 Состояние мобов: бот-GM меняет себе статы и сверяет состояние с сервером…"
+echo "3/8 4.4 Состояние мобов: бот-GM меняет себе статы и сверяет состояние с сервером…"
 bot --config "$TMP/gm.json" --create-character --no-packet-log \
   --action "say:[add Rat" --action target:here --action seenmob:0x00EE \
   --action "say:[set str 60" --action target:self \
@@ -118,7 +122,7 @@ fi
 bot --config "$TMP/player.json" --create-character --no-packet-log --action "statusdump:$PARITY" > "$LOGS/combat-player.log" 2>&1
 if grep -q "сервер не записал дамп состояния" "$LOGS/combat-player.log"; then ok "обычному игроку [DumpMobile недоступна"; else fail "у игрока дамп записан или бот упал иначе. Лог: Logs/check/combat-player.log"; fi
 
-echo "4/7 4.6 Прицел: бот-GM бинтуется быстрым бинтом и через курсор…"
+echo "4/8 4.6 Прицел: бот-GM бинтуется быстрым бинтом и через курсор…"
 bot --config "$TMP/gm.json" --no-packet-log \
   --action "say:[add Bandage 5" --action target:here --action seen:0x0E21,5 \
   --action "say:[set hits 30" --action target:self \
@@ -137,7 +141,7 @@ else
   fail "бинт через курсор не сработал. Лог: Logs/check/combat-target.log"
 fi
 
-echo "5/7 4.7 Стойка и атака: бот-игрок бьёт крысу до смерти…"
+echo "5/8 4.7 Стойка и атака (сценарий combat-basic): бот-игрок бьёт крысу до смерти…"
 START="$(grep -o 'персонаж 0x[0-9A-F]* ([0-9]*, [0-9]*, -*[0-9]*)' "$LOGS/combat-player.log" | head -n 1 | sed 's/.*(\(.*\))/\1/; s/ //g')"
 if [ -z "$START" ]; then
   fail "не знаю, где стоит бот-игрок (нет строки входа в Logs/check/combat-player.log)"
@@ -163,7 +167,7 @@ else
   fi
   if grep -Eq "Противник: здоровье [0-9]{1,2}/100" "$LOGS/combat-fight.log" \
     && grep -q "убит: труп" "$LOGS/combat-fight.log"; then
-    ok "здоровье крысы падало ($(grep -o 'Противник: здоровье [0-9]*/100' "$LOGS/combat-fight.log" | sed 's/.*здоровье //' | paste -sd ' ' -)), крыса убита, остался труп"
+    ok "здоровье крысы падало ($(grep -o 'Противник: здоровье [0-9]*/100' "$LOGS/combat-fight.log" | sed 's/.*здоровье //' | paste -sd ' ' -)), крыса убита: анимация смерти, труп, моб удалён"
   else
     fail "крыса не умерла или её здоровье не приходило. Лог: Logs/check/combat-fight.log"
   fi
@@ -174,7 +178,7 @@ else
   fi
 fi
 
-echo "6/7 4.8 Журнал боя: события того же боя и их порядок…"
+echo "6/8 4.8 Журнал боя: события того же боя и их порядок…"
 SUMMARY="$(grep -o 'Журнал боя: событий .*' "$LOGS/combat-fight.log" | head -n 1)"
 SWINGS="$(echo "$SUMMARY" | sed -n 's/.*замахов бота по противнику \([0-9]*\).*/\1/p')"
 MINE="$(echo "$SUMMARY" | sed -n 's/.*анимаций бота \([0-9]*\).*/\1/p')"
@@ -193,7 +197,51 @@ else
   [ -n "${ORDER:-}" ] && echo "  $ORDER"
 fi
 
-echo "7/7 Остановка копии и ваши сохранения…"
+echo "7/8 4.9 Смерть и воскрешение (сценарий death-res): бот-GM убивает бота-игрока и воскрешает…"
+if [ -z "$START" ]; then
+  fail "не знаю, где стоит бот-игрок"
+else
+  : > "$LOGS/combat-death.log"
+  bot --config "$TMP/player.json" --action dead --action alive --idle 1 > "$LOGS/combat-death.log" 2>&1 &
+  PLAYER_BOT=$!
+  for _ in $(seq 1 30); do grep -q "Действие: dead" "$LOGS/combat-death.log" 2>/dev/null && break; sleep 0.5; done
+  bot --config "$TMP/gm.json" --no-packet-log \
+    --action "say:[go ${START//,/ }" --action "at:${START%,*}" --action seenmob:0x0190 \
+    --action "say:[set HairItemID 8251 FacialHairItemID 8256" --action target:mob:0x0190 \
+    --action "say:[kill" --action target:mob:0x0190 --action deathof:0x0190 \
+    --action "say:[res" --action target:mob:0x0192 --idle 1 > "$LOGS/combat-death-gm.log" 2>&1
+  GM_CODE=$?
+  wait "$PLAYER_BOT"
+  CODE=$?
+  DEATH="$(grep -o 'Смерть 0x[0-9A-F]*: анимация смерти.*' "$LOGS/combat-death-gm.log" | head -n 1)"
+  if [ "$GM_CODE" -eq 0 ] && echo "$DEATH" | grep -q "Hair → .*FacialHair → .*стал призраком"; then
+    ok "GM видит смерть игрока: ${DEATH%.}"
+  else
+    fail "GM не увидел смерть игрока с трупом и вещами по слоям: код $GM_CODE. Лог: Logs/check/combat-death-gm.log"
+    grep -E "ОШИБКА|Смерть" "$LOGS/combat-death-gm.log" | head -n 5
+  fi
+  OWN="$(grep -o 'Смерть: свой труп .*' "$LOGS/combat-death.log" | head -n 1)"
+  if grep -q "Смерть: статус смерти (0x2C)" "$LOGS/combat-death.log" && grep -q "Смерть: тело призрака 0x0192" "$LOGS/combat-death.log" \
+    && echo "$OWN" | grep -q "Hair → .*(в трупе).*FacialHair → .*(в трупе)"; then
+    ok "игрок: статус смерти от сервера, тело призрака 0x0192; ${OWN#Смерть: }"
+  else
+    fail "игрок не увидел своей смерти (статус, призрак, свой труп с вещами). Лог: Logs/check/combat-death.log"
+    grep -E "ОШИБКА|Смерть" "$LOGS/combat-death.log" | head -n 5
+  fi
+  if [ "$CODE" -eq 0 ] && grep -q "Жив: тело 0x0190, здоровье [1-9]" "$LOGS/combat-death.log"; then
+    ok "после [res игрок снова жив: $(grep -o 'Жив: .*' "$LOGS/combat-death.log" | head -n 1 | sed 's/Жив: //; s/\.$//')"
+  else
+    fail "игрок не ожил после [res: код $CODE. Лог: Logs/check/combat-death.log"
+  fi
+  PACKETS="$(grep -o 'Лог пакетов: .*' "$LOGS/combat-death.log" | head -n 1 | sed 's/Лог пакетов: //')"
+  if [ -n "$PACKETS" ] && [ -f "$PACKETS" ] && grep -q "S>C	0x2C" "$PACKETS" && ! grep -q "C>S	0x2C" "$PACKETS"; then
+    ok "на статус смерти (0x2C) клиент не ответил — сервер такой ответ игнорирует"
+  else
+    fail "в логе пакетов игрока нет статуса смерти или есть ответ на него${PACKETS:+ ($PACKETS)}"
+  fi
+fi
+
+echo "8/8 Остановка копии и ваши сохранения…"
 stop_server
 if [ "$(saves_print)" = "$SAVES_BEFORE" ]; then ok "ваши сохранения не тронуты"; else fail "папка Saves вашего сервера изменилась во время проверки"; fi
 if [ "$FAILED" -eq 0 ]; then echo "ОК"; else echo "ОШИБКА: см. сообщения выше."; exit 1; fi

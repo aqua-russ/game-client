@@ -5,8 +5,9 @@ using TheVerge.Core.World;
 namespace TheVerge.Bot
 {
     /// <summary>
-    /// target:here|self|x,y,z|cancel — дождаться курсора сервера и ответить: клетка под ногами (земля), свой персонаж,
-    /// клетка x,y,z (земля) или отмена. Курсор принимает только объект, а нужна клетка — ошибка сразу.
+    /// target:here|self|x,y,z|0xГРАФИКА|mob:0xТЕЛО|cancel — дождаться курсора сервера и ответить: клетка под ногами (земля),
+    /// свой персонаж, клетка x,y,z (земля), предмет под ногами, ближайший другой моб с телом ([kill, [res) или отмена.
+    /// Курсор принимает только объект, а нужна клетка — ошибка сразу.
     /// </summary>
     internal sealed class TargetStep : IBotStep
     {
@@ -39,6 +40,7 @@ namespace TheVerge.Bot
             var sent = _argument == "cancel" ? cursor.Cancel()
                 : _argument == "self" ? player != null && cursor.TargetObject(player.Serial)
                 : BotAction.TryParseGraphic(_argument, out var graphic) ? TargetItemAtFeet(player, graphic)
+                : BotAction.TryParseMobileBody(_argument, out var body) ? TargetMobile(body)
                 : TargetCell(player);
             if (sent)
             {
@@ -71,6 +73,18 @@ namespace TheVerge.Bot
             }
 
             Failure = "под ногами нет предмета 0x" + graphic.ToString("X4") + ".";
+            return false;
+        }
+
+        private bool TargetMobile(ushort body)
+        {
+            var mobile = NearbyMobiles.Nearest(_world.Entities, body);
+            if (mobile != null)
+            {
+                return _world.Target.TargetObject(mobile.Serial);
+            }
+
+            Failure = "рядом нет другого моба с телом 0x" + body.ToString("X4") + ".";
             return false;
         }
 

@@ -87,7 +87,7 @@ id,sub,dir,name,length,condition,server,priority,stage,status,source,note
 0x85,,s2c,DeleteResult,2,,да,P1,1.8,нужно,Projects/Server/Network/Packets/OutgoingAccountPackets.cs#SendCharacterDeleteResult,отказ в удалении персонажа
 0x86,,s2c,CharacterListUpdate,var,,да,P1,1.8,нужно,Projects/Server/Network/Packets/OutgoingAccountPackets.cs#SendCharacterListUpdate,имена в UTF-8 (E1)
 0x88,,s2c,Paperdoll,66,,да,P2,5.5,нужно,Projects/Server/Network/Packets/OutgoingPlayerPackets.cs#SendDisplayPaperdoll,в ответ на двойной клик по себе или по мобу
-0x89,,s2c,CorpseEquipment,var,,да,P2,4.9,нужно,Projects/UOContent/Items/Misc/Corpses/CorpsePackets.cs#SendCorpseEquip,
+0x89,,s2c,CorpseEquipment,var,,да,P2,4.9,нужно,Projects/UOContent/Items/Misc/Corpses/CorpsePackets.cs#SendCorpseEquip,только трупы людей (Corpse.ShowsWornGear); после 0x3C с теми же вещами и до 0xAF; слой + 1; конец — байт 0
 0x8B,,s2c,SignGump,var,,нет,-,-,не используется,Projects/UOContent/Gumps/Base/OutgoingGumpPackets.cs#SendDisplaySignGump,метод есть; вызовов на сервере нет
 0x8C,,s2c,ServerRedirect,11,,да,P0,1.6,нужно,Projects/Server/Network/Packets/OutgoingAccountPackets.cs#SendPlayServerAck,адрес игрового сервера и ключ
 0x90,,s2c,MapDetailsOld,19,до 7.0.13.0; нашей версии сервер шлёт 0xF5,нет,-,-,не используется,Projects/UOContent/Items/Maps/MapItemPackets.cs#SendMapDetails,

@@ -92,10 +92,13 @@ namespace TheVerge.Bot
             var journal = new CombatLog(clock);
             CombatLogHandlers.Register(dispatcher, journal);
             environment.SoundPlayed += journal.OnSound;
+            var corpses = new CorpseEquipment(entities);
+            CorpseHandlers.Register(dispatcher, corpses);
             return new BotWorld(entities, environment, containers, items, new SpeechCommands(new SpeechSender(session), clock), target, status)
             {
                 QuickTargets = new TargetCommands(new QuickTargetSender(session), clock, actions),
                 Combat = new BotCombat(combat, new CombatCommands(new CombatSender(session), combat, entities), journal),
+                Corpses = corpses,
             };
         }
 

@@ -41,6 +41,8 @@ namespace TheVerge.Bot
                     return "урон " + e.Target + ": " + e.Value;
                 case CombatEventKind.Effect:
                     return "эффект " + (EffectKind)e.Detail + " 0x" + e.Value.ToString("X4") + " " + e.Source + " → " + e.Target;
+                case CombatEventKind.Death:
+                    return "смерть " + e.Source + " труп " + e.Target;
                 default:
                     return "звук 0x" + e.Value.ToString("X4") + " в " + e.Position;
             }
