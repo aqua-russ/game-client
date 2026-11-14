@@ -34,7 +34,7 @@
 | Контекстные меню (0xBF 0x13 → 0x14 → 0x15) | работают в любой эре | `Context Menus/ContextMenuSystem.cs` |
 | Кнопка гильдии на кукле (0xD7 0x28) | **ничего не делает**: новая система гильдий только с SE; гильдии — через камень гильдии и гампы | `Misc/Guild.cs` (`NewGuildSystem => Core.SE`) |
 | Кнопка квестов (0xD7 0x32) | квестов ML нет (`questSystem.enableMLQuests` = False) | `modernuo.json` |
-| Крафт | меню 0x7C / 0x7D | `t2aCraftMenus` (по умолчанию включён до UOTD) |
+| Крафт и инструменты | единое окно ремесла 0xDD / 0xB1 (с кнопкой «Сделать последнее»); все инструменты ремесла надеваются в руку | на Стадии 6 выключаем `t2aCraftMenus = false` в настройках (меню 0x7C / 0x7D остаются для не-крафтовых списков); на Стадии 5 в `BaseTool.cs` задаём `Layer = Layer.OneHanded` (как у `SmithHammer`), лопат в игре нет (руда добывается киркой) |
 | Тултипы, баффы, спецприёмы оружия, конструктор домов, плавный ход кораблей, золото на счёте | выключены | `ExpansionConfiguration.cs`, `expansion.json` |
 | Школы магии, кроме Magery (некромантия, рыцарство, бусидо, ниндзюцу, spellweaving, mysticism) | регистрируются только с AoS и позже | `UOContent/Spells/Initializer.cs` (`Core.AOS`, `Core.SE`, `Core.ML`, `Core.SA`) |
 | Гаргульи, полёт (0xBF 0x32), смена расы (0xBF 0x2A) | эра SA — не реализуем | `IncomingExtendedCommandPackets.cs` |
@@ -107,12 +107,12 @@
 | Сесть на маунта | 1 клетка; маунт должен быть ручным (`Controlled`) | `BaseMount.OnDoubleClick` |
 | Слезть | двойной клик по себе, в любой стойке (`DisableDismountInWarmode` выключен) | `Mobile.OnDoubleClick` |
 | Бинт | 1 клетка (при AoS 2) | `Bandage.Range` |
-| Добыча руды и песка | 2 клетки; инструмент в руках или рюкзаке; один заход 1,6 с | `Mining.cs` (`MaxRange`, `EffectDelay`), `BaseHarvestTool.OnDoubleClick` |
+| Добыча руды и песка | 2 клетки; в нашей игре руда добывается киркой в руках (лопат нет); один заход 1,6 с | `Mining.cs` (`MaxRange`, `EffectDelay`), `BaseHarvestTool.OnDoubleClick` |
 | Ресурс добычи | лежит блоками 8×8 клеток: 10–34 единицы на блок, один удар тратит 1, возвращается за 10–20 минут; конец — сообщение «здесь нет металла» (503040) | `Mining.cs` (`BankWidth`, `MinTotal`, `MaxTotal`, `MinRespawn`, `NoResourcesMessage`) |
 | Рубка и рыбалка | рубка: 2 клетки, за заход 1–3 удара по 1,6 с (в эре до AoS); рыбалка: 4 клетки | `Lumberjacking.cs`, `Fishing.cs` (`MaxRange`, `EffectCounts`) |
 | Ответ прицела 0x6C | номер прицела должен совпасть; статика — в этой клетке с тем же id и z, иначе прицел молча закрывается; земля — graphic 0; отмена — x = y = −1 и пустой serial | `IncomingTargetingPackets.TargetResponse` |
 | Время жизни прицела | заклинания 30 с, добыча без ограничения; новый прицел заменяет старый | `Spell.cs`, `HarvestTarget` |
-| 0xBF 0x2C, 0x2D, 0x2E | бинт, заклинание, навык вместе с целью одним пакетом; 0x2C ограничен `actionDelay` | `IncomingExtendedCommandPackets.cs` |
+| 0xBF 0x2C, 0x2D, 0x2E | 0x2C (бинт и цель) сразу лечит цель и ограничен `actionDelay`; в 0x2D (заклинание и цель) сервер начинает каст, но поле цели игнорирует и в конце каста шлёт обычный прицел 0x6C (клиент запоминает цель и сам отвечает на 0x6C); 0x2E — навык с целью | `IncomingExtendedCommandPackets.cs`, `Spellbook.TargetedSpell` |
 | 0xBF 0x30 «цель по ресурсу» | пакет принимается, но обработчика события нет — ничего не происходит, не используем | там же, `TargetByResourceMacro` |
 | Боевая стойка 0x72 | больше 4 переключений за 0,5 с — остальные откладываются на 2 с; выход в мирную стойку сбрасывает цель боя. Больше стойка почти ничего не меняет: показывает оружие в руках, призрак в стойке виден живым, а лучник подбирает свои стрелы только вне стойки | `Mobile.DelayChangeWarmode`, `Mobile.Warmode`, `Mobile.CanSee`, `AmmoRecovery` |
 | Каст заклинания (Magery) | пока идёт каст, шаг не принимается («вы заморожены», `Spell.OnCasterMoving`); ниндзя, самурай и паладин ходят. Отмены каста нет: сбивают только урон, смена экипировки, использование предмета и новый каст | `Spell.BlocksMovement`, `Spell.Disturb`, `DisturbType` |
@@ -134,7 +134,7 @@
 
 | Настройка | dev-стенд (сейчас) | parity-стенд (для критериев стадий) |
 |---|---|---|
-| Данные (`dataDirectories`) | **заглушка** `Data/ClientData` (карты-копии, ~300 статиков, пустой multi) — до решения пользователя переключить свой сервер | полная установка классического клиента UO ([ADR 0003](adr/0003-world-data.md)); версия файлов **7.0.118.46** (установлены 13 ноября 2026, копия — `remaster/uo-data/Ultima Online Classic`, вне git): карта UOP, tiledata — 64-битные флаги, дома — `MultiCollection.uop` |
+| Данные (`dataDirectories`) | полная установка **7.0.118.46** (`remaster/uo-data/Ultima Online Classic`, переключено в задаче 0.2; заглушка `Data/ClientData` остаётся только для быстрых MUL-тестов) | полная установка классического клиента UO ([ADR 0003](adr/0003-world-data.md)); версия файлов **7.0.118.46** (установлены 13 ноября 2026, копия — `remaster/uo-data/Ultima Online Classic`, вне git): карта UOP, tiledata — 64-битные флаги, дома — `MultiCollection.uop` |
 | Версия клиента для сервера (`clientData.clientVersion`) | 7.0.95.0 | 7.0.95.0: иначе сервер берёт версию из `client.exe` в папке данных и требует её от клиентов (`ClientVerification.cs`) |
 | `theverge.sandbox.enable` | False | False |
 | `speedhack_detection` | **True** | True |

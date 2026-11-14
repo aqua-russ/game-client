@@ -2,7 +2,7 @@
 
 Журнал всех отличий нашего форка `server/ModernUO` от оригинала. Обязателен к обновлению при любой правке сервера (`AGENTS.md` §5). Правки движка (`Projects/Server`) — только с разрешения руководителя, с комментарием `// THE VERGE: <причина>`.
 
-*Состояние на 13 ноября 2026 (сверено с `git diff` против оригинала ModernUO: 16 файлов, все в таблицах). Все правки закоммичены в ветке `theverge/uor-baseline` и отправлены в `github.com/aqua-russ/game-server`. Сборка `dotnet build -c Release` проходит без ошибок и предупреждений. Список сверен с `git diff` против оригинала ModernUO: 16 файлов, все в таблицах ниже.*
+*Состояние на 14 ноября 2026 (сверено с `git diff` против оригинала ModernUO: 31 файл вместе с тестами и новыми файлами в `Custom/TheVerge/Parity/`, все перечислены в таблицах ниже). Правки закоммичены в ветке `theverge/uor-baseline` (5 локальных коммитов поверх `origin`). Сборка `dotnet build -c Release` проходит без ошибок и предупреждений.*
 
 ## Движок (`Projects/Server`) — риск конфликтов при обновлении ModernUO
 
@@ -43,7 +43,7 @@
 | Файл | Что | Статус |
 |---|---|---|
 | `Distribution/Data/map-definitions.json` | — | правила Траммеля **возвращены** к `TrammelRules` (ADR 0001) |
-| `Distribution/Data/ClientData/` | заглушка мира для прототипа | заменить полными данными ([ADR 0003](adr/0003-world-data.md)) |
+| `Distribution/Data/ClientData/` | лёгкая заглушка мира (MUL) | сохранена для быстрых MUL-тестов; рабочий сервер переключён на полные данные `remaster/uo-data/Ultima Online Classic` (задача 0.2, 14 ноября 2026) |
 | `Distribution/Configuration/expansion.json` | Renaissance, только Фелукка | [ADR 0002](adr/0002-client-version-and-era.md) |
 | `Distribution/Configuration/modernuo.json` | значения эры UOR, `theverge.sandbox.enable`, `serverListing.address` = 127.0.0.1 | ADR 0002, ADR 0004 |
 | `Distribution/Configuration/FeatureFlags/flags.json` | `speedhack_detection` = true | ADR 0004 |

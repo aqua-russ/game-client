@@ -10,7 +10,7 @@
 - **Сжатие** на игровом сокете включается `NetworkSession.EnableCompression` до отправки 0x91 (ответ сервера уже сжат). 4 байта ключа перед 0x91 пишутся `OutgoingBuffer.WriteRaw` — только первыми в тике, это не пакет.
 - Решения по ядру (пределы, дамп, бюджет тика, таймаут, очередь, порты, неизвестная подкоманда — разрыв) — ADR 0013; значения — `TARGET.md` §3.1 и `ClientLimits`.
 - **Лог пакетов:** `Network/Diagnostics` (`PacketLogWriter`, `PacketLogReader`), подключается через `NetworkSession.PacketLog`. Формат — строка на пакет: время, S>C/C>S, номер, подкоманда, имя, длина, пометки, байты; события `CONNECTED`/`CLOSED`; пароль в 0x80/0x91 — `*`.
-- Не сделано: запись сырого сжатого потока для сверки Huffman — вместе с остатком 1.3.
+- **Запись и распаковка сырого сжатого потока** проверены в 0.6 / 1.3 (`CaptureConverter`, `tools/golden/`).
 
 ## 2. Вход и сессия (1.5–1.15; [ADR 0016](adr/0016-login-and-session.md))
 
@@ -30,7 +30,7 @@
 - **Unity:** разметка `UI/Session/LoginScreens.uxml`/`.uss`, тема `UI/TheVergeTheme.tss`; View — `Presentation/UI/Session` (`LoginScreensView` и панели), помощники `Presentation/UI/UiElements`, `ButtonList`.
 - **Сборка клиента** — `Bootstrap/UnityLoginClient` (как `BotClient`, повтор входа включён). Точка входа — `Bootstrap/GameBootstrap`: панель UI создаётся кодом, ссылки на разметку и тему в сцене ставит меню «The Verge → Prepare Bootstrap Scene». Последний адрес и логин — `LoginPrefs` (PlayerPrefs; пароль — никогда).
 - **Новый экран:** модель в Core с тестами, в Unity — разметка и тонкий View.
-- **В Unity мир пока не подключён:** `UnityLoginClient` — только вход; мир подключается вместе с отладочной картой (2.13).
+- **Вход и отладочная 3D-карта мира (2.13)** подключены в Unity через `DebugMapHost` (§4).
 
 ## 4. Мир (Стадия 2, часть А: 2.7–2.11, 2.14)
 
@@ -61,8 +61,8 @@
 Сообщения сервера пока хранятся номерами; тексты — задача 4.1. Окна статуса и журнала боя в Unity — 4.11. Проверка на сервере — `tools/check/combat.sh` (сценарии `combat-basic` и `death-res` = задача 4.10).
 
 - **Состояние мобов (4.4):** `Mobile.Status` (`Core/World/MobileStatus`: `Vital`, `StatusAttributes`, `StatLocks`); обновления — `Core/Status/MobileStatusUpdates` (событие `Changed`; неизвестный моб — пропуск и счётчик `UnknownMobile`); запрос — `StatusCommands.RequestStatus` → порт `IStatusSender`; `Network/Packets/Status`: 0x11, 0xA1–0xA3, 0x2D, 0x17, 0xBF 0x19, 0x34 (`StatusHandlers.Register`). Сервер — `[DumpMobile`; сверка — `StatusComparison`, отчёт — общий `ParityReport`.
-- **Прицел полностью (4.6):** вид курсора — `TargetCursor.IsHarmful`/`IsBeneficial`; быстрые цели — `Core/Targeting/TargetCommands` (`Bandage`, `CastAt`, `UseSkillAt`, `TargetByResource`) → порт `IQuickTargetSender` → `Network/Packets/Targeting/QuickTargetSender` (`QuickTargetPackets`); общая задержка действий — `Core/Session/ActionTimer` (двойной клик и бинт; `ItemCommands` принимает её необязательным параметром).
-- **Стойка и атака (4.7):** `Core/Combat/CombatState` (только по пакетам 0x72 и 0xAA, `Reset` при новом входе); `CombatCommands` (`SetWarMode`: та же стойка — не шлём; `Attack`: не моб или свой персонаж — не шлём) → порт `ICombatSender` → `Network/Packets/Combat` (`CombatHandlers.Register`, `CombatSender`).
+- **Прицел полностью (4.6):** вид курсора — `TargetCursor.IsHarmful`/`IsBeneficial`; быстрые цели — `Core/Targeting/TargetCommands` (`Bandage`, `CastAt`, `UseSkillAt`, `TargetByResource`) → порт `IQuickTargetSender` → `Network/Packets/Targeting/QuickTargetSender` (`QuickTargetPackets`); общая задержка действий — `Core/Session/ActionTimer` (двойной клик и бинт; `ItemCommands` принимает её необязательным параметром). Клиентские надстройки из `CONTROLS.md` (единая цель, предупреждения 2 с, авто-ответ на `0x6C` после каста, удаление `TargetByResource`) добавляются на шаге 7 (Стадия 4).
+- **Стойка и атака (4.7):** `Core/Combat/CombatState` (только по пакетам 0x72 и 0xAA, `Reset` при новом входе); `CombatCommands` (`SetWarMode`: та же стойка — не шлём; `Attack`: не моб или свой персонаж — не шлём) → порт `ICombatSender` → `Network/Packets/Combat` (`CombatHandlers.Register`, `CombatSender`). Клиентские надстройки из `CONTROLS.md` (автовключение стойки при атаке, автовыход по таймеру только при `0xAA` = 0) добавляются на шаге 7 (Стадия 4).
 - **Журнал боя (4.8):** `Core/Combat/CombatLog` — кольцо на `ClientLimits.CombatLogCapacity` = 512 событий `CombatEvent` (вид `CombatEventKind`, кто, по кому, значение, вид эффекта `EffectKind`, точка, цвет, время по часам клиента), событие `Added`, `Clear` при новом входе. Обработчики: `Network/Packets/Combat` (0x2F `SwingHandler`, 0x0B `DamageHandler`, 0x6E `MobileAnimationHandler`; все — `CombatLogHandlers.Register`) и `Network/Packets/Effects` (0x70, 0xC0, 0xC7; общая голова — `EffectHead`); звук 0x54 — через `WorldEnvironment.SoundPlayed` (подписать `CombatLog.OnSound`). Сверка порядка с логом пакетов — `tools/check/combat_order.py`.
 - **Смерть и воскрешение (4.9):** своя смерть — `CombatState.OnDeathStatus` (0x2C, `Deaths`, событие `Died`; ответ не шлём); жив ли — по телу сервера: `Mobile.IsGhost` (`Core/World/Bodies.IsGhost`, как `Body.IsGhost` сервера); чужая смерть — `CombatEventKind.Death` в журнале (0xAF: убитый, труп); вещи трупа по слоям — `Core/World/CorpseEquipment` (`CorpseItem`; 0x89 — `Network/Packets/Items/CorpseHandlers.Register`; забывается вместе с трупом).
 

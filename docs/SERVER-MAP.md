@@ -8,13 +8,13 @@
 |---|---|---|
 | `Projects/Server/` | движок: сеть, пакеты, `Mobile`, `Item`, карта, таймеры | только с разрешения руководителя (`AGENTS.md` §5) |
 | `Projects/UOContent/` | игровое содержимое: навыки, заклинания, предметы, NPC, гампы, обработчики входящих пакетов | да, минимально; своё — в `Custom/TheVerge/` |
-| `Projects/UOContent/Custom/` | наш код: GM-команды сверки клиента с сервером — `TheVerge/Parity/` (`[DumpVisible`, `[DumpMapData`, `[DumpMobile`); песочница `MinocSandboxInitializer.cs` (выключена, долг) | да |
+| `Projects/UOContent/Custom/` | наш код: GM-команды сверки клиента с сервером — `TheVerge/Parity/` (`[DumpVisible`, `[DumpMapData`, `[DumpMobile`, `[ParityPlace`); песочница `MinocSandboxInitializer.cs` (выключена, долг) | да |
 | `Projects/*.Tests/` | тесты сервера (в том числе тесты пакетов — удобный образец байтов) | — |
 | `Distribution/` | собранный сервер, отсюда он запускается | — |
 | `Distribution/Configuration/` | настройки стенда (в git не хранится) | да + обновить шаблон |
 | `Distribution/ConfigurationTemplates/theverge/` | шаблон наших настроек (в git) | да |
 | `Distribution/Data/` | данные сервера: эры, карты, регионы, спавны, навыки | осторожно |
-| `Distribution/Data/ClientData/` | файлы данных клиента UO (у сервера пользователя пока заглушка; полная установка — `remaster/uo-data`, ADR 0003) | переключить на полную установку (задача 0.2) |
+| `Distribution/Data/ClientData/` | лёгкая заглушка для быстрых MUL-проверок (рабочий сервер пользователя переключён на полную установку `remaster/uo-data/Ultima Online Classic` в задаче 0.2, ADR 0003) | не удалять (нужна тестам MUL) |
 | `dev-docs/` | документация ModernUO для разработчиков | только чтение |
 | `CLAUDE.md` | правила кода сервера (обязательны при правке сервера) | не трогать |
 
@@ -77,7 +77,7 @@
 | 5 | поднять, положить, надеть | `IncomingItemPackets.cs`, `Network/ContainerGridPacketHandler.cs`, `Mobile.Lift`/`Drop` |
 | 5 | контейнеры | `Server/Items/Container.cs`, `OutgoingContainerPackets.cs`, `Distribution/Data/containers.cfg` |
 | 6 | гампы | `UOContent/Gumps/Base/`, `dev-docs/gump-system.md`; меню 0x7C — `Server/Menus/`, `OutgoingMenuPackets.cs`; запросы ввода — `Server/Prompt.cs` |
-| 6 | крафт через меню (эра UOR) | `UOContent/Engines/Craft/T2A/`, `dev-docs/t2a-crafting.md` |
+| 6 | крафт: единое окно ремесла `CraftGump` (при `t2aCraftMenus = false`) и инструменты | `UOContent/Engines/Craft/Core/CraftGump.cs`, `Items/Skill Items/Tools/BaseTool.cs`; старые меню T2A — `UOContent/Engines/Craft/T2A/` |
 | 7 | магия | `UOContent/Spells/` (круги First…Eighth), `Items/Skill Items/Magical/Spellbook.cs` |
 | 7 | вендоры | `UOContent/Mobiles/Vendors/BaseVendor.cs`, `IncomingVendorPackets.cs` |
 | 7 | обмен, группа, гильдии | `Server/SecureTrade.cs`, `Engines/Party/`, `UOContent/Misc/Guild.cs` |
