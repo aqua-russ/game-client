@@ -42,7 +42,8 @@ namespace TheVerge.Bootstrap
             var log = new UnityLog();
             var stop = _stop.Token;
             _screens = new LoginScreens(() => NewClient(log, stop));
-            _debugMap = new DebugMapHost(log, FindCamera());
+            _debugMap = new DebugMapHost(log, FindCamera(), position => _view != null && _view.IsPointerOverUi(position),
+                text => _view?.ShowCellReport(text));
             LoginPrefs.Load(_screens.Form);
             _screens.Submitted += OnSubmitted;
             _view = new LoginScreensView(CreateDocument().rootVisualElement, _screens);

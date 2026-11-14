@@ -19,6 +19,8 @@ namespace TheVerge.Presentation.UI.Session
         private readonly CharactersPanelView _characters;
         private readonly CreatePanelView _create;
         private readonly WorldPanelView _world;
+        private readonly InspectorPanelView _inspector;
+        private readonly PointerOverUiGuard _guard;
         private readonly VisualElement _waiting;
         private readonly Label _waitingStatus;
         private readonly Button _waitingCancel;
@@ -34,6 +36,8 @@ namespace TheVerge.Presentation.UI.Session
             _characters = new CharactersPanelView(_root, screens);
             _create = new CreatePanelView(_root, screens);
             _world = new WorldPanelView(_root, screens);
+            _inspector = new InspectorPanelView(_root);
+            _guard = new PointerOverUiGuard(_root);
             _waiting = UiElements.Require<VisualElement>(_root, "waitingPanel");
             _waitingStatus = UiElements.Require<Label>(_waiting, "waitingStatus");
             _waitingCancel = UiElements.Require<Button>(_waiting, "waitingCancel");
@@ -64,6 +68,12 @@ namespace TheVerge.Presentation.UI.Session
         /// <summary>Строка отладочной карты на панели «в мире»: что нарисовано или почему карты нет.</summary>
         public void SetMapStatus(string text) => _world.SetMapStatus(text);
 
+        /// <summary>Окно клетки отладочной карты поверх мира (клик по клетке).</summary>
+        public void ShowCellReport(string text) => _inspector.Show(text);
+
+        /// <summary>Курсор (пиксели экрана, начало внизу слева) над панелью интерфейса — клик в мир не идёт.</summary>
+        public bool IsPointerOverUi(UnityEngine.Vector2 screenPosition) => _guard.IsOver(screenPosition);
+
         public void Dispose()
         {
             _waitingCancel.clicked -= _screens.Cancel;
@@ -72,6 +82,7 @@ namespace TheVerge.Presentation.UI.Session
             _characters.Dispose();
             _create.Dispose();
             _world.Dispose();
+            _inspector.Dispose();
         }
 
         private void ShowOnly(LoginScreen screen)
@@ -82,6 +93,11 @@ namespace TheVerge.Presentation.UI.Session
             UiElements.Show(_characters.Panel, screen == LoginScreen.Characters);
             UiElements.Show(_create.Panel, screen == LoginScreen.CreateCharacter);
             UiElements.Show(_world.Panel, screen == LoginScreen.InWorld);
+            if (screen != LoginScreen.InWorld)
+            {
+                _inspector.Hide();
+            }
+
             _root.EnableInClassList(InWorldClass, screen == LoginScreen.InWorld);
         }
 

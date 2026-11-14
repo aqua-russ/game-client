@@ -18,9 +18,14 @@ namespace TheVerge.Presentation.World
         private readonly TerrainPresenter _terrain;
         private readonly EntityMarkers _markers;
         private readonly DebugCamera _camera;
+        private readonly CellPicking _picking;
 
         /// <param name="builder">Блоки карты из файлов данных; null — файлов нет, видны только мобы и предметы.</param>
-        public DebugMapPresenter(EntityStore world, SceneBuilder builder, UnityEngine.Camera camera)
+        /// <param name="inspector">Окно клетки по клику; null — файлов нет.</param>
+        /// <param name="pointerOverUi">Позиция курсора на экране → над панелью ли он (клик в мир тогда не идёт).</param>
+        /// <param name="report">Куда отдать текст окна клетки.</param>
+        public DebugMapPresenter(EntityStore world, SceneBuilder builder, CellInspector inspector, UnityEngine.Camera camera,
+            Func<Vector2, bool> pointerOverUi, Action<string> report)
         {
             _world = world;
             _root = new GameObject("DebugMap");
@@ -28,6 +33,7 @@ namespace TheVerge.Presentation.World
             _terrain = new TerrainPresenter(world, builder, new TerrainMeshes(_root.transform, _materials));
             _markers = new EntityMarkers(world, _root.transform, _materials);
             _camera = new DebugCamera(camera);
+            _picking = new CellPicking(world, inspector, camera, pointerOverUi, report);
         }
 
         public EntityStore Entities => _world;
@@ -38,6 +44,7 @@ namespace TheVerge.Presentation.World
         public void Update()
         {
             _terrain.Update();
+            _picking.Update(_terrain.Blocks);
             var player = _world.Player;
             if (player != null)
             {

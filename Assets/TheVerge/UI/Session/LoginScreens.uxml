@@ -88,5 +88,14 @@
             <ui:Label name="mapStatus" class="map-status" />
             <ui:Button name="logoutButton" text="Выйти" />
         </ui:VisualElement>
+        <ui:VisualElement name="inspectorPanel" class="inspector hidden">
+            <ui:VisualElement class="inspector-head">
+                <ui:Label text="Клетка карты" class="inspector-title" />
+                <ui:Button name="inspectorClose" text="Закрыть" />
+            </ui:VisualElement>
+            <ui:ScrollView name="inspectorScroll" class="inspector-scroll">
+                <ui:Label name="inspectorText" class="inspector-text" />
+            </ui:ScrollView>
+        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

@@ -19,15 +19,21 @@ namespace TheVerge.Bootstrap
 
         private readonly ILog _log;
         private readonly Camera _camera;
+        private readonly Func<Vector2, bool> _pointerOverUi;
+        private readonly Action<string> _showReport;
         private UnityWorldData _data;
         private bool _dataTried;
         private string _dataError = string.Empty;
         private DebugMapPresenter _presenter;
 
-        public DebugMapHost(ILog log, Camera camera)
+        /// <param name="pointerOverUi">Позиция курсора на экране → над панелью ли он.</param>
+        /// <param name="showReport">Показать окно клетки (клик по клетке).</param>
+        public DebugMapHost(ILog log, Camera camera, Func<Vector2, bool> pointerOverUi, Action<string> showReport)
         {
             _log = log;
             _camera = camera;
+            _pointerOverUi = pointerOverUi;
+            _showReport = showReport;
         }
 
         /// <summary>Что показать на панели «в мире»; пусто — ничего.</summary>
@@ -62,13 +68,21 @@ namespace TheVerge.Bootstrap
         {
             EnsureData();
             var builder = _data == null ? null : new SceneBuilder(_data.Map, _data.Tiles, _data.Multis, entities);
-            var presenter = new DebugMapPresenter(entities, builder, _camera);
+            var inspector = _data == null ? null : new CellInspector(_data.Map, _data.Tiles, _data.Multis, entities);
+            var presenter = new DebugMapPresenter(entities, builder, inspector, _camera, _pointerOverUi, ShowReport);
             if (_data == null)
             {
                 _log.Warning("Отладочная карта без земли: " + _dataError);
             }
 
             return presenter;
+        }
+
+        // Окно клетки показывается на экране и пишется в журнал Unity (Console), откуда текст можно скопировать.
+        private void ShowReport(string text)
+        {
+            _log.Info(text);
+            _showReport(text);
         }
 
         private void Close()

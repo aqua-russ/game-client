@@ -97,6 +97,8 @@ namespace TheVerge.Bot
                     return BotActionKind.SeenMulti;
                 case "scene" when SceneStep.TryParseRadius(argument, out _):
                     return BotActionKind.Scene;
+                case "inspect" when InspectStep.TryParseCell(argument, out _, out _, out _):
+                    return BotActionKind.Inspect;
                 default:
                     return null;
             }

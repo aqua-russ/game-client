@@ -30,6 +30,9 @@ namespace TheVerge.Presentation.World
         /// <summary>Строка для панели «в мире»: что показано или почему карты нет.</summary>
         public string Status { get; private set; }
 
+        /// <summary>Блоки карты, которые сейчас нарисованы (для выбора клетки кликом).</summary>
+        public IReadOnlyList<SceneBlock> Blocks => _blocks;
+
         public void Update()
         {
             if (!_tracker.TryTakeRebuild(out var x, out var y, out var map) || _builder == null)

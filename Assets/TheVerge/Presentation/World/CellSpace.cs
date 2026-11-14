@@ -1,3 +1,4 @@
+using TheVerge.Core.MapView;
 using UnityEngine;
 
 namespace TheVerge.Presentation.World
@@ -21,5 +22,10 @@ namespace TheVerge.Presentation.World
 
         /// <summary>Высота в метрах по единицам Z сервера.</summary>
         public static float Height(int zUnits) => zUnits * ZUnit;
+
+        /// <summary>Луч сцены в клетках UO для <see cref="CellPicker"/>: x = X сцены, y = −Z сцены, Z сервера = Y сцены / <see cref="ZUnit"/>.</summary>
+        public static PickRay ToCellRay(Ray ray) => new PickRay(
+            ray.origin.x / CellSize, -ray.origin.z / CellSize, ray.origin.y / ZUnit,
+            ray.direction.x / CellSize, -ray.direction.z / CellSize, ray.direction.y / ZUnit);
     }
 }

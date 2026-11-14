@@ -109,6 +109,8 @@ namespace TheVerge.Bot
                     return new SeenMultiStep(_world, _log);
                 case BotActionKind.Scene:
                     return new SceneStep(_world, _log, Data, action.Argument);
+                case BotActionKind.Inspect:
+                    return new InspectStep(_world, _log, Data, action.Argument);
                 case BotActionKind.UseItem:
                     return new UseItemStep(_world, _log, action.Argument);
                 case BotActionKind.Bandage:

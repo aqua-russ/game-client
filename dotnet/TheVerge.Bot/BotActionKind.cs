@@ -53,6 +53,9 @@ namespace TheVerge.Bot
         SeenMulti,
 
         /// <summary>scene:[радиус] — собрать отладочную карту вокруг себя из --data и написать, сколько блоков каких цветов (PLAN Стадия 2, п. 13).</summary>
-        Scene
+        Scene,
+
+        /// <summary>inspect:[x,y] — написать в журнал окно клетки (все объекты на ней) из --data; без клетки — клетка бота.</summary>
+        Inspect
     }
 }

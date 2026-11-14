@@ -107,9 +107,10 @@ go 1499 1628; act "say:[add Rat set CantWalk true"; act target:here; act seenmob
 go 1496 1624; act "say:[add Rat set CantWalk true"; act target:here; act seenmob:0x00EE
 go 1500 1642; act "say:[ParityPlace house"; act seenmulti:
 go 1496 1628; act scene:
+act inspect:1493,1628; act inspect:1499,1628; act inspect:1500,1642; act inspect:
 dotnet "$BOT_DLL" --config "$TMP/gm.json" --create-character --no-packet-log --data "$DATA" "${ACTIONS[@]}" --idle 3600 > "$LOGS/debugmap-gm.log" 2>&1 &
 BOT_PID=$!
-for _ in $(seq 1 120); do grep -aq "Сцена вокруг" "$LOGS/debugmap-gm.log" 2>/dev/null && break; kill -0 "$BOT_PID" 2>/dev/null || break; sleep 1; done
+for _ in $(seq 1 120); do grep -aq "Клетка (1496, 1628)" "$LOGS/debugmap-gm.log" 2>/dev/null && break; kill -0 "$BOT_PID" 2>/dev/null || break; sleep 1; done
 SCENE="$(grep -a "Сцена вокруг" "$LOGS/debugmap-gm.log" | head -n 1)"
 if [ -z "$SCENE" ]; then
   fail "бот не дошёл до сборки карты. Лог: Logs/check/debugmap-gm.log"
@@ -121,6 +122,13 @@ else
   echo "$SCENE" | grep -qE "части домов [1-9]" && ok "части дома попали на карту" || fail "частей домов нет"
   echo "$SCENE" | grep -qE "стена [1-9]" && ok "стены (здания Британии) есть" || fail "стен нет"
   echo "$SCENE" | grep -qE "поверхность [1-9]" && ok "проходимая поверхность есть" || fail "поверхности нет"
+  # Окно клетки (то же, что Unity показывает по клику): строки объектов нужной клетки из журнала бота.
+  cell_lines() { awk -v h="Клетка ($1)" 'index($0, h) {f=1; next} /Действие:|Клетка \(|Стою в мире/ {f=0} f' "$LOGS/debugmap-gm.log"; }
+  cell_lines "1493, 1628" | grep -aqE "земля: tile 0x[0-9A-F]{4}" && cell_lines "1493, 1628" | grep -aqE "предмет 0x[0-9A-F]{8}: tile 0x09D0" \
+    && ok "окно клетки: яблоко и земля под ним" || fail "в окне клетки (1493, 1628) нет яблока или земли"
+  cell_lines "1499, 1628" | grep -aqE "моб 0x[0-9A-F]{8}: тело 0x00EE" && ok "окно клетки: крыса" || fail "в окне клетки (1499, 1628) нет крысы"
+  cell_lines "1500, 1642" | grep -aqE "часть дома 0x[0-9A-F]{8}: tile" && ok "окно клетки: части дома на его клетке" || fail "в окне клетки (1500, 1642) нет частей дома"
+  cell_lines "1496, 1628" | grep -aqE "моб 0x[0-9A-F]{8}: тело" && ok "окно клетки: сам бот-GM" || fail "в окне клетки (1496, 1628) нет бота"
 fi
 
 echo "4/4 Стенд готов"
