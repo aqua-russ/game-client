@@ -32,6 +32,9 @@ namespace TheVerge.Bot
 
         public TargetCursor Target { get; }
 
+        /// <summary>Быстрые цели без курсора (Стадия 4, п. 6); null — не подключены (тесты, которым они не нужны).</summary>
+        public TargetCommands? QuickTargets { get; init; }
+
         /// <summary>Состояние мобов (Стадия 4); null — не подключено (тесты, которым оно не нужно).</summary>
         public BotStatus? Status { get; }
     }

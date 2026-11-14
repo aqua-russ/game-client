@@ -5,6 +5,10 @@ namespace TheVerge.Bot
     {
         /// <summary>use:backpack — открыть свой рюкзак и написать его содержимое.</summary>
         UseBackpack,
+        /// <summary>use:0xГРАФИКА — двойной клик по предмету с этой графикой не дальше 2 клеток.</summary>
+        UseItem,
+        /// <summary>bandage:self — быстрый бинт на себя бинтом не дальше 2 клеток (0xBF 0x2C).</summary>
+        Bandage,
 
         /// <summary>say:&lt;текст&gt; — сказать (и GM-команды: «[go 1500 1600»).</summary>
         Say,

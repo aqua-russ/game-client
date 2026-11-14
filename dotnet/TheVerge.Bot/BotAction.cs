@@ -39,6 +39,10 @@ namespace TheVerge.Bot
             {
                 case "use" when argument == "backpack":
                     return BotActionKind.UseBackpack;
+                case "use" when TryParseGraphic(argument, out _):
+                    return BotActionKind.UseItem;
+                case "bandage" when argument == "self":
+                    return BotActionKind.Bandage;
                 case "say" when argument.Trim().Length > 0 && argument.Trim().Length <= ServerLimits.SpeechMaxChars:
                     return BotActionKind.Say;
                 case "at" when TryParseCell(argument, out _, out _):
@@ -46,7 +50,7 @@ namespace TheVerge.Bot
                 case "target" when argument == "here" || argument == "self" || argument == "cancel" ||
                                    TryParsePoint(argument, out _) || TryParseGraphic(argument, out _):
                     return BotActionKind.Target;
-                case "seen" when TryParseGraphic(argument, out _):
+                case "seen" when SeenItemStep.TryParse(argument, out _, out _):
                     return BotActionKind.SeenItem;
                 case "seenmob" when TryParseGraphic(argument, out _):
                     return BotActionKind.SeenMobile;

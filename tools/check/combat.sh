@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Проверки Стадии 4 на настоящем сервере (PLAN Стадия 4; сейчас — 4.4 «Состояние мобов»). Печатает «ОК» или «ОШИБКА».
+# Проверки Стадии 4 на настоящем сервере (PLAN Стадия 4: 4.4 состояние мобов, 4.6 прицел). Печатает «ОК» или «ОШИБКА».
 #
 #   tools/check/combat.sh [<папка с файлами данных>]
 #
@@ -9,6 +9,8 @@
 # за вас (случайный пароль, только на время проверки).
 # 4.4: бот-GM ставит крысу ([add Rat), меняет себе силу, здоровье и яд ([set) и сверяет состояние своё и крысы с
 # сервером ([DumpMobile); обычный игрок команду выполнить не может.
+# 4.6: бот-GM кладёт под ноги 5 бинтов ([add Bandage 5), ранит себя ([set hits 30), бинтуется быстрым бинтом без курсора
+# (бинтов становится 4) и обычным — двойной клик и ответ на курсор «польза» (бинтов 3).
 # Ваш сервер должен быть остановлен (порт 2593 свободен) и собран (dotnet build -c Release в server/ModernUO).
 # Подробности — Logs/check/combat-*.log, лог сервера — Logs/check/combat-server.log.
 set -u
@@ -46,7 +48,7 @@ cleanup() { stop_server; rm -rf "$TMP"; }
 trap cleanup EXIT
 bot() { dotnet "$BOT_DLL" "$@"; }
 
-echo "1/4 Сборка бота и временная копия сервера…"
+echo "1/5 Сборка бота и временная копия сервера…"
 if ! dotnet build dotnet/TheVerge.Bot -nologo -v:q -tl:off > "$LOGS/combat-build.log" 2>&1; then
   echo "ОШИБКА: бот не собрался. Лог: Logs/check/combat-build.log"; exit 1
 fi
@@ -76,7 +78,7 @@ printf '{"login":"%s","password":"%s","character":"Combatgm"}\n' "$OWNER" "$PASS
 printf '{"login":"%sp","password":"%s","character":"Combatplayer"}\n' "$OWNER" "$PASSWORD" > "$TMP/player.json"
 chmod 600 "$TMP/gm.json" "$TMP/player.json"
 
-echo "2/4 Запуск копии сервера (до 90 с)…"
+echo "2/5 Запуск копии сервера (до 90 с)…"
 : > "$LOGS/combat-server.log"
 (cd "$COPY" && exec python3 "$ROOT/tools/check/pty_server.py" --log "$LOGS/combat-server.log" \
   --answer "owner account now=y" --answer "Input Username=$OWNER" --answer "Input Password=$PASSWORD" -- dotnet ModernUO.dll) &
@@ -87,7 +89,7 @@ if ! grep -aq "Listening: " "$LOGS/combat-server.log"; then
 fi
 ok "сервер запущен, временный владелец создан"
 
-echo "3/4 4.4 Состояние мобов: бот-GM меняет себе статы и сверяет состояние с сервером…"
+echo "3/5 4.4 Состояние мобов: бот-GM меняет себе статы и сверяет состояние с сервером…"
 bot --config "$TMP/gm.json" --create-character --no-packet-log \
   --action "say:[add Rat" --action target:here --action seenmob:0x00EE \
   --action "say:[set str 60" --action target:self \
@@ -109,7 +111,26 @@ fi
 bot --config "$TMP/player.json" --create-character --no-packet-log --action "statusdump:$PARITY" > "$LOGS/combat-player.log" 2>&1
 if grep -q "сервер не записал дамп состояния" "$LOGS/combat-player.log"; then ok "обычному игроку [DumpMobile недоступна"; else fail "у игрока дамп записан или бот упал иначе. Лог: Logs/check/combat-player.log"; fi
 
-echo "4/4 Остановка копии и ваши сохранения…"
+echo "4/5 4.6 Прицел: бот-GM бинтуется быстрым бинтом и через курсор…"
+bot --config "$TMP/gm.json" --no-packet-log \
+  --action "say:[add Bandage 5" --action target:here --action seen:0x0E21,5 \
+  --action "say:[set hits 30" --action target:self \
+  --action bandage:self --action seen:0x0E21,4 \
+  --action use:0x0E21 --action target:self --action seen:0x0E21,3 --idle 1 > "$LOGS/combat-target.log" 2>&1
+CODE=$?
+if [ "$CODE" -eq 0 ] && grep -q "Быстрый бинт" "$LOGS/combat-target.log" && grep -q "количество 4" "$LOGS/combat-target.log"; then
+  ok "быстрый бинт без курсора: лечение началось, бинтов 5 → 4"
+else
+  fail "быстрый бинт: код $CODE. Лог: Logs/check/combat-target.log"
+  grep -E "ОШИБКА|не появился|нет рядом" "$LOGS/combat-target.log" | head -n 5
+fi
+if [ "$CODE" -eq 0 ] && grep -q "self» на курсор [0-9]* (польза)" "$LOGS/combat-target.log" && grep -q "количество 3" "$LOGS/combat-target.log"; then
+  ok "обычный бинт: двойной клик, курсор сервера «польза», ответ «себя» — бинтов 4 → 3"
+else
+  fail "бинт через курсор не сработал. Лог: Logs/check/combat-target.log"
+fi
+
+echo "5/5 Остановка копии и ваши сохранения…"
 stop_server
 if [ "$(saves_print)" = "$SAVES_BEFORE" ]; then ok "ваши сохранения не тронуты"; else fail "папка Saves вашего сервера изменилась во время проверки"; fi
 if [ "$FAILED" -eq 0 ]; then echo "ОК"; else echo "ОШИБКА: см. сообщения выше."; exit 1; fi

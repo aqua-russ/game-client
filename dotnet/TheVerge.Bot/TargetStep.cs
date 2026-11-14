@@ -35,13 +35,14 @@ namespace TheVerge.Bot
             }
 
             var player = _world.Entities.Player;
+            var kind = cursor.IsHarmful ? "вред" : cursor.IsBeneficial ? "польза" : "нейтральный";
             var sent = _argument == "cancel" ? cursor.Cancel()
                 : _argument == "self" ? player != null && cursor.TargetObject(player.Serial)
                 : BotAction.TryParseGraphic(_argument, out var graphic) ? TargetItemAtFeet(player, graphic)
                 : TargetCell(player);
             if (sent)
             {
-                _log.Info("Прицел: ответ «" + _argument + "» на курсор " + cursor.CursorId + ".");
+                _log.Info("Прицел: ответ «" + _argument + "» на курсор " + cursor.CursorId + " (" + kind + ").");
             }
             else if (Failure.Length == 0)
             {

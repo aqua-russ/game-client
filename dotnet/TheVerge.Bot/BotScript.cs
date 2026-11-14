@@ -96,6 +96,10 @@ namespace TheVerge.Bot
                 case BotActionKind.MapDump:
                     MapDumpRequest.TryParse(action.Argument, out var request);
                     return new MapDumpStep(_world, _log, _clock, Data, request);
+                case BotActionKind.UseItem:
+                    return new UseItemStep(_world, _log, action.Argument);
+                case BotActionKind.Bandage:
+                    return new BandageStep(_world, _log);
                 default:
                     return new OpenBackpackStep(_world, _log);
             }

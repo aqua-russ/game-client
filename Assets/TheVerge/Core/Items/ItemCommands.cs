@@ -15,14 +15,15 @@ namespace TheVerge.Core.Items
         private readonly EntityStore _store;
         private readonly IItemSender _sender;
         private readonly IClock _clock;
-        private bool _usedBefore;
-        private long _lastUseMs;
+        private readonly ActionTimer _actions;
 
-        public ItemCommands(EntityStore store, IItemSender sender, IClock clock)
+        /// <param name="actions">Задержка действий, общая с быстрым бинтом (Стадия 4); null — своя.</param>
+        public ItemCommands(EntityStore store, IItemSender sender, IClock clock, ActionTimer? actions = null)
         {
             _store = store;
             _sender = sender;
             _clock = clock;
+            _actions = actions ?? new ActionTimer();
         }
 
         /// <summary>Двойной клик по объекту. false — не отправлен: не тот серийник или не прошла задержка действий.</summary>
@@ -33,14 +34,11 @@ namespace TheVerge.Core.Items
                 return false;
             }
 
-            var now = _clock.NowMs;
-            if (_usedBefore && now - _lastUseMs < ServerLimits.ActionDelayMs)
+            if (!_actions.TryStart(_clock.NowMs))
             {
                 return false;
             }
 
-            _usedBefore = true;
-            _lastUseMs = now;
             _sender.SendUse(serial);
             return true;
         }

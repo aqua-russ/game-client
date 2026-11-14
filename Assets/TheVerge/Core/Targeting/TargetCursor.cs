@@ -40,6 +40,12 @@ namespace TheVerge.Core.Targeting
         /// <summary>0 — нейтральный, <see cref="FlagHarmful"/> — вред, <see cref="FlagBeneficial"/> — польза.</summary>
         public byte Flags { get; private set; }
 
+        /// <summary>Сервер ждёт цель для вреда (атака, вредное заклинание): цель — враг.</summary>
+        public bool IsHarmful => Flags == FlagHarmful;
+
+        /// <summary>Сервер ждёт цель для пользы (лечение, бинт): цель — свой или союзник.</summary>
+        public bool IsBeneficial => Flags == FlagBeneficial;
+
         /// <summary>0x6C от сервера: открыть курсор или, с флагом <see cref="FlagCancel"/>, закрыть.</summary>
         public void OnRequest(bool allowsLocation, int cursorId, byte flags)
         {

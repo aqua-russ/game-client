@@ -78,12 +78,16 @@ namespace TheVerge.Bot
             var containers = new ContainerContents(entities);
             WorldHandlers.Register(dispatcher, entities, environment);
             ItemHandlers.Register(dispatcher, containers);
-            var items = new ItemCommands(entities, new ItemSender(session), clock);
+            var actions = new ActionTimer();
+            var items = new ItemCommands(entities, new ItemSender(session), clock, actions);
             var target = new TargetCursor(new TargetSender(session));
             TargetHandlers.Register(dispatcher, target);
             var status = new BotStatus(new MobileStatusUpdates(entities), new StatusCommands(new StatusSender(session)));
             StatusHandlers.Register(dispatcher, status.Updates);
-            return new BotWorld(entities, environment, containers, items, new SpeechCommands(new SpeechSender(session), clock), target, status);
+            return new BotWorld(entities, environment, containers, items, new SpeechCommands(new SpeechSender(session), clock), target, status)
+            {
+                QuickTargets = new TargetCommands(new QuickTargetSender(session), clock, actions),
+            };
         }
 
         // Seed логин-сервера: любое число, кроме 0 (NetState.cs: нулевой сервер отключает).

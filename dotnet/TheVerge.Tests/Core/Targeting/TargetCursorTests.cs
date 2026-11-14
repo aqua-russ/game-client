@@ -137,6 +137,41 @@ namespace TheVerge.Tests.Core.Targeting
             Assert.That(_sender.Responses[0].CursorId, Is.EqualTo(2));
         }
 
+        [TestCase(0, false, false)]
+        [TestCase(1, true, false)]
+        [TestCase(2, false, true)]
+        public void CursorKind_HarmfulBeneficialNeutral(int flags, bool harmful, bool beneficial)
+        {
+            _cursor.OnRequest(false, 7, (byte)flags);
+
+            Assert.That(_cursor.IsHarmful, Is.EqualTo(harmful));
+            Assert.That(_cursor.IsBeneficial, Is.EqualTo(beneficial));
+        }
+
+        [Test]
+        public void NewServerCursor_ReplacesOld_AnswerUsesNewId()
+        {
+            _cursor.OnRequest(false, 7, TargetCursor.FlagHarmful);
+            _cursor.OnRequest(true, 8, TargetCursor.FlagBeneficial);
+
+            _cursor.TargetObject(new Serial(0x3E));
+
+            Assert.That(_sender.Responses.Count, Is.EqualTo(1));
+            Assert.That(_sender.Responses[0].CursorId, Is.EqualTo(8));
+            Assert.That(_sender.Responses[0].Flags, Is.EqualTo(TargetCursor.FlagBeneficial));
+        }
+
+        [Test]
+        public void CancelTwice_SecondSendsNothing()
+        {
+            _cursor.OnRequest(false, 7, 0);
+
+            Assert.That(_cursor.Cancel(), Is.True);
+            Assert.That(_cursor.Cancel(), Is.False);
+            Assert.That(_sender.Responses.Count, Is.EqualTo(1));
+            Assert.That(_cursor.IsActive, Is.False);
+        }
+
         private sealed class RecordingTargetSender : ITargetSender
         {
             public List<TargetResponse> Responses { get; } = new List<TargetResponse>();
