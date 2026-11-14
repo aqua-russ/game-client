@@ -89,6 +89,8 @@ namespace TheVerge.Bot
                     return BotActionKind.Dump;
                 case "mapdump" when MapDumpRequest.TryParse(argument, out _):
                     return BotActionKind.MapDump;
+                case "movedump" when MoveDumpRequest.TryParse(argument, out _):
+                    return BotActionKind.MoveDump;
                 case "statusdump" when argument.Length > 0:
                     return BotActionKind.StatusDump;
                 case "onmap" when TryParseMap(argument, out _):

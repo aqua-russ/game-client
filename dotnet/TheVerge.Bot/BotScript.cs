@@ -103,6 +103,9 @@ namespace TheVerge.Bot
                 case BotActionKind.MapDump:
                     MapDumpRequest.TryParse(action.Argument, out var request);
                     return new MapDumpStep(_world, _log, _clock, Data, request);
+                case BotActionKind.MoveDump:
+                    MoveDumpRequest.TryParse(action.Argument, out var moveRequest);
+                    return new MoveDumpStep(_world, _log, _clock, Data, moveRequest);
                 case BotActionKind.OnMap:
                     return new OnMapStep(_world, _log, action.Argument);
                 case BotActionKind.SeenMulti:

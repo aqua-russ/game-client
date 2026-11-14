@@ -43,6 +43,8 @@ namespace TheVerge.Bot
             "                        inspect:[x,y] — окно клетки из --data (все объекты на ней); без клетки — клетка бота\n" +
             "                        mapdump:<клеток>,<seed>,<папка>[,all-statics] — [DumpMapData (нужен GM и --data):\n" +
             "                        сверить клетки, tiledata, дома и корабли из --data с сервером (tools/check/map.sh)\n" +
+            "                        movedump:<проверок>,<seed>,<папка> — [DumpMove (нужен GM и --data):\n" +
+            "                        сверить физику движения с сервером (tools/check/movement.sh)\n" +
             "  --reconnect           при разрыве или неудачном подключении повторять вход (паузы 1, 2, 4, 8, 16 с)\n" +
             "  --config <путь>       другой файл настроек\n" +
             "  --convert-capture <запись> <лог>  перевести запись посредника (tools/golden/record.sh) в лог пакетов\n" +

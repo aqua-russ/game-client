@@ -39,6 +39,10 @@ namespace TheVerge.Bot
         /// с ним свои файлы данных (--data): клетки, tiledata, дома и корабли.
         /// </summary>
         MapDump,
+        /// <summary>
+        /// movedump:&lt;проверок&gt;,&lt;seed&gt;,&lt;папка&gt; — сказать [DumpMove, дождаться файла сервера и сверить физику движения.
+        /// </summary>
+        MoveDump,
 
         /// <summary>
         /// statusdump:&lt;папка&gt; — запросить статус видимых мобов, сказать [DumpMobile, дождаться файла сервера и сверить
