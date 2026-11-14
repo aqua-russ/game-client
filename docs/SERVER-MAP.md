@@ -8,13 +8,13 @@
 |---|---|---|
 | `Projects/Server/` | движок: сеть, пакеты, `Mobile`, `Item`, карта, таймеры | только с разрешения руководителя (`AGENTS.md` §5) |
 | `Projects/UOContent/` | игровое содержимое: навыки, заклинания, предметы, NPC, гампы, обработчики входящих пакетов | да, минимально; своё — в `Custom/TheVerge/` |
-| `Projects/UOContent/Custom/` | наш код. Сейчас там только песочница `MinocSandboxInitializer.cs` (выключена, долг) | да |
+| `Projects/UOContent/Custom/` | наш код: GM-команды сверки клиента с сервером — `TheVerge/Parity/` (`[DumpVisible`, `[DumpMapData`, `[DumpMobile`); песочница `MinocSandboxInitializer.cs` (выключена, долг) | да |
 | `Projects/*.Tests/` | тесты сервера (в том числе тесты пакетов — удобный образец байтов) | — |
 | `Distribution/` | собранный сервер, отсюда он запускается | — |
 | `Distribution/Configuration/` | настройки стенда (в git не хранится) | да + обновить шаблон |
 | `Distribution/ConfigurationTemplates/theverge/` | шаблон наших настроек (в git) | да |
 | `Distribution/Data/` | данные сервера: эры, карты, регионы, спавны, навыки | осторожно |
-| `Distribution/Data/ClientData/` | файлы данных клиента UO (сейчас заглушка, ADR 0003) | заменить полной установкой |
+| `Distribution/Data/ClientData/` | файлы данных клиента UO (у сервера пользователя пока заглушка; полная установка — `remaster/uo-data`, ADR 0003) | переключить на полную установку (задача 0.2) |
 | `dev-docs/` | документация ModernUO для разработчиков | только чтение |
 | `CLAUDE.md` | правила кода сервера (обязательны при правке сервера) | не трогать |
 

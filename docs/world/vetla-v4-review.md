@@ -1,7 +1,7 @@
 # Аудит эскиза «Ветлинские земли» v4
 
-- **Что разбираем:** [`source/VETLA_WORLD_MAP_V4.json`](source/VETLA_WORLD_MAP_V4.json) (геометрия и данные) и [`source/Vetla_World_Map_v4.html`](source/Vetla_World_Map_v4.html) (интерактивная карта), ChatGPT, 14 ноября 2026.
-- **Основа:** задание на v4 из [`vetla-map-v3-review.md`](vetla-map-v3-review.md), раздел 6.
+- **Что разбираем:** [`vetla-v4.json`](vetla-v4.json) (геометрия и данные) и [`vetla-v4.html`](vetla-v4.html) (интерактивная карта), ChatGPT, 14 ноября 2026.
+- **Основа:** задание на v4 из аудита v3 (в истории git).
 - **Статус:** аудит. Свой мир — после переноса функционала.
 
 ## 0. Вердикт
