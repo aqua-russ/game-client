@@ -8,12 +8,11 @@ using TheVerge.Core.World;
 namespace TheVerge.Core.Movement
 {
     /// <summary>
-    /// Сбор земли, статики, частей multi (кроме скрытых частей дизайна без флагов, MultiData.cs) и динамических
-    /// предметов клетки в предвыделенные списки. Только из главного потока.
+    /// Сбор земли, статики, частей multi (только занимающих клетку — <see cref="Multis.MultiComponents.IsPlaced"/>) и
+    /// динамических предметов клетки в предвыделенные списки. Только из главного потока.
     /// </summary>
     internal sealed class MovementCellData
     {
-        public const byte MovableItemFlag = 0x20;
         public const TileFlags ImpassableSurface = TileFlags.Impassable | TileFlags.Surface;
 
         private readonly IMapData _map;
@@ -72,17 +71,17 @@ namespace TheVerge.Core.Movement
 
         private void AppendMultiParts(Item item, int x, int y)
         {
-            var parts = _multis!.Get(item.Graphic).Components;
+            var multi = _multis!.Get(item.Graphic);
+            var parts = multi.Components;
             for (int j = 0; j < parts.Count; j++)
             {
                 var part = parts[j];
-                if ((j != 0 && part.Flags == TileFlags.None) || item.Position.X + part.X != x || item.Position.Y + part.Y != y)
+                if (!multi.IsPlaced(j) || item.Position.X + part.X != x || item.Position.Y + part.Y != y)
                 {
                     continue;
                 }
 
-                int worldZ = (sbyte)((sbyte)part.Z + item.Position.Z);
-                Tiles.Add(new StaticTile(part.ItemId, worldZ, 0));
+                Tiles.Add(new StaticTile(part.ItemId, part.WorldZ(item.Position.Z), 0));
             }
         }
 
@@ -100,7 +99,7 @@ namespace TheVerge.Core.Movement
 
                 var data = _tileData.Item(item.Graphic);
                 bool hasFlag = (data.Flags & ImpassableSurface) != 0;
-                bool ignored = ignoreMovableImpassables && (item.Flags & MovableItemFlag) != 0 && hasFlag;
+                bool ignored = ignoreMovableImpassables && item.IsMovable && hasFlag;
                 if (!hasFlag || ignored)
                 {
                     Items.RemoveAt(i);
@@ -111,7 +110,7 @@ namespace TheVerge.Core.Movement
         private void ReadLand(int x, int y)
         {
             _map.TryGetLand(x, y, out var tile);
-            LandConsider = !(tile.Id == 2 || tile.Id == 0x1DB || (tile.Id >= 0x1AE && tile.Id <= 0x1B5));
+            LandConsider = !tile.IsIgnored;
             var data = _tileData.Land(tile.Id);
             LandBlocks = data.Has(TileFlags.Impassable);
 

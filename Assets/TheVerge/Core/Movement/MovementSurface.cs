@@ -141,7 +141,7 @@ namespace TheVerge.Core.Movement
             for (int i = 0; i < items.Count; i++)
             {
                 var item = items[i];
-                if ((item.Flags & MovementCellData.MovableItemFlag) != 0)
+                if (item.IsMovable)
                 {
                     continue;
                 }

@@ -36,7 +36,7 @@ namespace TheVerge.Core.Movement
         public static MoverState FromMobile(Mobile mobile, bool isGameMaster = false, bool canShoveMobiles = false)
         {
             bool isGhost = mobile.IsGhost;
-            bool ignoreDoors = isGhost || mobile.Body == 0x03DB || mobile.Status.IsDeadBonded;
+            bool ignoreDoors = isGhost || Bodies.PassesDoors(mobile.Body) || mobile.Status.IsDeadBonded;
             bool shove = isGameMaster || isGhost || canShoveMobiles;
             return new MoverState(mobile.Serial.Value, isGameMaster, ignoreDoors, isGhost, shove);
         }

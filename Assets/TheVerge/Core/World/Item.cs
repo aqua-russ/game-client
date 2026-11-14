@@ -10,6 +10,8 @@ namespace TheVerge.Core.World
     /// </summary>
     public sealed class Item
     {
+        private const byte MovableFlag = 0x20;
+
         private List<Item>? _contents;
 
         internal Item(Serial serial)
@@ -28,7 +30,11 @@ namespace TheVerge.Core.World
 
         public ushort Hue { get; private set; }
 
+        /// <summary>Флаги Item.GetPacketFlags сервера: 0x20 — переносимый (или украшение с ForceShowProperties), 0x80 — невидимый.</summary>
         public byte Flags { get; private set; }
+
+        /// <summary>Переносимый: такой предмет не служит опорой при шаге, а призрак проходит его насквозь (Movement.cs).</summary>
+        public bool IsMovable => (Flags & MovableFlag) != 0;
 
         public byte Light { get; private set; }
 

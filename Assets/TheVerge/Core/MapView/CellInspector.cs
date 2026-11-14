@@ -85,13 +85,14 @@ namespace TheVerge.Core.MapView
                     continue;
                 }
 
-                var parts = _multis.Get(item.Graphic).Components;
+                var multi = _multis.Get(item.Graphic);
+                var parts = multi.Components;
                 for (var i = 0; i < parts.Count; i++)
                 {
-                    if (item.Position.X + parts[i].X == x && item.Position.Y + parts[i].Y == y)
+                    if (multi.IsPlaced(i) && item.Position.X + parts[i].X == x && item.Position.Y + parts[i].Y == y)
                     {
                         var data = _tiles.Item(parts[i].ItemId);
-                        result.Add(new CellObject(SceneKind.MultiPart, parts[i].ItemId, item.Position.Z + parts[i].Z,
+                        result.Add(new CellObject(SceneKind.MultiPart, parts[i].ItemId, parts[i].WorldZ(item.Position.Z),
                             data.CalcHeight, data.Flags, data.Name, new CellEntity(item.Serial.Value, 0, 0)));
                     }
                 }

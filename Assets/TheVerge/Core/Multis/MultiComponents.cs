@@ -25,6 +25,12 @@ namespace TheVerge.Core.Multis
         }
 
         public IReadOnlyList<MultiComponent> Components => _components;
+
+        /// <summary>
+        /// Занимает ли часть клетку: первая — всегда, остальные — только с ненулевыми флагами (MultiComponentList.Tiles сервера).
+        /// Только такие части видит физика сервера и только их рисует отладочная карта.
+        /// </summary>
+        public bool IsPlaced(int index) => index == 0 || _components[index].Flags != 0;
         public int MinX { get; }
         public int MinY { get; }
         public int MaxX { get; }

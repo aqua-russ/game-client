@@ -197,6 +197,18 @@ namespace TheVerge.Tests.Core.MapView
         }
 
         [Test]
+        public void Multi_PartWithoutFlags_IsNotDrawn_LikeServerTiles()
+        {
+            _multis.Set(0x10, new MultiComponent(0x0001, 0, 0, 0, TileFlags.Background), new MultiComponent(0x0001, 1, 0, 0, TileFlags.None));
+            _world.PlaceInWorld(Backpack, new ItemInfo(0x10, 1, new TheVerge.Core.Primitives.Point3D(100, 100, 0), 0, 0, 0, isMulti: true));
+
+            _builder.Build(100, 100, 3, _blocks);
+
+            Assert.That(_blocks.Count(b => b.Kind == SceneKind.MultiPart && b.X == 101), Is.EqualTo(0));
+            Assert.That(_blocks.Count(b => b.Kind == SceneKind.MultiPart && b.X == 100), Is.EqualTo(1));
+        }
+
+        [Test]
         public void Multi_PartOutsideView_IsSkipped()
         {
             _multis.Set(0x10, new MultiComponent(0x0001, 15, 0, 0, TileFlags.Background));

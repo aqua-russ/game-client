@@ -66,6 +66,40 @@ namespace TheVerge.Tests.Core.Movement
         }
 
         [Test]
+        public void MovableSurfaceItem_IsNotStoodOn_ButBlocksLand()
+        {
+            _tiles.SetItem(0x0E3C, TileFlags.Surface, 2, "crate");
+            _entities.PlaceInWorld(new Serial(0x40000300), new ItemInfo(0x0E3C, 1, new Point3D(11, 10, 0), 0, 0, 0));
+            _entities.PlaceInWorld(new Serial(0x40000301), new ItemInfo(0x0E3C, 1, new Point3D(11, 12, 0), 0, 0x20, 0));
+
+            Assert.That(_check.CheckMovement(new Point3D(10, 10, 0), Direction.East, MoverState.Player(), out int fixedZ), Is.True);
+            Assert.That(fixedZ, Is.EqualTo(2));
+            Assert.That(_check.CheckMovement(new Point3D(10, 12, 0), Direction.East, MoverState.Player(), out _), Is.False);
+        }
+
+        [Test]
+        public void ZeroAllocations_WithItemsMultisAndMobiles()
+        {
+            var start = new Point3D(10, 10, 0);
+            _multis.Set(0x0010, new MultiComponent(0x0001, 0, 0, 0, TileFlags.Surface), new MultiComponent(0x0002, 3, 0, 0, TileFlags.Wall));
+            _entities.PlaceInWorld(new Serial(0x40000400), new ItemInfo(0x0010, 1, new Point3D(12, 12, 0), 0, 0, 0, isMulti: true));
+            _entities.PlaceInWorld(new Serial(0x40000401), new ItemInfo(0x0E40, 1, new Point3D(11, 11, 0), 0, 0x20, 0));
+            _entities.UpdateMobile(new Serial(0x00000030), new MobileInfo(0x00EE, new Point3D(9, 10, 0), Direction.West, 0, 0, 1));
+            for (int i = 0; i < 16; i++)
+            {
+                _check.CheckMovement(start, (Direction)(i & 7), MoverState.Player(), out _);
+            }
+
+            long before = System.GC.GetAllocatedBytesForCurrentThread();
+            for (int i = 0; i < 200; i++)
+            {
+                _check.CheckMovement(start, (Direction)(i & 7), MoverState.Player(), out _);
+            }
+
+            Assert.That(System.GC.GetAllocatedBytesForCurrentThread() - before, Is.EqualTo(0));
+        }
+
+        [Test]
         public void MultiComponents_FloorAndWall_ZeroFlagComponentIgnored()
         {
             _multis.Set(0x64,

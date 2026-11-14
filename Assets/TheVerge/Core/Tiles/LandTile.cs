@@ -14,5 +14,8 @@ namespace TheVerge.Core.Tiles
 
         public int Id { get; }
         public int Z { get; }
+
+        /// <summary>«Пустая» земля, которая не служит опорой: LandTile.Ignored сервера (TileMatrix.cs) — номера 2, 0x1DB и 0x1AE–0x1B5.</summary>
+        public bool IsIgnored => Id == 2 || Id == 0x1DB || (Id >= 0x1AE && Id <= 0x1B5);
     }
 }

@@ -50,14 +50,15 @@ namespace TheVerge.Core.MapView
 
         private void AddParts(Item item, int centerX, int centerY, int radius, List<SceneBlock> result)
         {
-            var parts = _multis.Get(item.Graphic).Components;
+            var multi = _multis.Get(item.Graphic);
+            var parts = multi.Components;
             for (var i = 0; i < parts.Count; i++)
             {
                 var x = item.Position.X + parts[i].X;
                 var y = item.Position.Y + parts[i].Y;
-                if (System.Math.Abs(x - centerX) <= radius && System.Math.Abs(y - centerY) <= radius)
+                if (multi.IsPlaced(i) && System.Math.Abs(x - centerX) <= radius && System.Math.Abs(y - centerY) <= radius)
                 {
-                    var z = item.Position.Z + parts[i].Z;
+                    var z = parts[i].WorldZ(item.Position.Z);
                     result.Add(Block(SceneKind.MultiPart, x, y, z, _tiles.Item(parts[i].ItemId)));
                 }
             }

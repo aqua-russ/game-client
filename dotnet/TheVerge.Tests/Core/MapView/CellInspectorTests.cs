@@ -97,6 +97,18 @@ namespace TheVerge.Tests.Core.MapView
         }
 
         [Test]
+        public void HousePartWithoutFlags_IsNotListed_LikeServerTiles()
+        {
+            _tiles.SetItem(0x0001, TileFlags.Wall | TileFlags.Impassable, 20, "wall");
+            _multis.Set(0x10, new MultiComponent(0x0001, 0, 0, 0, TileFlags.Background), new MultiComponent(0x0001, 1, 0, 0, TileFlags.None));
+            _world.PlaceInWorld(Backpack, new ItemInfo(0x10, 1, new Point3D(100, 100, 5), 0, 0, 0, isMulti: true));
+
+            _inspector.TryCollect(101, 100, _objects);
+
+            Assert.That(_objects.Exists(o => o.Kind == SceneKind.MultiPart), Is.False);
+        }
+
+        [Test]
         public void GroundItem_ShowsSerialAmountAndTileName()
         {
             _tiles.SetItem(0x09D0, TileFlags.None, 0, "apple");

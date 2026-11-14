@@ -21,5 +21,8 @@ namespace TheVerge.Core.Multis
 
         /// <summary>0 — часть видна только как часть дизайна (в границы не входит, кроме первой); как у сервера.</summary>
         public TileFlags Flags { get; }
+
+        /// <summary>Высота части в мире: сервер хранит её в sbyte (StaticTile.Z, TileMatrix.cs), поэтому сумма переполняется так же.</summary>
+        public int WorldZ(int multiZ) => (sbyte)((sbyte)Z + multiZ);
     }
 }
