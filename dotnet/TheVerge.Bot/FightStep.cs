@@ -9,7 +9,8 @@ namespace TheVerge.Bot
     /// <summary>
     /// fight:0xТЕЛО (PLAN Стадия 4, п. 7): боевая стойка (0x72, ждём ответа сервера), атака ближайшего моба с этим телом
     /// (0x05), противник — по 0xAA сервера, смерть — моб исчез и рядом лёг его труп (0x2006, количество = тело, Corpse.cs).
-    /// В лог — ход боя: здоровье противника и бота. Бой долгий — свой срок <see cref="BotScript.FightTimeoutMs"/>.
+    /// В лог — ход боя: здоровье противника и бота, после смерти — журнал боя (<see cref="CombatLogReport"/>). Бой долгий —
+    /// свой срок <see cref="BotScript.FightTimeoutMs"/>.
     /// </summary>
     internal sealed class FightStep : IBotStep
     {
@@ -180,6 +181,7 @@ namespace TheVerge.Bot
             _log.Info(_lowestPlayerHits.Maximum > 0
                 ? "Бот получил урон: здоровье опускалось до " + _lowestPlayerHits + "."
                 : "Бот урона не получил.");
+            CombatLogReport.Write(_log, _world.Combat!.Log, _world.Entities.PlayerSerial, _target);
             return true;
         }
 

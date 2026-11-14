@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Проверки Стадии 4 на настоящем сервере (PLAN Стадия 4: 4.4 состояние мобов, 4.6 прицел, 4.7 стойка и атака).
+# Проверки Стадии 4 на настоящем сервере (PLAN Стадия 4: 4.4 состояние мобов, 4.6 прицел, 4.7 стойка и атака,
+# 4.8 журнал боя).
 # Печатает «ОК» или «ОШИБКА».
 #
 #   tools/check/combat.sh [<папка с файлами данных>]
@@ -15,6 +16,8 @@
 # 4.7: бот-GM переходит к игроку ([go) и ставит крысу, которая не ходит ([add Rat set CantWalk true …); бот-игрок
 # включает боевую стойку, атакует крысу и ждёт её смерти: противник по серверу — эта крыса, её здоровье падает, остаётся
 # труп, крыса тоже бьёт игрока.
+# 4.8: журнал боя бота из того же боя: свои замахи (сервер шлёт замах только атакующему), анимации бота и крысы; события
+# журнала совпадают по порядку с пакетами сервера в логе пакетов бота (tools/check/combat_order.py).
 # Ваш сервер должен быть остановлен (порт 2593 свободен) и собран (dotnet build -c Release в server/ModernUO).
 # Подробности — Logs/check/combat-*.log, лог сервера — Logs/check/combat-server.log.
 set -u
@@ -52,7 +55,7 @@ cleanup() { stop_server; rm -rf "$TMP"; }
 trap cleanup EXIT
 bot() { dotnet "$BOT_DLL" "$@"; }
 
-echo "1/6 Сборка бота и временная копия сервера…"
+echo "1/7 Сборка бота и временная копия сервера…"
 if ! dotnet build dotnet/TheVerge.Bot -nologo -v:q -tl:off > "$LOGS/combat-build.log" 2>&1; then
   echo "ОШИБКА: бот не собрался. Лог: Logs/check/combat-build.log"; exit 1
 fi
@@ -82,7 +85,7 @@ printf '{"login":"%s","password":"%s","character":"Combatgm"}\n' "$OWNER" "$PASS
 printf '{"login":"%sp","password":"%s","character":"Combatplayer"}\n' "$OWNER" "$PASSWORD" > "$TMP/player.json"
 chmod 600 "$TMP/gm.json" "$TMP/player.json"
 
-echo "2/6 Запуск копии сервера (до 90 с)…"
+echo "2/7 Запуск копии сервера (до 90 с)…"
 : > "$LOGS/combat-server.log"
 (cd "$COPY" && exec python3 "$ROOT/tools/check/pty_server.py" --log "$LOGS/combat-server.log" \
   --answer "owner account now=y" --answer "Input Username=$OWNER" --answer "Input Password=$PASSWORD" -- dotnet ModernUO.dll) &
@@ -93,7 +96,7 @@ if ! grep -aq "Listening: " "$LOGS/combat-server.log"; then
 fi
 ok "сервер запущен, временный владелец создан"
 
-echo "3/6 4.4 Состояние мобов: бот-GM меняет себе статы и сверяет состояние с сервером…"
+echo "3/7 4.4 Состояние мобов: бот-GM меняет себе статы и сверяет состояние с сервером…"
 bot --config "$TMP/gm.json" --create-character --no-packet-log \
   --action "say:[add Rat" --action target:here --action seenmob:0x00EE \
   --action "say:[set str 60" --action target:self \
@@ -115,7 +118,7 @@ fi
 bot --config "$TMP/player.json" --create-character --no-packet-log --action "statusdump:$PARITY" > "$LOGS/combat-player.log" 2>&1
 if grep -q "сервер не записал дамп состояния" "$LOGS/combat-player.log"; then ok "обычному игроку [DumpMobile недоступна"; else fail "у игрока дамп записан или бот упал иначе. Лог: Logs/check/combat-player.log"; fi
 
-echo "4/6 4.6 Прицел: бот-GM бинтуется быстрым бинтом и через курсор…"
+echo "4/7 4.6 Прицел: бот-GM бинтуется быстрым бинтом и через курсор…"
 bot --config "$TMP/gm.json" --no-packet-log \
   --action "say:[add Bandage 5" --action target:here --action seen:0x0E21,5 \
   --action "say:[set hits 30" --action target:self \
@@ -134,7 +137,7 @@ else
   fail "бинт через курсор не сработал. Лог: Logs/check/combat-target.log"
 fi
 
-echo "5/6 4.7 Стойка и атака: бот-игрок бьёт крысу до смерти…"
+echo "5/7 4.7 Стойка и атака: бот-игрок бьёт крысу до смерти…"
 START="$(grep -o 'персонаж 0x[0-9A-F]* ([0-9]*, [0-9]*, -*[0-9]*)' "$LOGS/combat-player.log" | head -n 1 | sed 's/.*(\(.*\))/\1/; s/ //g')"
 if [ -z "$START" ]; then
   fail "не знаю, где стоит бот-игрок (нет строки входа в Logs/check/combat-player.log)"
@@ -147,7 +150,7 @@ else
   if [ "$CODE" -ne 0 ]; then
     fail "бот-GM не поставил крысу рядом с игроком ($START): код $CODE. Лог: Logs/check/combat-fight-gm.log"
   fi
-  bot --config "$TMP/player.json" --no-packet-log --action seenmob:0x00EE --action fight:0x00EE --idle 1 \
+  bot --config "$TMP/player.json" --action seenmob:0x00EE --action fight:0x00EE --idle 1 \
     > "$LOGS/combat-fight.log" 2>&1
   CODE=$?
   RAT="$(grep -o 'Атака 0x[0-9A-F]*' "$LOGS/combat-fight.log" | head -n 1 | sed 's/Атака //')"
@@ -171,7 +174,26 @@ else
   fi
 fi
 
-echo "6/6 Остановка копии и ваши сохранения…"
+echo "6/7 4.8 Журнал боя: события того же боя и их порядок…"
+SUMMARY="$(grep -o 'Журнал боя: событий .*' "$LOGS/combat-fight.log" | head -n 1)"
+SWINGS="$(echo "$SUMMARY" | sed -n 's/.*замахов бота по противнику \([0-9]*\).*/\1/p')"
+MINE="$(echo "$SUMMARY" | sed -n 's/.*анимаций бота \([0-9]*\).*/\1/p')"
+THEIRS="$(echo "$SUMMARY" | sed -n 's/.*противника \([0-9]*\), урона.*/\1/p')"
+if [ "${SWINGS:-0}" -gt 0 ] && [ "${MINE:-0}" -gt 0 ] && [ "${THEIRS:-0}" -gt 0 ]; then
+  ok "${SUMMARY#Журнал боя: }"
+else
+  fail "в журнале боя нет замахов бота или анимаций бота и крысы. Лог: Logs/check/combat-fight.log"
+  [ -n "$SUMMARY" ] && echo "  $SUMMARY"
+fi
+PACKETS="$(grep -o 'Лог пакетов: .*' "$LOGS/combat-fight.log" | head -n 1 | sed 's/Лог пакетов: //')"
+if [ -n "$PACKETS" ] && [ -f "$PACKETS" ] && ORDER="$(python3 "$ROOT/tools/check/combat_order.py" "$LOGS/combat-fight.log" "$PACKETS")"; then
+  ok "$ORDER"
+else
+  fail "порядок журнала боя не совпал с пакетами сервера${PACKETS:+ (лог пакетов: $PACKETS)}"
+  [ -n "${ORDER:-}" ] && echo "  $ORDER"
+fi
+
+echo "7/7 Остановка копии и ваши сохранения…"
 stop_server
 if [ "$(saves_print)" = "$SAVES_BEFORE" ]; then ok "ваши сохранения не тронуты"; else fail "папка Saves вашего сервера изменилась во время проверки"; fi
 if [ "$FAILED" -eq 0 ]; then echo "ОК"; else echo "ОШИБКА: см. сообщения выше."; exit 1; fi

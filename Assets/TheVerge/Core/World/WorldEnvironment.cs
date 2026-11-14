@@ -1,4 +1,5 @@
 using System;
+using TheVerge.Core.Primitives;
 
 namespace TheVerge.Core.World
 {
@@ -19,6 +20,9 @@ namespace TheVerge.Core.World
         private readonly int[] _landPatches = new int[PatchMaps];
 
         public event Action? Changed;
+
+        /// <summary>Звук сервера (0x54): номер и точка — для журнала боя (Стадия 4, п. 8) и, позже, для проигрывания.</summary>
+        public event Action<ushort, Point3D>? SoundPlayed;
 
         public byte GlobalLight { get; private set; }
 
@@ -104,10 +108,11 @@ namespace TheVerge.Core.World
             Changed?.Invoke();
         }
 
-        public void OnSound(ushort sound)
+        public void OnSound(ushort sound, Point3D position)
         {
             SoundsPlayed++;
             LastSound = sound;
+            SoundPlayed?.Invoke(sound, position);
         }
 
         public void SetMusic(ushort music)

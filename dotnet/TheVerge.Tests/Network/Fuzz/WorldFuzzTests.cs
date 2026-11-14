@@ -3,26 +3,30 @@ using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Diagnostics;
 using NUnit.Framework;
+using TheVerge.Core.Combat;
 using TheVerge.Core.Items;
 using TheVerge.Core.Primitives;
 using TheVerge.Core.Status;
 using TheVerge.Core.Targeting;
 using TheVerge.Core.World;
 using TheVerge.Network.Framing;
+using TheVerge.Network.Packets.Combat;
 using TheVerge.Network.Packets.Items;
 using TheVerge.Network.Packets.Status;
 using TheVerge.Network.Packets.Targeting;
 using TheVerge.Network.Packets.World;
 using TheVerge.Network.Session;
+using TheVerge.Tests.Core.Session;
 using TheVerge.Tests.Network.Session;
 
 namespace TheVerge.Tests.Network.Fuzz
 {
     /// <summary>
     /// Устойчивость мира (PLAN Стадия 2, п. 14; критерий «фаззинг новых парсеров: 1 млн входов без падений и зависаний»).
-    /// Пакеты мира, контейнеров, прицела и состояния мобов (Стадия 4, п. 4) — случайные байты и пакеты из небольшого набора серийников (чтобы попадать в уже
+    /// Пакеты мира, контейнеров, прицела, состояния мобов, боя и боевых событий (Стадия 4, п. 4, 7, 8) — случайные байты и пакеты из небольшого набора серийников (чтобы попадать в уже
     /// известные объекты: вложенность, циклы, перенос, удаление). Падение допустимо одно — «пакет короче, чем нужно»
-    /// (PacketDispatcher ловит его сам). После — мир цел: связи взаимны, циклов нет, поиск рядом совпадает с перебором.
+    /// (PacketDispatcher ловит его сам). После — мир цел: связи взаимны, циклов нет, поиск рядом совпадает с перебором;
+    /// журнал боя не больше своего размера, события в нём по порядку.
     /// Seed — в сообщении: упавший случай повторяется.
     /// </summary>
     public sealed class WorldFuzzTests
@@ -32,7 +36,7 @@ namespace TheVerge.Tests.Network.Fuzz
         private static readonly byte[] Ids =
         {
             0x78, 0x20, 0x77, 0x2E, 0x1D, 0xF3, 0x76, 0x24, 0x3C, 0x25, 0x6C, 0x4F, 0x4E, 0xBC, 0x5B, 0x65, 0x54, 0x6D,
-            0x11, 0xA1, 0xA2, 0xA3, 0x2D, 0x17,
+            0x11, 0xA1, 0xA2, 0xA3, 0x2D, 0x17, 0x72, 0xAA, 0x2F, 0x6E, 0x0B, 0x70, 0xC0, 0xC7,
         };
 
         [Test]
@@ -41,7 +45,8 @@ namespace TheVerge.Tests.Network.Fuzz
             var seed = Environment.TickCount;
             var random = new Random(seed);
             var store = new EntityStore();
-            var dispatcher = NewDispatcher(store);
+            var log = new CombatLog(new FakeClock());
+            var dispatcher = NewDispatcher(store, log);
             var buffer = new byte[1024];
             var watch = Stopwatch.StartNew();
             for (var i = 0; i < Inputs; i++)
@@ -61,17 +66,23 @@ namespace TheVerge.Tests.Network.Fuzz
             }
 
             WorldInvariants.Check(store, random, "seed " + seed + ", конец");
+            Assert.That(log.Count, Is.EqualTo(Math.Min(log.Total, log.Capacity)), "seed " + seed);
+            Assert.That(log.Total, Is.GreaterThan(0), "seed " + seed);
             Assert.That(watch.Elapsed.TotalSeconds, Is.LessThan(60), "seed " + seed);
         }
 
-        private static PacketDispatcher NewDispatcher(EntityStore store)
+        private static PacketDispatcher NewDispatcher(EntityStore store, CombatLog log)
         {
             var dispatcher = new PacketDispatcher(new RecordingLog());
-            WorldHandlers.Register(dispatcher, store, new WorldEnvironment());
+            var environment = new WorldEnvironment();
+            environment.SoundPlayed += log.OnSound;
+            WorldHandlers.Register(dispatcher, store, environment);
             ItemHandlers.Register(dispatcher, new ContainerContents(store));
             var session = new NetworkSession(new PacketDispatcher(new RecordingLog()), new RecordingLog());
             TargetHandlers.Register(dispatcher, new TargetCursor(new TargetSender(session)));
             StatusHandlers.Register(dispatcher, new MobileStatusUpdates(store));
+            CombatHandlers.Register(dispatcher, new CombatState());
+            CombatLogHandlers.Register(dispatcher, log);
             return dispatcher;
         }
 

@@ -38,7 +38,7 @@ id,sub,dir,name,length,condition,server,priority,stage,status,source,note
 0x2C,,s2c,DeathStatus,2,,да,P1,4.9,нужно,Projects/Server/Network/Packets/OutgoingPlayerPackets.cs#SendDeathStatus,
 0x2D,,s2c,MobileAttributes,17,,да,P1,4.4,нужно,Projects/Server/Network/Packets/OutgoingMobilePackets.cs#CreateMobileAttributes,
 0x2E,,s2c,EquipUpdate,15,,да,P0,2.9,нужно,Projects/Server/Network/Packets/OutgoingEquipmentPackets.cs#SendEquipUpdate,волосы и борода — тоже 0x2E (OutgoingVirtualHairPackets)
-0x2F,,s2c,Swing,10,,да,P2,4.8,нужно,Projects/Server/Network/Packets/OutgoingCombatPackets.cs#SendSwing,
+0x2F,,s2c,Swing,10,,да,P2,4.8,нужно,Projects/Server/Network/Packets/OutgoingCombatPackets.cs#SendSwing,сервер шлёт только атакующему (BaseWeapon.OnSwing) — замахи чужих по нам не приходят; видны их анимации 0x6E
 0x34,,c2s,MobileQuery,10,,да,P1,4.4,нужно,Projects/UOContent/Network/Packets/IncomingPlayerPackets.cs#MobileQuery,тип 4 — статус; 5 — навыки
 0x38,,s2c,PathfindMessage,7,,нет,-,-,не используется,Projects/Server/Network/Packets/OutgoingPlayerPackets.cs#SendPathfindMessage,метод есть; вызовов на сервере нет
 0x3A,,c2s,SkillLockChange,var,,да,P2,4.5,нужно,Projects/UOContent/Network/Packets/IncomingPlayerPackets.cs#ChangeSkillLock,

@@ -89,15 +89,22 @@ namespace TheVerge.Bot
             StatusHandlers.Register(dispatcher, status.Updates);
             var combat = new CombatState();
             CombatHandlers.Register(dispatcher, combat);
+            var journal = new CombatLog(clock);
+            CombatLogHandlers.Register(dispatcher, journal);
+            environment.SoundPlayed += journal.OnSound;
             return new BotWorld(entities, environment, containers, items, new SpeechCommands(new SpeechSender(session), clock), target, status)
             {
                 QuickTargets = new TargetCommands(new QuickTargetSender(session), clock, actions),
-                Combat = new BotCombat(combat, new CombatCommands(new CombatSender(session), combat, entities)),
+                Combat = new BotCombat(combat, new CombatCommands(new CombatSender(session), combat, entities), journal),
             };
         }
 
-        /// <summary>Новый вход: стойку и противника сервер пришлёт заново.</summary>
-        private void ResetCombat(PlayerState player) => InWorld.Combat?.State.Reset();
+        /// <summary>Новый вход: стойку и противника сервер пришлёт заново, журнал боя — с чистого листа.</summary>
+        private void ResetCombat(PlayerState player)
+        {
+            InWorld.Combat?.State.Reset();
+            InWorld.Combat?.Log.Clear();
+        }
 
         // Seed логин-сервера: любое число, кроме 0 (NetState.cs: нулевой сервер отключает).
         private static int NewSeed() => System.Security.Cryptography.RandomNumberGenerator.GetInt32(1, int.MaxValue);

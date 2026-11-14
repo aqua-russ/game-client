@@ -67,5 +67,11 @@ namespace TheVerge.Core.Session
 
         /// <summary>Адрес логин-сервера на экране входа по умолчанию — локальный стенд (AGENTS.md §1).</summary>
         public const string DefaultServerAddress = "127.0.0.1:2593";
+
+        /// <summary>
+        /// Сколько последних боевых событий (замахи, анимации, урон, эффекты, звуки) держит журнал боя; старые вытесняются.
+        /// Бой с крысой — около 50 событий за 20 с: хватает на несколько минут боя.
+        /// </summary>
+        public const int CombatLogCapacity = 512;
     }
 }

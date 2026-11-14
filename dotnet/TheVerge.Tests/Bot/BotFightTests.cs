@@ -33,6 +33,7 @@ namespace TheVerge.Tests.Bot
         private RecordingLog _log = null!;
         private Recorder _sent = null!;
         private CombatState _combat = null!;
+        private CombatLog _journal = null!;
         private BotWorld _world = null!;
 
         [SetUp]
@@ -43,10 +44,11 @@ namespace TheVerge.Tests.Bot
             _sent = new Recorder();
             var store = new EntityStore();
             _combat = new CombatState();
+            _journal = new CombatLog(_clock);
             _world = new BotWorld(store, new WorldEnvironment(), new ContainerContents(store), new ItemCommands(store, _sent, _clock),
                 new SpeechCommands(_sent, _clock), new TargetCursor(_sent), new BotStatus(new MobileStatusUpdates(store), new StatusCommands(_sent)))
             {
-                Combat = new BotCombat(_combat, new CombatCommands(_sent, _combat, store)),
+                Combat = new BotCombat(_combat, new CombatCommands(_sent, _combat, store), _journal),
             };
             store.Reset(new PlayerState(Player, 0x190, new Point3D(10, 10, 0), Direction.North, new MapSize(7168, 4096)));
             store.UpdateMobile(Rat, new MobileInfo(0xEE, new Point3D(11, 10, 0), Direction.North, 0, 0, 3));
@@ -67,6 +69,13 @@ namespace TheVerge.Tests.Bot
             _combat.OnCombatant(Rat);
             _world.Status!.Updates.OnVital(Rat, VitalKind.Hits, new Vital(40, 100));
             _world.Status.Updates.OnVital(Player, VitalKind.Hits, new Vital(48, 50));
+            _journal.OnSwing(Player, Rat);
+            _journal.OnAnimation(Player, 9);
+            _clock.NowMs += 1500;
+            _journal.OnAnimation(Rat, 5);
+            _journal.OnDamage(Player, 2);
+            _journal.OnSound(0x1A4, new Point3D(11, 10, 0));
+            _journal.OnEffect(EffectKind.Moving, Player, Rat, 0x36D4, new Point3D(10, 10, 0), 0);
             script.Step();
             Assert.That(script.IsDone, Is.False);
 
@@ -84,6 +93,13 @@ namespace TheVerge.Tests.Bot
             Assert.That(text, Does.Contain("Противник: здоровье 40/100"));
             Assert.That(text, Does.Contain("убит: труп 0x40000900"));
             Assert.That(text, Does.Contain("Бот получил урон: здоровье опускалось до 48/50"));
+            Assert.That(text, Does.Contain("Журнал боя: +0.000 с замах 0x0000003E → 0x00000100"));
+            Assert.That(text, Does.Contain("Журнал боя: +0.000 с анимация 0x0000003E действие 9"));
+            Assert.That(text, Does.Contain("Журнал боя: +1.500 с анимация 0x00000100 действие 5"));
+            Assert.That(text, Does.Contain("Журнал боя: +1.500 с урон 0x0000003E: 2"));
+            Assert.That(text, Does.Contain("Журнал боя: +1.500 с звук 0x01A4 в (11, 10, 0)"));
+            Assert.That(text, Does.Contain("Журнал боя: +1.500 с эффект Moving 0x36D4 0x0000003E → 0x00000100"));
+            Assert.That(text, Does.Contain("замахов бота по противнику 1, анимаций бота 1, противника 1, урона 1, эффектов 1, звуков 1"));
         }
 
         [Test]
