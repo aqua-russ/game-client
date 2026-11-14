@@ -102,6 +102,36 @@ namespace TheVerge.Tests.Bot
         }
 
         [Test]
+        public void Dump_BrokenServerFile_RetriedThenTimeoutNamesReadError()
+        {
+            var dir = TempDir();
+            var script = Script("dump:" + dir);
+            script.Step();
+            _clock.NowMs += BotScript.DumpSettleMs;
+            System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "visible-0000003E.json"), "{ не json");
+
+            script.Step();
+            Assert.That(script.IsDone, Is.False, "файл мог ещё дописываться — ждём следующий тик");
+            Assert.That(script.Problem, Is.Null.Or.Empty);
+
+            _clock.NowMs += BotScript.ActionTimeoutMs;
+            script.Step();
+
+            Assert.That(script.Problem, Does.Contain("[DumpVisible").And.Contain("не разобран"));
+        }
+
+        [Test]
+        public void MoveDump_WithoutData_ProblemAtOnce_NothingSaid()
+        {
+            var script = Script("movedump:100,1," + TempDir());
+
+            script.Step();
+
+            Assert.That(script.Problem, Does.Contain("--data"));
+            Assert.That(_speech.Sent, Is.Empty);
+        }
+
+        [Test]
         public void MapDump_WithoutData_ProblemAtOnce_NothingSaid()
         {
             var script = Script("mapdump:100,1," + TempDir());

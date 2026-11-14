@@ -19,6 +19,9 @@ namespace TheVerge.Bot
         /// <summary>Сколько ждать своей смерти или воскрешения (dead, alive) и чужой смерти (deathof), мс: это делает GM-бот.</summary>
         public const int DeathTimeoutMs = 60000;
 
+        /// <summary>Сколько ждать большого дампа ([DumpMove на 100 000 проверок): сервер считает и пишет его секунды.</summary>
+        public const int LargeDumpTimeoutMs = 60000;
+
         /// <summary>
         /// Сколько ждать после [DumpVisible, прежде чем сверять: пакеты, которые сервер отправил до команды, должны дойти.
         /// </summary>
