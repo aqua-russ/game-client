@@ -1,5 +1,6 @@
 using System.Threading;
 using TheVerge.Core.Session.Screens;
+using TheVerge.Core.World;
 using TheVerge.Presentation.UI.Session;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -24,6 +25,8 @@ namespace TheVerge.Bootstrap
         private PanelSettings _panel;
         private LoginScreens _screens;
         private LoginScreensView _view;
+        private DebugMapHost _debugMap;
+        private EntityStore _entities;
 
         private void Awake()
         {
@@ -38,7 +41,8 @@ namespace TheVerge.Bootstrap
             _stop = new CancellationTokenSource();
             var log = new UnityLog();
             var stop = _stop.Token;
-            _screens = new LoginScreens(() => UnityLoginClient.Create(_clock, log, stop));
+            _screens = new LoginScreens(() => NewClient(log, stop));
+            _debugMap = new DebugMapHost(log, FindCamera());
             LoginPrefs.Load(_screens.Form);
             _screens.Submitted += OnSubmitted;
             _view = new LoginScreensView(CreateDocument().rootVisualElement, _screens);
@@ -48,6 +52,8 @@ namespace TheVerge.Bootstrap
         private void Update()
         {
             _screens.Tick(_clock.NowMs);
+            _debugMap.Update(_screens.Screen == LoginScreen.InWorld, _entities);
+            _view.SetMapStatus(_debugMap.Status);
             _view.Refresh();
         }
 
@@ -59,6 +65,7 @@ namespace TheVerge.Bootstrap
             }
 
             _screens.Submitted -= OnSubmitted;
+            _debugMap?.Dispose();
             _view?.Dispose();
             _screens.Dispose();
             _stop.Cancel();
@@ -67,6 +74,28 @@ namespace TheVerge.Bootstrap
         }
 
         private void OnSubmitted() => LoginPrefs.Save(_screens.Form);
+
+        // Каждый вход — новый клиент и новый мир; отладочная карта следит за миром текущего входа.
+        private LoginParts NewClient(UnityLog log, CancellationToken stop)
+        {
+            var parts = UnityLoginClient.Create(_clock, log, stop, out var entities);
+            _entities = entities;
+            return parts;
+        }
+
+        // Камера сцены (Main Camera); если её нет — своя. Положение и вид ей задаёт отладочная карта.
+        private static Camera FindCamera()
+        {
+            var main = Camera.main;
+            if (main != null)
+            {
+                return main;
+            }
+
+            var created = new GameObject("Main Camera", typeof(Camera));
+            created.tag = "MainCamera";
+            return created.GetComponent<Camera>();
+        }
 
         // Панель создаётся кодом, а не ассетом: настройки панели — здесь, в сцене — только ссылки на разметку и тему.
         private UIDocument CreateDocument()

@@ -85,6 +85,7 @@
         </ui:VisualElement>
         <ui:VisualElement name="worldPanel" class="world-bar hidden">
             <ui:Label name="worldStatus" class="world-status" />
+            <ui:Label name="mapStatus" class="map-status" />
             <ui:Button name="logoutButton" text="Выйти" />
         </ui:VisualElement>
     </ui:VisualElement>

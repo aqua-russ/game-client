@@ -50,6 +50,9 @@ namespace TheVerge.Bot
         OnMap,
 
         /// <summary>seenmulti: — ждать дом или корабль (multi) в пределах обзора multi.</summary>
-        SeenMulti
+        SeenMulti,
+
+        /// <summary>scene:[радиус] — собрать отладочную карту вокруг себя из --data и написать, сколько блоков каких цветов (PLAN Стадия 2, п. 13).</summary>
+        Scene
     }
 }

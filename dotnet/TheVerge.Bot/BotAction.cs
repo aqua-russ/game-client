@@ -95,6 +95,8 @@ namespace TheVerge.Bot
                     return BotActionKind.OnMap;
                 case "seenmulti" when argument.Length == 0:
                     return BotActionKind.SeenMulti;
+                case "scene" when SceneStep.TryParseRadius(argument, out _):
+                    return BotActionKind.Scene;
                 default:
                     return null;
             }

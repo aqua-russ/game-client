@@ -150,3 +150,9 @@
     font-size: 16px;
     color: var(--color-text);
 }
+
+.map-status {
+    font-size: 14px;
+    margin-right: 12px;
+    color: var(--color-muted);
+}

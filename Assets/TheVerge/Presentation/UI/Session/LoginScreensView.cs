@@ -61,6 +61,9 @@ namespace TheVerge.Presentation.UI.Session
             RefreshPanel(screen);
         }
 
+        /// <summary>Строка отладочной карты на панели «в мире»: что нарисовано или почему карты нет.</summary>
+        public void SetMapStatus(string text) => _world.SetMapStatus(text);
+
         public void Dispose()
         {
             _waitingCancel.clicked -= _screens.Cancel;

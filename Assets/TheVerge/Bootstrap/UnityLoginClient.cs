@@ -4,8 +4,10 @@ using System.Threading;
 using TheVerge.Core.Ports;
 using TheVerge.Core.Session;
 using TheVerge.Core.Session.Screens;
+using TheVerge.Core.World;
 using TheVerge.Network.Packets.Account;
 using TheVerge.Network.Packets.Session;
+using TheVerge.Network.Packets.World;
 using TheVerge.Network.Session;
 using TheVerge.Network.Transport;
 
@@ -21,7 +23,8 @@ namespace TheVerge.Bootstrap
         private static readonly Random SeedSource = new Random();
 
         /// <param name="stop">Отмена закрывает соединение (выход из Play, закрытие игры).</param>
-        public static LoginParts Create(IClock clock, ILog log, CancellationToken stop)
+        /// <param name="entities">Мир этого входа: мобы и предметы по пакетам сервера (как у бота).</param>
+        public static LoginParts Create(IClock clock, ILog log, CancellationToken stop, out EntityStore entities)
         {
             var dispatcher = new PacketDispatcher(log);
             var session = new NetworkSession(dispatcher, log);
@@ -32,10 +35,34 @@ namespace TheVerge.Bootstrap
             var game = new GameSession(flow.Progress, sessionSender, connector, clock);
             AccountHandlers.Register(dispatcher, flow);
             SessionHandlers.Register(dispatcher, world, new ServerRequests(sessionSender), game);
+            entities = new EntityStore();
+            WorldHandlers.Register(dispatcher, entities, new WorldEnvironment());
+            world.PlayerConfirmed += entities.Reset;
             session.Observer = flow;
             var reconnector = new Reconnector(flow);
             var core = new GameClient(session, clock, game, new LoginWatchdog(flow.Progress), reconnector);
-            return new LoginParts(flow, game, reconnector, core, session);
+            return new LoginParts(flow, game, reconnector, core, new ClientOwner(world, entities, session));
+        }
+
+        /// <summary>Закрывает клиент: отписывает мир от входа и закрывает сеть.</summary>
+        private sealed class ClientOwner : IDisposable
+        {
+            private readonly WorldEntry _world;
+            private readonly EntityStore _entities;
+            private readonly IDisposable _session;
+
+            public ClientOwner(WorldEntry world, EntityStore entities, IDisposable session)
+            {
+                _world = world;
+                _entities = entities;
+                _session = session;
+            }
+
+            public void Dispose()
+            {
+                _world.PlayerConfirmed -= _entities.Reset;
+                _session.Dispose();
+            }
         }
 
         private static IConnection NewConnection() =>
