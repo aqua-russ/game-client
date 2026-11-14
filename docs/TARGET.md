@@ -108,6 +108,8 @@
 | Слезть | двойной клик по себе, в любой стойке (`DisableDismountInWarmode` выключен) | `Mobile.OnDoubleClick` |
 | Бинт | 1 клетка (при AoS 2) | `Bandage.Range` |
 | Добыча руды и песка | 2 клетки; инструмент в руках или рюкзаке; один заход 1,6 с | `Mining.cs` (`MaxRange`, `EffectDelay`), `BaseHarvestTool.OnDoubleClick` |
+| Ресурс добычи | лежит блоками 8×8 клеток: 10–34 единицы на блок, один удар тратит 1, возвращается за 10–20 минут; конец — сообщение «здесь нет металла» (503040) | `Mining.cs` (`BankWidth`, `MinTotal`, `MaxTotal`, `MinRespawn`, `NoResourcesMessage`) |
+| Рубка и рыбалка | рубка: 2 клетки, за заход 1–3 удара по 1,6 с (в эре до AoS); рыбалка: 4 клетки | `Lumberjacking.cs`, `Fishing.cs` (`MaxRange`, `EffectCounts`) |
 | Ответ прицела 0x6C | номер прицела должен совпасть; статика — в этой клетке с тем же id и z, иначе прицел молча закрывается; земля — graphic 0; отмена — x = y = −1 и пустой serial | `IncomingTargetingPackets.TargetResponse` |
 | Время жизни прицела | заклинания 30 с, добыча без ограничения; новый прицел заменяет старый | `Spell.cs`, `HarvestTarget` |
 | 0xBF 0x2C, 0x2D, 0x2E | бинт, заклинание, навык вместе с целью одним пакетом; 0x2C ограничен `actionDelay` | `IncomingExtendedCommandPackets.cs` |
