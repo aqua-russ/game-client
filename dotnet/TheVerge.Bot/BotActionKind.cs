@@ -44,6 +44,12 @@ namespace TheVerge.Bot
         /// statusdump:&lt;папка&gt; — запросить статус видимых мобов, сказать [DumpMobile, дождаться файла сервера и сверить
         /// с ним состояние мобов бота (Стадия 4, п. 4).
         /// </summary>
-        StatusDump
+        StatusDump,
+
+        /// <summary>onmap:N — ждать, пока мир бота не окажется на карте N (после [go Trammel).</summary>
+        OnMap,
+
+        /// <summary>seenmulti: — ждать дом или корабль (multi) в пределах обзора multi.</summary>
+        SeenMulti
     }
 }

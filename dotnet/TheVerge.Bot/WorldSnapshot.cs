@@ -16,11 +16,14 @@ namespace TheVerge.Bot
     {
         public Serial Player { get; set; }
 
+        /// <summary>Номер карты, на которой мир; <see cref="EntityStore.UnknownMap"/> — не известен.</summary>
+        public int Map { get; set; } = EntityStore.UnknownMap;
+
         public List<SnapshotObject> Objects { get; } = new List<SnapshotObject>();
 
         public static WorldSnapshot FromStore(EntityStore store)
         {
-            var snapshot = new WorldSnapshot { Player = store.PlayerSerial };
+            var snapshot = new WorldSnapshot { Player = store.PlayerSerial, Map = store.MapIndex };
             foreach (var m in store.Mobiles)
             {
                 snapshot.Objects.Add(new SnapshotObject
@@ -42,7 +45,11 @@ namespace TheVerge.Bot
         {
             using var document = JsonDocument.Parse(json);
             var root = document.RootElement;
-            var snapshot = new WorldSnapshot { Player = ParseSerial(root.GetProperty("player").GetString()) };
+            var snapshot = new WorldSnapshot
+            {
+                Player = ParseSerial(root.GetProperty("player").GetString()),
+                Map = root.TryGetProperty("map", out var map) && map.ValueKind == JsonValueKind.Number ? map.GetInt32() : EntityStore.UnknownMap
+            };
             foreach (var o in root.GetProperty("objects").EnumerateArray())
             {
                 snapshot.Objects.Add(new SnapshotObject
@@ -71,6 +78,7 @@ namespace TheVerge.Bot
             {
                 writer.WriteStartObject();
                 writer.WriteString("player", Hex(snapshot.Player));
+                writer.WriteNumber("map", snapshot.Map);
                 writer.WriteStartArray("objects");
                 foreach (var o in snapshot.Objects)
                 {

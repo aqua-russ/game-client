@@ -91,9 +91,20 @@ namespace TheVerge.Bot
                     return BotActionKind.MapDump;
                 case "statusdump" when argument.Length > 0:
                     return BotActionKind.StatusDump;
+                case "onmap" when TryParseMap(argument, out _):
+                    return BotActionKind.OnMap;
+                case "seenmulti" when argument.Length == 0:
+                    return BotActionKind.SeenMulti;
                 default:
                     return null;
             }
+        }
+
+        /// <summary>Номер карты «0»–«5» из onmap:N (видимые карты сервера — 0–5, <c>map-definitions.json</c>).</summary>
+        public static bool TryParseMap(string text, out int map)
+        {
+            map = 0;
+            return int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out map) && map <= 5;
         }
 
         /// <summary>Клетка с высотой «x,y,z» из target:x,y,z.</summary>

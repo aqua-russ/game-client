@@ -40,7 +40,7 @@
 - **Контейнеры:** команда `ItemCommands.Use`, порт `IItemSender`.
 - **Речь:** `Core/Chat/SpeechCommands` (таймер `GameClient`), порт `ISpeechSender`, 0xAD.
 - **Прицел (база):** `Core/Targeting/TargetCursor`, порт `ITargetSender`, 0x6C.
-- **Сверка с сервером:** `WorldSnapshot`; сервер — GM-команда `[DumpVisible` (JSON: `player`, `map`, `x`, `y`, `z`, `objects[]`: `serial`, `kind`, `place` world|equipped|container, `graphic`, `hue`, `amount`, `x`, `y`, `z`, `parent`, `layer`; надетое — место 0 и количество 1, в контейнере — Z 0, как знает клиент). Проверка — `tools/check/world.sh`.
+- **Сверка с сервером:** `WorldSnapshot`; сервер — GM-команда `[DumpVisible` (JSON: `player`, `map`, `x`, `y`, `z`, `objects[]`: `serial`, `kind`, `place` world|equipped|container, `graphic`, `hue`, `amount`, `x`, `y`, `z`, `parent`, `layer`; надетое — место 0 и количество 1, в контейнере — Z 0, как знает клиент). Номер карты (`map`) сверяется тоже. Проверки — `tools/check/world.sh` (вход, яблоко, рюкзак, удаление) и `tools/check/parity.sh` (5 точек и смена карты, 2.12).
 - **Устойчивость:** фаззинг `WorldFuzzTests`, целостность — `WorldInvariants`.
 
 ## 5. Файлы данных (Стадия 2, часть Б: 2.1–2.4, 2.6, 2.11б)
@@ -73,8 +73,9 @@
 - **Фейковый сервер для CI (1.13):** `dotnet/TheVerge.Bot/Replay` (`ReplayScript` из лога пакетов, `ReplayServer.NextConnection`, расхождения — `Mismatches`).
 - **Записи с настоящего сервера** (перезаписывать ботом против копии сервера, если изменился вход или мир): вход — `dotnet/TheVerge.Tests/Bot/Replays/bot-login-modernuo.tsv` (аккаунт `replaybot`, персонаж `Replay`); мир — `Bot/Replays/world-dump-modernuo.*` (бот-GM с `--action use:backpack --action dump:<папка>` против копии с пустым миром).
 - **Эталоны ClassicUO (0.6):** посредник с записью — `tools/golden/proxy.py` (подменяет адрес в 0x8C на свой); запись → лог пакетов — `TheVerge.Bot --convert-capture` (`CaptureConverter`, соединение — `CaptureConnection`: вид по первым 9 байтам клиента — ключ + 0x91 с тем же ключом = игровое, поток сервера сжат); запись сеансов — `tools/golden/record.sh` (на Mac), сравнение логов — `tools/golden/diff.sh`, бот против эталонов — `tools/golden/compare.sh`, самопроверка цепочки — `tools/golden/selftest.sh`; временная копия сервера для них — `tools/golden/server-copy.sh`; эталоны — `golden/`; ClassicUO — `remaster/classicuo` (вне git).
+- **Действия сверки мира (2.12):** `onmap:N` — ждать, пока бот окажется на карте N (`OnMapStep`); `seenmulti:` — ждать дом или корабль (multi) в мире (`SeenMultiStep`). Сценарий — `tools/check/parity.sh`: GM-команда `[ParityPlace house|ship` ставит дом или корабль рядом с GM на настоящей карте; `[move` двигает моба; `[go Trammel` / `[go Felucca` меняют карту.
 - **Скрипты проверок** и что они делают — `docs/DEV-ENV.md` §1.
-- **Сервер:** GM-команды сверки — `server/ModernUO/Projects/UOContent/Custom/TheVerge/Parity/` (`[DumpVisible`, `[DumpMapData`, `[DumpMobile`), только для GameMaster.
+- **Сервер:** GM-команды сверки — `server/ModernUO/Projects/UOContent/Custom/TheVerge/Parity/` (`[DumpVisible`, `[DumpMapData`, `[DumpMobile`, `[ParityPlace`), только для GameMaster.
 
 ## 8. Поведение сервера, найденное по его коду
 
@@ -105,3 +106,7 @@
 | Призрак игрока | виден GM: у GM моб не удаляется, а меняет тело |
 | Молчащее подключение | 5 с без данных — адрес блокируется на 15 минут (`TARGET.md` §5); на стенде 127.0.0.1 в списке исключений |
 | Dif-патчи карты | при версии 7.0.95.0 не применяются (`TileMatrixPatch.Configure`) |
+| Смена карты (`[go Trammel`) | сервер заново присылает игроку содержимое его рюкзака (0x3C), а `[DumpVisible` перечисляет содержимое только открытых контейнеров (`Container.Openers`) — перед сверкой после смены карты нужно `use:backpack` |
+| Моб (крыса) | у него свой рюкзак — надетый предмет на слое 21; «яблоко и крыса» — 3 объекта, а не 2 |
+| Ключи дома (`BaseHouse.CreateKeys`, не AOS) | кладутся в рюкзак и банковский ящик хозяина; банковский ящик после этого виден боту как надетый предмет (слой 29) |
+| Предметы в контейнере и обновление (`Item.ProcessDelta`) | 0x25 шлётся корневому владельцу-мобу, даже если контейнер не открыт — бот узнаёт о таких предметах, а дамп нет, пока контейнер не открыт |

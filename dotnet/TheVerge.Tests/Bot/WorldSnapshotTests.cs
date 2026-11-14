@@ -55,6 +55,7 @@ namespace TheVerge.Tests.Bot
         {
             var store = new EntityStore();
             store.Reset(new PlayerState(Player, 400, new Point3D(5445, 1153, 0), Direction.North, new MapSize(7168, 4096)));
+            store.ChangeMap(0); // в дампе сервера map = 0: бот получает карту от сервера (0xBF 0x08), сверка её проверяет
             store.UpdateMobile(Player, new MobileInfo(400, new Point3D(5445, 1153, 0), Direction.North, 33770, 0, 1));
             store.Equip(new Serial(0x40000001), new ItemInfo(3701, 1, Point3D.Zero, 0, 0, 0), Player, Layer.Backpack);
             store.PlaceInContainer(new Serial(0x40000002), new ItemInfo(4081, 1, new Point3D(119, 132, 0), 0, 0, 0), new Serial(0x40000001), 0);

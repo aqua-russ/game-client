@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using TheVerge.Core.World;
 
 namespace TheVerge.Bot
 {
@@ -9,6 +10,11 @@ namespace TheVerge.Bot
         public static List<string> Compare(WorldSnapshot bot, WorldSnapshot server)
         {
             var result = new List<string>();
+            if (bot.Map != server.Map)
+            {
+                result.Add("карта — у бота " + MapText(bot.Map) + ", на сервере " + MapText(server.Map) + ".");
+            }
+
             var mine = bot.Objects.ToDictionary(o => o.Serial.Value);
             var theirs = server.Objects.ToDictionary(o => o.Serial.Value);
             foreach (var s in server.Objects.OrderBy(o => o.Serial.Value))
@@ -29,6 +35,8 @@ namespace TheVerge.Bot
 
             return result;
         }
+
+        private static string MapText(int map) => map == EntityStore.UnknownMap ? "неизвестна" : map.ToString();
 
         private static void CompareFields(SnapshotObject bot, SnapshotObject server, List<string> result)
         {
