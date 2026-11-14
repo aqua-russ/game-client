@@ -3,7 +3,7 @@
 > Этот файл читается агентом **в начале каждой сессии**. Он короткий намеренно: здесь только правила,
 > которые нельзя нарушать, и карта, где искать подробности. Факты о протоколе, механиках и планах живут в
 > отдельных документах (ссылки ниже) — не дублируй их сюда.
-> Claude Code читает `CLAUDE.md` (в нём одна строка `@AGENTS.md`), Codex/Gemini — этот файл напрямую.
+> Claude Code читает `CLAUDE.md` (в нём одна строка `@AGENTS.md`), Gemini — `GEMINI.md` (начинается с `@AGENTS.md`; дальше только договорённости с Gemini и пометки для ревью), Codex — этот файл напрямую.
 
 ---
 
@@ -86,7 +86,7 @@
 
 ```text
 The Verge/                         ← корень репо = Unity-проект
-├── AGENTS.md · CLAUDE.md · README.md · PROGRESS.md
+├── AGENTS.md · CLAUDE.md · GEMINI.md · README.md · PROGRESS.md
 ├── docs/            PLAN · TARGET · CODE-MAP · SERVER-MAP · DEV-ENV · CONTROLS · TECH-DEBT · REFERENCE-CLIENT · LICENSES · LEGAL · server-patches (.md) · protocol/ · adr/ · world/
 ├── golden/          эталонные логи трафика ClassicUO (`docs/REFERENCE-CLIENT.md`) — только чтение
 ├── tools/
@@ -364,4 +364,5 @@ The Verge/                         ← корень репо = Unity-проек�
 - Не коммитить: `Library/`, `Temp/`, `Logs/`, `UserSettings/`, `obj/`, `bin/`, `.DS_Store`, архивы, файлы данных UO (`*.mul`, `*.uop`), `Distribution/Configuration/`, `Distribution/Saves/`.
 - **Рабочий режим (с 2026-11-11):** разработка идёт локально. Агент коммитит сам после каждой завершённой задачи (локальный коммит безопасен и позволяет откатиться), но **ничего не отправляет на GitHub**. Отправку делает пользователь раз в день вечером кнопкой «Sync Changes» в VS Code для обоих репозиториев (клиент и сервер). Если сделано что-то крупное или рискованное, агент напоминает отправить раньше. Когда у пользователя настроен вход в GitHub для терминала (`gh auth login`), агент может отправлять сам по просьбе.
 - Формат коммита: `[Слой/Домен] Что сделано` (`[Network/Movement] Обработка 0x21 Move Reject`).
+- Автор коммитов агента — `The Verge` (`docs/DEV-ENV.md` §2); Gemini подписывается `Gemini` и ставит пометки для ревью (`GEMINI.md`).
 - Одна задача — один коммит. Не смешивать рефакторинг и новую функциональность.

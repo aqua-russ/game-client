@@ -233,3 +233,4 @@ verdata.mul
 .vscode/
 .claude/
 .utmp/
+.local/
