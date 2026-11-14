@@ -154,7 +154,7 @@ id,sub,dir,name,length,condition,server,priority,stage,status,source,note
 0xBF,0x2C,c2s,BandageTarget,var,,да,P1,4.6,нужно,Projects/UOContent/Network/Packets/IncomingExtendedCommandPackets.cs#BandageTarget,
 0xBF,0x2D,c2s,TargetedSpell,var,,да,P2,4.6,нужно,Projects/UOContent/Network/Packets/IncomingExtendedCommandPackets.cs#TargetedSpell,
 0xBF,0x2E,c2s,TargetedSkill,var,,да,P2,4.6,нужно,Projects/UOContent/Network/Packets/IncomingExtendedCommandPackets.cs#TargetedSkillUse,
-0xBF,0x30,c2s,TargetByResource,var,,да,P3,4.6,нужно,Projects/UOContent/Network/Packets/IncomingExtendedCommandPackets.cs#TargetByResourceMacro,
+0xBF,0x30,c2s,TargetByResource,var,сервер пакет принимает; обработчика события нет,игнорирует,-,-,не используется,Projects/UOContent/Network/Packets/IncomingExtendedCommandPackets.cs#TargetByResourceMacro,
 0xBF,0x32,c2s,ToggleFlying,var,полёт гаргулий — эра SA,да,-,-,не используется,Projects/UOContent/Network/Packets/IncomingExtendedCommandPackets.cs#ToggleFlying,
 0xBF,,s2c,ExtendedCommand,var,,да,P0,1.2,нужно,-,подкоманда — 2 байта сразу после длины
 0xBF,0x04,s2c,CloseGump,var,,да,P1,6.3,нужно,Projects/UOContent/Gumps/Base/OutgoingGumpPackets.cs#SendCloseGump,

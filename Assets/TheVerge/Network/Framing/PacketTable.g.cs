@@ -256,7 +256,7 @@ namespace TheVerge.Network.Framing
             (0xBF, 0x2C) => Variable("BandageTarget"),
             (0xBF, 0x2D) => Variable("TargetedSpell"),
             (0xBF, 0x2E) => Variable("TargetedSkill"),
-            (0xBF, 0x30) => Variable("TargetByResource"),
+            (0xBF, 0x30) => Variable("TargetByResource"), // не используется
             (0xBF, 0x32) => Variable("ToggleFlying"), // не используется
             (0xD7, 0x02) => Variable("DesignerBackup"), // не используется
             (0xD7, 0x03) => Variable("DesignerRestore"), // не используется
