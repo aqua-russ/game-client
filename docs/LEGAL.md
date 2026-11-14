@@ -83,7 +83,7 @@
 
 ## Открытые вопросы (нужно решение пользователя)
 
-**A. Таблица Huffman скопирована из сервера.** `Assets/TheVerge/Network/Compression/HuffmanTree.cs`: таблица кодов (32 строки) совпадает с `Projects/Server/Network/NetworkCompression.cs`. Предложенное решение, исключающее риск полностью: клиент вообще не содержит таблицы, сервер не сжимает данные для нашего клиента ([ADR 0018](adr/0018-no-huffman-in-client.md), статус «предложено», ждёт «да»). Пока решение не выполнено, `legal.sh --release` падает на этом файле; после выполнения запись `copies` в `legal-baseline.json` удаляется.
+**A. Таблица Huffman скопирована из сервера.** `Assets/TheVerge/Network/Compression/HuffmanTree.cs`: таблица кодов (32 строки) совпадает с `Projects/Server/Network/NetworkCompression.cs`. Предложенное решение, исключающее риск полностью: клиент не содержит таблицы, а наш клиент и сервер сжимают трафик стандартным deflate из .NET (лучше сжатия UO); Huffman остаётся только в сервере для ClassicUO ([ADR 0018](adr/0018-no-huffman-in-client.md), статус «предложено», ждёт «да»). Пока решение не выполнено, `legal.sh --release` падает на этом файле; после выполнения запись `copies` в `legal-baseline.json` удаляется.
 
 ## 7. Сторонние библиотеки и ассеты
 
