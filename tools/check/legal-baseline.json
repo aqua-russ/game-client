@@ -1,0 +1,43 @@
+{
+ "client": {
+  "Assets/TheVerge/Core/Session/ClientLimits.cs": 1,
+  "Assets/TheVerge/Core/Session/StartingCity.cs": 2,
+  "Assets/TheVerge/Data/DataAssembly.cs": 1,
+  "Assets/TheVerge/Data/Map/MapDefinition.cs": 2,
+  "Assets/TheVerge/Data/Multis/MultiUopReader.cs": 6,
+  "Assets/TheVerge/Network/Framing/PacketTable.g.cs": 2,
+  "Assets/TheVerge/Network/Packets/Account/CharacterListHandler.cs": 1,
+  "Assets/TheVerge/Network/Packets/Account/ClientMapFlags.cs": 3,
+  "Assets/TheVerge/Network/Packets/Account/CreateCharacterPacket.cs": 1,
+  "Assets/TheVerge/Network/Packets/Account/PlayCharacterPacket.cs": 1,
+  "dotnet/TheVerge.Bot/BotData.cs": 1,
+  "dotnet/TheVerge.Tests/Core/Session/CharacterCreateDeleteTests.cs": 1,
+  "dotnet/TheVerge.Tests/Core/Session/CharacterSelectionTests.cs": 3,
+  "dotnet/TheVerge.Tests/Data/Files/DataLayoutDetectorTests.cs": 12,
+  "dotnet/TheVerge.Tests/Data/Multis/MultiFileBuilder.cs": 8,
+  "dotnet/TheVerge.Tests/Data/Multis/MultiTableTests.cs": 3,
+  "dotnet/TheVerge.Tests/Network/Packets/Account/CharacterListPacketTests.cs": 4,
+  "tools/check/combat.sh": 3,
+  "tools/check/map.sh": 1
+ },
+ "copies": {
+  "Assets/TheVerge/Network/Compression/HuffmanTree.cs": 32
+ },
+ "copies_accepted": {
+  "dotnet/TheVerge.Bot/WorldSnapshot.cs": "ложное срабатывание: стандартная строка вызова Utf8JsonWriter из .NET, не логика сервера"
+ },
+ "server": {
+  "Distribution/Data": {
+   "files": 87,
+   "hits": 6596
+  },
+  "Projects/Server": {
+   "files": 23,
+   "hits": 90
+  },
+  "Projects/UOContent": {
+   "files": 267,
+   "hits": 1312
+  }
+ }
+}
