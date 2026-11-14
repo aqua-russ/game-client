@@ -5,12 +5,16 @@ namespace TheVerge.Bot
 {
     /// <summary>
     /// Действия бота в мире (--action) по очереди, после каждого тика. Каждое ждёт своего ответа сервера не дольше
-    /// <see cref="ActionTimeoutMs"/>; не дождалось — <see cref="Problem"/>, бот выходит с ошибкой.
+    /// <see cref="ActionTimeoutMs"/> (бой — дольше, <see cref="IBotStep.TimeoutMs"/>); не дождалось — <see cref="Problem"/>,
+    /// бот выходит с ошибкой.
     /// </summary>
     public sealed class BotScript
     {
         /// <summary>Сколько ждать ответа сервера на действие, мс.</summary>
         public const int ActionTimeoutMs = 10000;
+
+        /// <summary>Сколько ждать конца боя (fight:), мс: крыса с 6 здоровья умирает за несколько ударов, но бой не мгновенный.</summary>
+        public const int FightTimeoutMs = 60000;
 
         /// <summary>
         /// Сколько ждать после [DumpVisible, прежде чем сверять: пакеты, которые сервер отправил до команды, должны дойти.
@@ -67,7 +71,7 @@ namespace TheVerge.Bot
                 _step.Finish();
                 _step = null;
             }
-            else if (_clock.NowMs - _startedAt >= ActionTimeoutMs)
+            else if (_clock.NowMs - _startedAt >= _step.TimeoutMs)
             {
                 Problem = _actions[_index].Text + ": " + _step.TimeoutProblem;
                 _step.Finish();
@@ -100,6 +104,8 @@ namespace TheVerge.Bot
                     return new UseItemStep(_world, _log, action.Argument);
                 case BotActionKind.Bandage:
                     return new BandageStep(_world, _log);
+                case BotActionKind.Fight:
+                    return new FightStep(_world, _log, action.Argument);
                 default:
                     return new OpenBackpackStep(_world, _log);
             }

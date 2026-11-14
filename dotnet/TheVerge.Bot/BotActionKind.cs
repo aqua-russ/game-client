@@ -9,6 +9,8 @@ namespace TheVerge.Bot
         UseItem,
         /// <summary>bandage:self — быстрый бинт на себя бинтом не дальше 2 клеток (0xBF 0x2C).</summary>
         Bandage,
+        /// <summary>fight:0xТЕЛО — боевая стойка, атака ближайшего моба с этим телом, ждать его смерти (Стадия 4, п. 7).</summary>
+        Fight,
 
         /// <summary>say:&lt;текст&gt; — сказать (и GM-команды: «[go 1500 1600»).</summary>
         Say,

@@ -54,6 +54,8 @@ namespace TheVerge.Bot
                     return BotActionKind.SeenItem;
                 case "seenmob" when TryParseGraphic(argument, out _):
                     return BotActionKind.SeenMobile;
+                case "fight" when TryParseGraphic(argument, out _):
+                    return BotActionKind.Fight;
                 default:
                     return null;
             }
