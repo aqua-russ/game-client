@@ -7,8 +7,8 @@
 # Работает на ВРЕМЕННОЙ копии вашего сервера с пустым миром: ваши сохранения, аккаунты и настройки не трогаются
 # (проверяется в конце). Папка с файлами данных — по умолчанию remaster/uo-data/Ultima Online Classic.
 # Бот-GM в Британии (1495, 1629, 10) ставит дом ([ParityPlace house), деревянный сундук (WoodenChest) и
-# неподвижную крысу (Rat), после чего запрашивает [DumpMove 100000 1337 и сверяет все 100 000 кейсов в трёх режимах
-# (игрок, GM, призрак) против MovementCheck.
+# неподвижную крысу (Rat), после чего запрашивает [DumpMove 100000 1337 и сверяет все 100 000 кейсов в четырёх режимах
+# (игрок, игрок с полной выносливостью — проходит сквозь моба, GM, призрак) против MovementCheck.
 # Ваш сервер должен быть остановлен (порт 2593 свободен) и собран (dotnet build -c Release в server/ModernUO).
 # Логи — Logs/check/movement-*.log.
 set -u
@@ -100,7 +100,7 @@ dotnet "$BOT_DLL" --config "$TMP/gm.json" --create-character --no-packet-log --d
 CODE=$?
 if [ "$CODE" -eq 0 ] && grep -q "Сверка физики движения с сервером: совпадает" "$LOGS/movement-gm.log" \
    && grep -q "сверено проверок 100000" "$LOGS/movement-gm.log"; then
-  ok "физика движения совпала на 100000 проверках (режимы player, gm, ghost)"
+  ok "физика движения совпала на 100000 проверках (режимы player, gm, ghost, shove)"
 else
   fail "сверка MovementCheck с сервером: код $CODE. Лог: Logs/check/movement-gm.log"
   grep -E "Расхождение|не может|не появился|не оказался|ОШИБКА|не записал|проблема:" "$LOGS/movement-gm.log" | head -n 15

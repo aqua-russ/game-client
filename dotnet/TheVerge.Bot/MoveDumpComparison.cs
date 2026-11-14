@@ -6,11 +6,15 @@ namespace TheVerge.Bot
 {
     /// <summary>
     /// Сверка физики движения клиента <see cref="MovementCheck"/> с дампом сервера [DumpMove: для каждого кейса
-    /// [x, y, z, dir, pOk, pZ, gOk, gZ, hOk, hZ] проверяются режимы player, gm и ghost.
+    /// [x, y, z, dir, pOk, pZ, gOk, gZ, hOk, hZ, sOk, sZ] проверяются режимы player (выносливость не полная — моб
+    /// загораживает), gm, ghost и shove (игрок с полной выносливостью проходит сквозь моба, Mobile.CheckShove).
+    /// Формат — Custom/TheVerge/Parity/MoveDump.cs.
     /// </summary>
     public static class MoveDumpComparison
     {
-        private static readonly string[] ModeNames = { "player", "gm", "ghost" };
+        public const int CaseLength = 12;
+
+        private static readonly string[] ModeNames = { "player", "gm", "ghost", "shove" };
 
         public static ParityReport Compare(JsonElement server, MovementCheck checker, uint playerSerial = 0)
         {
@@ -20,12 +24,20 @@ namespace TheVerge.Bot
                 MoverState.Player(playerSerial, canShoveMobiles: false),
                 MoverState.GameMaster(playerSerial),
                 MoverState.Ghost(playerSerial),
+                MoverState.Player(playerSerial, canShoveMobiles: true),
             };
             var seed = server.GetProperty("seed").GetInt32();
             var count = 0;
 
             foreach (var entry in server.GetProperty("cases").EnumerateArray())
             {
+                if (entry.GetArrayLength() != CaseLength)
+                {
+                    report.Differ($"в дампе сервера {entry.GetArrayLength()} чисел на проверку вместо {CaseLength}: " +
+                                  "сервер собран до режима shove — пересоберите сервер (dotnet build -c Release в server/ModernUO).");
+                    return report;
+                }
+
                 for (int modeIndex = 0; modeIndex < modes.Length; modeIndex++)
                 {
                     CheckMode(checker, entry, modes[modeIndex], modeIndex, report);
@@ -34,7 +46,7 @@ namespace TheVerge.Bot
                 count++;
             }
 
-            report.Summary.Add($"Физика движения: сверено проверок {count} (режимы player/gm/ghost, seed {seed}).");
+            report.Summary.Add($"Физика движения: сверено проверок {count} (режимы player/gm/ghost/shove, seed {seed}).");
             return report;
         }
 

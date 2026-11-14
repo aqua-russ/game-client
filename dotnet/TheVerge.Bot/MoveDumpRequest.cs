@@ -4,11 +4,11 @@ namespace TheVerge.Bot
 {
     /// <summary>
     /// movedump:&lt;проверок&gt;,&lt;seed&gt;,&lt;папка&gt; — что попросить у сервера командой [DumpMove
-    /// (Custom/TheVerge/Parity/DumpMoveCommand.cs: проверок 1..1 000 000) и где ждать файл.
+    /// (Custom/TheVerge/Parity/DumpMoveCommand.cs: проверок 1..200 000) и где ждать файл.
     /// </summary>
     public readonly struct MoveDumpRequest
     {
-        public const int MaxCount = 1000000;
+        public const int MaxCount = 200000;
 
         private MoveDumpRequest(int count, int seed, string directory)
         {
