@@ -34,6 +34,9 @@ namespace TheVerge.Core.World
 
         public int EquippedCount { get; private set; }
 
+        /// <summary>Здоровье, статы и полоски по пакетам состояния (PLAN Стадия 4, п. 4).</summary>
+        public MobileStatus Status { get; } = new MobileStatus();
+
         /// <summary>Что надето на слое; null — ничего или слой вне Layer.</summary>
         public Item? GetEquipped(Layer layer) => IsSlot(layer) ? _slots[(int)layer] : null;
 

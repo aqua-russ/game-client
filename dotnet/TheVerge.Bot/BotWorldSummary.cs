@@ -22,5 +22,20 @@ namespace TheVerge.Bot
 
             return text;
         }
+
+        /// <summary>Статус своего персонажа одной строкой; пусто — сервер полного статуса ещё не прислал.</summary>
+        public static string DescribeStatus(EntityStore entities)
+        {
+            var status = entities.Player?.Status;
+            if (status == null || status.Version <= 0)
+            {
+                return string.Empty;
+            }
+
+            var a = status.Attributes;
+            return "«" + status.Name + "», здоровье " + status.Hits + ", мана " + status.Mana + ", выносливость " + status.Stam +
+                   ", сила " + a.Str + ", ловкость " + a.Dex + ", интеллект " + a.Int + ", золото " + a.Gold + ", броня " + a.Armor +
+                   ", вес " + a.Weight;
+        }
     }
 }

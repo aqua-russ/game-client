@@ -87,8 +87,12 @@ namespace TheVerge.Bot
                     return new TargetStep(_world, _log, action.Argument);
                 case BotActionKind.SeenItem:
                     return new SeenItemStep(_world, _log, action.Argument);
+                case BotActionKind.SeenMobile:
+                    return new SeenMobileStep(_world, _log, action.Argument);
                 case BotActionKind.Dump:
                     return new DumpStep(_world, _log, _clock, action.Argument);
+                case BotActionKind.StatusDump:
+                    return new StatusDumpStep(_world, _log, _clock, action.Argument);
                 case BotActionKind.MapDump:
                     MapDumpRequest.TryParse(action.Argument, out var request);
                     return new MapDumpStep(_world, _log, _clock, Data, request);

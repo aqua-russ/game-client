@@ -9,7 +9,7 @@ namespace TheVerge.Bot
     public static class MapCellsComparison
     {
         /// <summary>Сверяет клетки; возвращает, сколько их было.</summary>
-        public static int Compare(JsonElement cells, IMapData map, MapDumpReport report)
+        public static int Compare(JsonElement cells, IMapData map, ParityReport report)
         {
             var statics = new List<StaticTile>();
             var count = 0;
@@ -23,7 +23,7 @@ namespace TheVerge.Bot
         }
 
         /// <summary>Все клетки со статикой: сверка каждой и их числа со своим (обход всей карты).</summary>
-        public static void CompareAllStatics(JsonElement cells, IMapData map, MapDumpReport report)
+        public static void CompareAllStatics(JsonElement cells, IMapData map, ParityReport report)
         {
             var serverCount = Compare(cells, map, report);
             var clientCount = 0;
@@ -45,7 +45,7 @@ namespace TheVerge.Bot
             report.Summary.Add("Клетки со статикой: сервер " + serverCount + ", клиент " + clientCount + ".");
         }
 
-        private static void CompareCell(JsonElement cell, IMapData map, List<StaticTile> statics, MapDumpReport report)
+        private static void CompareCell(JsonElement cell, IMapData map, List<StaticTile> statics, ParityReport report)
         {
             int x = cell.GetProperty("x").GetInt32(), y = cell.GetProperty("y").GetInt32();
             var where = "клетка (" + x + ", " + y + "): ";
@@ -75,7 +75,7 @@ namespace TheVerge.Bot
             }
         }
 
-        private static void Field(MapDumpReport report, string what, long server, long client)
+        private static void Field(ParityReport report, string what, long server, long client)
         {
             if (server != client)
             {

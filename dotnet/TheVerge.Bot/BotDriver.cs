@@ -120,6 +120,12 @@ namespace TheVerge.Bot
             }
 
             _log.Info("Мир: " + BotWorldSummary.Describe(_entities) + ".");
+            var status = BotWorldSummary.DescribeStatus(_entities);
+            if (status.Length > 0)
+            {
+                _log.Info("Статус: " + status + ".");
+            }
+
             _log.Info("Выход из игры" + (_game.LastRttMs >= 0 ? " (задержка до сервера " + _game.LastRttMs + " мс)" : string.Empty) + "…");
             LoggedOut = true;
             _game.Logout();

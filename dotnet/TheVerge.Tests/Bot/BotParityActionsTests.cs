@@ -6,6 +6,7 @@ using TheVerge.Core.Chat;
 using TheVerge.Core.Items;
 using TheVerge.Core.Ports;
 using TheVerge.Core.Primitives;
+using TheVerge.Core.Status;
 using TheVerge.Core.Targeting;
 using TheVerge.Core.World;
 using TheVerge.Tests.Core.Session;
@@ -111,6 +112,62 @@ namespace TheVerge.Tests.Bot
             Assert.That(_speech.Sent, Is.Empty);
         }
 
+        [Test]
+        public void StatusDump_WithoutStatus_ProblemAtOnce()
+        {
+            var script = Script("statusdump:" + TempDir());
+
+            script.Step();
+
+            Assert.That(script.Problem, Does.Contain("состояни"));
+            Assert.That(_speech.Sent, Is.Empty);
+        }
+
+        [Test]
+        public void StatusDump_AsksStatusOfEveryMobile_ThenSaysCommandAfterPause()
+        {
+            var sender = new RecordingStatusSender();
+            var store = _world.Entities;
+            store.UpdateMobile(new Serial(0x100), new MobileInfo(0xEE, new Point3D(2, 2, 0), Direction.North, 0, 0, 3));
+            var status = new BotStatus(new MobileStatusUpdates(store), new StatusCommands(sender));
+            var world = new BotWorld(store, _world.Environment, _world.Containers, _world.Items, _world.Speech, _world.Target, status);
+            var script = new BotScript(new[] { BotAction.Parse("statusdump:" + TempDir(), out _)! }, world, _log, _clock);
+
+            script.Step();
+            Assert.That(sender.Queried, Is.EquivalentTo(new uint[] { 0x3E, 0x100 }));
+            Assert.That(_speech.Sent, Is.Empty, "сначала ответы на запросы статуса");
+
+            _clock.NowMs += BotScript.DumpSettleMs;
+            script.Step();
+            _world.Speech.Update(_clock.NowMs);
+            Assert.That(_speech.Sent, Is.EqualTo(new[] { "[DumpMobile" }));
+        }
+
+        [Test]
+        public void SeenMobile_WaitsForBodyNearby()
+        {
+            var script = Script("seenmob:0x00EE");
+
+            script.Step();
+            Assert.That(script.IsDone, Is.False);
+
+            _world.Entities.UpdateMobile(new Serial(0x100), new MobileInfo(0xEE, new Point3D(3, 4, 0), Direction.North, 0, 0, 3));
+            script.Step();
+
+            Assert.That(script.IsDone, Is.True);
+            Assert.That(Text(), Does.Contain("0x00EE").And.Contain("0x00000100"));
+        }
+
+        [Test]
+        public void SeenMobile_OwnBodyDoesNotCount()
+        {
+            var script = Script("seenmob:0x0190");
+
+            script.Step();
+
+            Assert.That(script.IsDone, Is.False);
+        }
+
         private static string TempDir()
         {
             var dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "verge-dump-" + System.Guid.NewGuid().ToString("N"));
@@ -138,6 +195,13 @@ namespace TheVerge.Tests.Bot
             public List<string> Sent { get; } = new List<string>();
 
             public void SendSpeech(string text, ushort hue) => Sent.Add(text);
+        }
+
+        private sealed class RecordingStatusSender : IStatusSender
+        {
+            public List<uint> Queried { get; } = new List<uint>();
+
+            public void SendStatusQuery(Serial serial) => Queried.Add(serial.Value);
         }
 
         private sealed class NoItemSender : IItemSender

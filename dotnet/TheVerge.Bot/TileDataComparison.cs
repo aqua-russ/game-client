@@ -8,7 +8,7 @@ namespace TheVerge.Bot
     {
         private static readonly string[] ItemFields = { "флаги", "вес", "качество", "анимация", "количество", "значение", "высота" };
 
-        public static void Compare(JsonElement land, JsonElement items, ITileData tiles, MapDumpReport report)
+        public static void Compare(JsonElement land, JsonElement items, ITileData tiles, ParityReport report)
         {
             var id = 0;
             foreach (var entry in land.EnumerateArray())
@@ -31,7 +31,7 @@ namespace TheVerge.Bot
             report.Summary.Add("Tiledata: сверено земли " + landCount + ", предметов " + id + ".");
         }
 
-        private static void CompareItem(JsonElement entry, ITileData tiles, int id, MapDumpReport report)
+        private static void CompareItem(JsonElement entry, ITileData tiles, int id, ParityReport report)
         {
             var mine = tiles.Item(id);
             var where = "предмет 0x" + id.ToString("X4") + ": ";
@@ -48,7 +48,7 @@ namespace TheVerge.Bot
             Name(report, where, entry[7].GetString() ?? string.Empty, mine.Name);
         }
 
-        private static void Number(MapDumpReport report, string what, ulong server, ulong client)
+        private static void Number(ParityReport report, string what, ulong server, ulong client)
         {
             if (server != client)
             {
@@ -56,7 +56,7 @@ namespace TheVerge.Bot
             }
         }
 
-        private static void Name(MapDumpReport report, string where, string server, string client)
+        private static void Name(ParityReport report, string where, string server, string client)
         {
             if (server != client)
             {

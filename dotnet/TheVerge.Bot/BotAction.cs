@@ -24,48 +24,51 @@ namespace TheVerge.Bot
         /// <summary>Разобрать «вид:значение»; null — непонятно что, причина — в <paramref name="error"/>.</summary>
         public static BotAction? Parse(string text, out string error)
         {
-            error = string.Empty;
             var colon = text.IndexOf(':');
             var kind = colon < 0 ? text : text.Substring(0, colon);
             var argument = colon < 0 ? string.Empty : text.Substring(colon + 1);
-            if (kind == "use" && argument == "backpack")
-            {
-                return new BotAction(BotActionKind.UseBackpack, argument, text);
-            }
+            var parsed = WorldKind(kind, argument) ?? ParityKind(kind, argument);
+            error = parsed == null ? "--action «" + text + "»: непонятное действие. Список действий: --help." : string.Empty;
+            return parsed == null ? null : new BotAction(parsed.Value, argument, text);
+        }
 
-            if (kind == "say" && argument.Trim().Length > 0 && argument.Trim().Length <= ServerLimits.SpeechMaxChars)
+        /// <summary>Действия в мире: рюкзак, речь, ожидание клетки, прицел, ожидание предмета или моба.</summary>
+        private static BotActionKind? WorldKind(string kind, string argument)
+        {
+            switch (kind)
             {
-                return new BotAction(BotActionKind.Say, argument, text);
+                case "use" when argument == "backpack":
+                    return BotActionKind.UseBackpack;
+                case "say" when argument.Trim().Length > 0 && argument.Trim().Length <= ServerLimits.SpeechMaxChars:
+                    return BotActionKind.Say;
+                case "at" when TryParseCell(argument, out _, out _):
+                    return BotActionKind.WaitAt;
+                case "target" when argument == "here" || argument == "self" || argument == "cancel" ||
+                                   TryParsePoint(argument, out _) || TryParseGraphic(argument, out _):
+                    return BotActionKind.Target;
+                case "seen" when TryParseGraphic(argument, out _):
+                    return BotActionKind.SeenItem;
+                case "seenmob" when TryParseGraphic(argument, out _):
+                    return BotActionKind.SeenMobile;
+                default:
+                    return null;
             }
+        }
 
-            if (kind == "at" && TryParseCell(argument, out _, out _))
+        /// <summary>Сверки с сервером: мир, данные карты, состояние мобов.</summary>
+        private static BotActionKind? ParityKind(string kind, string argument)
+        {
+            switch (kind)
             {
-                return new BotAction(BotActionKind.WaitAt, argument, text);
+                case "dump" when argument.Length > 0:
+                    return BotActionKind.Dump;
+                case "mapdump" when MapDumpRequest.TryParse(argument, out _):
+                    return BotActionKind.MapDump;
+                case "statusdump" when argument.Length > 0:
+                    return BotActionKind.StatusDump;
+                default:
+                    return null;
             }
-
-            if (kind == "target" && (argument == "here" || argument == "self" || argument == "cancel" ||
-                                     TryParsePoint(argument, out _) || TryParseGraphic(argument, out _)))
-            {
-                return new BotAction(BotActionKind.Target, argument, text);
-            }
-
-            if (kind == "seen" && TryParseGraphic(argument, out _))
-            {
-                return new BotAction(BotActionKind.SeenItem, argument, text);
-            }
-
-            if (kind == "dump" && argument.Length > 0)
-            {
-                return new BotAction(BotActionKind.Dump, argument, text);
-            }
-
-            if (kind == "mapdump" && MapDumpRequest.TryParse(argument, out _))
-            {
-                return new BotAction(BotActionKind.MapDump, argument, text);
-            }
-
-            error = "--action «" + text + "»: непонятное действие. Список действий: --help.";
-            return null;
         }
 
         /// <summary>Клетка с высотой «x,y,z» из target:x,y,z.</summary>

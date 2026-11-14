@@ -9,9 +9,9 @@ namespace TheVerge.Bot
     /// </summary>
     public static class MapDataComparison
     {
-        public static MapDumpReport Compare(JsonElement server, BotWorldData data)
+        public static ParityReport Compare(JsonElement server, BotWorldData data)
         {
-            var report = new MapDumpReport();
+            var report = new ParityReport();
             var definition = data.Layout.Map.Definition;
             int width = server.GetProperty("width").GetInt32(), height = server.GetProperty("height").GetInt32();
             if (width != data.Map.Width || height != data.Map.Height)

@@ -17,6 +17,8 @@ namespace TheVerge.Bot
 
         /// <summary>seen:0xГРАФИКА — ждать предмет с этой графикой на земле в клетке персонажа.</summary>
         SeenItem,
+        /// <summary>seenmob:0xТЕЛО — ждать чужого моба с этим телом (после [add).</summary>
+        SeenMobile,
 
         /// <summary>dump:&lt;папка&gt; — сказать [DumpVisible, дождаться файла сервера в папке и сверить свой мир с ним.</summary>
         Dump,
@@ -24,6 +26,12 @@ namespace TheVerge.Bot
         /// mapdump:&lt;клеток&gt;,&lt;seed&gt;,&lt;папка&gt;[,all-statics] — сказать [DumpMapData, дождаться файла сервера и сверить
         /// с ним свои файлы данных (--data): клетки, tiledata, дома и корабли.
         /// </summary>
-        MapDump
+        MapDump,
+
+        /// <summary>
+        /// statusdump:&lt;папка&gt; — запросить статус видимых мобов, сказать [DumpMobile, дождаться файла сервера и сверить
+        /// с ним состояние мобов бота (Стадия 4, п. 4).
+        /// </summary>
+        StatusDump
     }
 }

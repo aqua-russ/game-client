@@ -2,8 +2,8 @@ using System.Collections.Generic;
 
 namespace TheVerge.Bot
 {
-    /// <summary>Итог сверки данных карты с дампом сервера: что совпало, первые расхождения и сколько их всего.</summary>
-    public sealed class MapDumpReport
+    /// <summary>Итог сверки с дампом сервера (карта, состояние мобов): что совпало, первые расхождения и сколько их всего.</summary>
+    public sealed class ParityReport
     {
         /// <summary>Сколько расхождений перечислять: дальше — только счёт (испорченный файл дал бы их миллионы).</summary>
         public const int MaxListed = 20;

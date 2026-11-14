@@ -4,12 +4,14 @@ using TheVerge.Core.Items;
 using TheVerge.Core.Targeting;
 using TheVerge.Core.Ports;
 using TheVerge.Core.Session;
+using TheVerge.Core.Status;
 using TheVerge.Core.World;
 using TheVerge.Network.Diagnostics;
 using TheVerge.Network.Packets.Account;
 using TheVerge.Network.Packets.Chat;
 using TheVerge.Network.Packets.Items;
 using TheVerge.Network.Packets.Session;
+using TheVerge.Network.Packets.Status;
 using TheVerge.Network.Packets.Targeting;
 using TheVerge.Network.Packets.World;
 using TheVerge.Network.Session;
@@ -68,7 +70,7 @@ namespace TheVerge.Bot
         /// <summary>Вход закончился и повтора не будет.</summary>
         public bool IsFinished => Flow.IsFinished && (Reconnector == null || !Reconnector.WillRetry);
 
-        /// <summary>Мир и действия в нём (PLAN Стадия 2): обработчики пакетов мира и контейнеров, отправка действий.</summary>
+        /// <summary>Мир и действия в нём (PLAN Стадии 2, 4): обработчики пакетов мира, контейнеров, прицела, состояния мобов.</summary>
         private static BotWorld CreateWorld(PacketDispatcher dispatcher, NetworkSession session, IClock clock)
         {
             var entities = new EntityStore();
@@ -79,7 +81,9 @@ namespace TheVerge.Bot
             var items = new ItemCommands(entities, new ItemSender(session), clock);
             var target = new TargetCursor(new TargetSender(session));
             TargetHandlers.Register(dispatcher, target);
-            return new BotWorld(entities, environment, containers, items, new SpeechCommands(new SpeechSender(session), clock), target);
+            var status = new BotStatus(new MobileStatusUpdates(entities), new StatusCommands(new StatusSender(session)));
+            StatusHandlers.Register(dispatcher, status.Updates);
+            return new BotWorld(entities, environment, containers, items, new SpeechCommands(new SpeechSender(session), clock), target, status);
         }
 
         // Seed логин-сервера: любое число, кроме 0 (NetState.cs: нулевой сервер отключает).

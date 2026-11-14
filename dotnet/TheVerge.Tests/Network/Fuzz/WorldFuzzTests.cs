@@ -5,10 +5,12 @@ using System.Diagnostics;
 using NUnit.Framework;
 using TheVerge.Core.Items;
 using TheVerge.Core.Primitives;
+using TheVerge.Core.Status;
 using TheVerge.Core.Targeting;
 using TheVerge.Core.World;
 using TheVerge.Network.Framing;
 using TheVerge.Network.Packets.Items;
+using TheVerge.Network.Packets.Status;
 using TheVerge.Network.Packets.Targeting;
 using TheVerge.Network.Packets.World;
 using TheVerge.Network.Session;
@@ -18,7 +20,7 @@ namespace TheVerge.Tests.Network.Fuzz
 {
     /// <summary>
     /// Устойчивость мира (PLAN Стадия 2, п. 14; критерий «фаззинг новых парсеров: 1 млн входов без падений и зависаний»).
-    /// Пакеты мира, контейнеров и прицела — случайные байты и пакеты из небольшого набора серийников (чтобы попадать в уже
+    /// Пакеты мира, контейнеров, прицела и состояния мобов (Стадия 4, п. 4) — случайные байты и пакеты из небольшого набора серийников (чтобы попадать в уже
     /// известные объекты: вложенность, циклы, перенос, удаление). Падение допустимо одно — «пакет короче, чем нужно»
     /// (PacketDispatcher ловит его сам). После — мир цел: связи взаимны, циклов нет, поиск рядом совпадает с перебором.
     /// Seed — в сообщении: упавший случай повторяется.
@@ -27,7 +29,11 @@ namespace TheVerge.Tests.Network.Fuzz
     {
         private const int Inputs = 1_000_000;
 
-        private static readonly byte[] Ids = { 0x78, 0x20, 0x77, 0x2E, 0x1D, 0xF3, 0x76, 0x24, 0x3C, 0x25, 0x6C, 0x4F, 0x4E, 0xBC, 0x5B, 0x65, 0x54, 0x6D };
+        private static readonly byte[] Ids =
+        {
+            0x78, 0x20, 0x77, 0x2E, 0x1D, 0xF3, 0x76, 0x24, 0x3C, 0x25, 0x6C, 0x4F, 0x4E, 0xBC, 0x5B, 0x65, 0x54, 0x6D,
+            0x11, 0xA1, 0xA2, 0xA3, 0x2D, 0x17,
+        };
 
         [Test]
         public void MillionPackets_WorldStaysConsistent()
@@ -65,6 +71,7 @@ namespace TheVerge.Tests.Network.Fuzz
             ItemHandlers.Register(dispatcher, new ContainerContents(store));
             var session = new NetworkSession(new PacketDispatcher(new RecordingLog()), new RecordingLog());
             TargetHandlers.Register(dispatcher, new TargetCursor(new TargetSender(session)));
+            StatusHandlers.Register(dispatcher, new MobileStatusUpdates(store));
             return dispatcher;
         }
 

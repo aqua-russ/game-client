@@ -9,8 +9,9 @@ namespace TheVerge.Bot
     public sealed class BotWorld
     {
         public BotWorld(EntityStore entities, WorldEnvironment environment, ContainerContents containers, ItemCommands items,
-            SpeechCommands speech, TargetCursor target)
+            SpeechCommands speech, TargetCursor target, BotStatus? status = null)
         {
+            Status = status;
             Target = target;
             Speech = speech;
             Entities = entities;
@@ -30,5 +31,8 @@ namespace TheVerge.Bot
         public SpeechCommands Speech { get; }
 
         public TargetCursor Target { get; }
+
+        /// <summary>Состояние мобов (Стадия 4); null — не подключено (тесты, которым оно не нужно).</summary>
+        public BotStatus? Status { get; }
     }
 }

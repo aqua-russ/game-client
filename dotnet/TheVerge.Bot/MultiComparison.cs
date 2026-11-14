@@ -16,7 +16,7 @@ namespace TheVerge.Bot
         private static readonly string[] BoundNames = { "мин. X", "мин. Y", "макс. X", "макс. Y", "центр X", "центр Y", "ширина", "высота" };
         private static readonly string[] PartNames = { "номер", "x", "y", "z", "флаги" };
 
-        public static void Compare(JsonElement multis, IMultiData client, MapDumpReport report)
+        public static void Compare(JsonElement multis, IMultiData client, ParityReport report)
         {
             var serverIds = new HashSet<int>();
             foreach (var multi in multis.EnumerateArray())
@@ -37,7 +37,7 @@ namespace TheVerge.Bot
             report.Summary.Add("Дома и корабли: сверено домов и кораблей " + serverIds.Count + ".");
         }
 
-        private static void CompareMulti(JsonElement server, MultiComponents mine, string where, MapDumpReport report)
+        private static void CompareMulti(JsonElement server, MultiComponents mine, string where, ParityReport report)
         {
             if (ReferenceEquals(mine, MultiComponents.Empty))
             {
@@ -70,7 +70,7 @@ namespace TheVerge.Bot
             }
         }
 
-        private static void Field(MapDumpReport report, string what, long server, long client)
+        private static void Field(ParityReport report, string what, long server, long client)
         {
             if (server != client)
             {

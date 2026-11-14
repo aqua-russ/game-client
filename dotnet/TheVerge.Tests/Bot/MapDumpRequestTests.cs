@@ -42,6 +42,17 @@ namespace TheVerge.Tests.Bot
         }
 
         [Test]
+        public void Action_StatusDump()
+        {
+            var action = BotAction.Parse("statusdump:/tmp/parity", out var error);
+
+            Assert.That(error, Is.Empty);
+            Assert.That(action!.Kind, Is.EqualTo(BotActionKind.StatusDump));
+            Assert.That(action.Argument, Is.EqualTo("/tmp/parity"));
+            Assert.That(BotAction.Parse("statusdump:", out _), Is.Null);
+        }
+
+        [Test]
         public void Action_MapDump()
         {
             var action = BotAction.Parse("mapdump:100,1,/p", out var error);

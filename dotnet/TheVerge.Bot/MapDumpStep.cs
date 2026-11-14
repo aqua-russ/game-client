@@ -92,7 +92,7 @@ namespace TheVerge.Bot
             }
         }
 
-        private bool Report(MapDumpReport report, string path)
+        private bool Report(ParityReport report, string path)
         {
             foreach (var line in report.Summary)
             {

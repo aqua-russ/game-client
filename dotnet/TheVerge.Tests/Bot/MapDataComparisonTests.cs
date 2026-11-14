@@ -175,10 +175,10 @@ namespace TheVerge.Tests.Bot
             var report = Compare(dump);
 
             Assert.That(report.DifferenceCount, Is.EqualTo(0x10000));
-            Assert.That(report.Differences.Count, Is.EqualTo(MapDumpReport.MaxListed));
+            Assert.That(report.Differences.Count, Is.EqualTo(ParityReport.MaxListed));
         }
 
-        private MapDumpReport Compare(JsonObject dump)
+        private ParityReport Compare(JsonObject dump)
         {
             using (var document = JsonDocument.Parse(dump.ToJsonString()))
             {
