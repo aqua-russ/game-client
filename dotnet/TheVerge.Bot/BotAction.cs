@@ -30,7 +30,8 @@ namespace TheVerge.Bot
             var colon = text.IndexOf(':');
             var kind = colon < 0 ? text : text.Substring(0, colon);
             var argument = colon < 0 ? string.Empty : text.Substring(colon + 1);
-            var parsed = WorldKind(kind, argument) ?? CombatKind(kind, argument) ?? ParityKind(kind, argument);
+            var parsed = WorldKind(kind, argument) ?? CombatKind(kind, argument) ?? ParityKind(kind, argument) ??
+                         MovementKind(kind, argument);
             error = parsed == null ? "--action «" + text + "»: непонятное действие. Список действий: --help." : string.Empty;
             return parsed == null ? null : new BotAction(parsed.Value, argument, text);
         }
@@ -101,6 +102,20 @@ namespace TheVerge.Bot
                     return BotActionKind.Scene;
                 case "inspect" when InspectStep.TryParseCell(argument, out _, out _, out _):
                     return BotActionKind.Inspect;
+                default:
+                    return null;
+            }
+        }
+
+        /// <summary>Движение своего персонажа (Стадия 3).</summary>
+        private static BotActionKind? MovementKind(string kind, string argument)
+        {
+            switch (kind)
+            {
+                case "walk" when WalkRequest.TryParse(argument, out _):
+                    return BotActionKind.Walk;
+                case "mounted" when argument.Length == 0:
+                    return BotActionKind.Mounted;
                 default:
                     return null;
             }

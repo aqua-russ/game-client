@@ -1,23 +1,31 @@
 using TheVerge.Core.Movement;
+using TheVerge.Core.Ports;
 using TheVerge.Core.World;
 
 namespace TheVerge.Bot
 {
     /// <summary>
-    /// Движение своего персонажа у бота (PLAN Стадия 3): предсказание шага и ответы сервера. Есть только с файлами данных
+    /// Движение своего персонажа у бота (PLAN Стадия 3): клавиши (<see cref="MoveIntent"/>, раскладка «север сверху»), темп
+    /// (<see cref="StepPacer"/> — его тикает GameClient), предсказание шага и ответы сервера. Есть только с файлами данных
     /// (--data): без карты шаг не предсказать.
     /// </summary>
     public sealed class BotMovement
     {
-        public BotMovement(PlayerMotion motion, MovementReplies replies)
+        public BotMovement(PlayerMotion motion, MovementReplies replies, IClock clock)
         {
             Motion = motion;
             Replies = replies;
+            Intent = new MoveIntent(clock, CameraLayout.NorthUp);
+            Pacer = new StepPacer(Intent, motion);
         }
 
         public PlayerMotion Motion { get; }
 
         public MovementReplies Replies { get; }
+
+        public MoveIntent Intent { get; }
+
+        public StepPacer Pacer { get; }
 
         /// <summary>Сервер подтвердил вход (0x1B): персонаж на его клетке, счёт шагов с нуля.</summary>
         public void OnPlayerConfirmed(PlayerState player) => Motion.EnterWorld(player.Position, player.Direction);

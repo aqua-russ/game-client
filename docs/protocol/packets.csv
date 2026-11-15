@@ -171,7 +171,7 @@ id,sub,dir,name,length,condition,server,priority,stage,status,source,note
 0xBF,0x21,s2c,ClearWeaponAbility,var,спецприёмы оружия AoS,нет,-,-,не используется,Projects/UOContent/Items/Weapons/Abilities/WeaponAbilityPackets.cs#SendClearWeaponAbility,
 0xBF,0x22,s2c,DamageOld,var,до 5.0.0a; нашей версии — 0x0B,нет,-,-,не используется,Projects/Server/Network/Packets/OutgoingDamagePackets.cs#SendDamage,
 0xBF,0x25,s2c,ToggleSpecialAbility,var,бусидо и ниндзюцу — эра SE,нет,-,-,не используется,Projects/UOContent/Items/Weapons/Abilities/WeaponAbilityPackets.cs#SendToggleSpecialAbility,
-0xBF,0x26,s2c,SpeedControl,var,,да,P1,3.7,нужно,Projects/Server/Network/Packets/OutgoingMovementPackets.cs#SendSpeedControl,
+0xBF,0x26,s2c,SpeedControl,var,,да,-,-,не используется,Projects/Server/Network/Packets/OutgoingMovementPackets.cs#SendSpeedControl,игрокам в UOR шлёт только босс ML Ilhenir (через [add) и персоналу [SpeedBoost и [ResetStaffDress; на задержку шага у сервера не влияет (ComputeMovementSpeed)
 0xBF,0x2A,s2c,RaceChange,var,смена расы — эра ML и новее,нет,-,-,не используется,Projects/UOContent/Engines/ML Quests/MLQuestPackets.cs#SendRaceChanger,
 0xC0,,s2c,HuedEffect,36,,да,P2,4.8,нужно,Projects/Server/Network/Packets/OutgoingEffectPackets.cs#CreateHuedEffect,
 0xC1,,s2c,LocalizedMessage,var,,да,P1,4.2,нужно,Projects/Server/Network/Packets/OutgoingMessagePackets.cs#CreateMessageLocalized,имя в UTF-8 (E1)

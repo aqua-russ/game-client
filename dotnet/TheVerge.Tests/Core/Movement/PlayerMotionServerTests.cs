@@ -48,6 +48,17 @@ namespace TheVerge.Tests.Core.Movement
         }
 
         [Test]
+        public void MovesSent_CountsStepsNotTurns()
+        {
+            _motion.Step(Direction.North, true);
+            _motion.Step(Direction.North, true);
+            _motion.Step(Direction.North, true);
+
+            Assert.That(_sender.Steps.Count, Is.EqualTo(3));
+            Assert.That(_motion.MovesSent, Is.EqualTo(2), "первый запрос — поворот");
+        }
+
+        [Test]
         public void Confirm_UpdatesOwnNotoriety()
         {
             _motion.Step(Direction.East, false);

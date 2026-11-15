@@ -119,6 +119,16 @@ namespace TheVerge.Bot
                     return new InspectStep(_world, _log, Data, action.Argument);
                 case BotActionKind.UseItem:
                     return new UseItemStep(_world, _log, action.Argument);
+                default:
+                    return CreateBodyStep(action);
+            }
+        }
+
+        // Бой, смерть и движение своего персонажа (Стадии 3, 4); остальное — рюкзак.
+        private IBotStep CreateBodyStep(BotAction action)
+        {
+            switch (action.Kind)
+            {
                 case BotActionKind.Bandage:
                     return new BandageStep(_world, _log);
                 case BotActionKind.Fight:
@@ -129,6 +139,10 @@ namespace TheVerge.Bot
                     return new AliveStep(_world, _log);
                 case BotActionKind.DeathOf:
                     return new DeathOfStep(_world, _log, action.Argument);
+                case BotActionKind.Walk:
+                    return new WalkStep(_world, _log, _clock, action.Argument);
+                case BotActionKind.Mounted:
+                    return new MountedStep(_world, _log);
                 default:
                     return new OpenBackpackStep(_world, _log);
             }

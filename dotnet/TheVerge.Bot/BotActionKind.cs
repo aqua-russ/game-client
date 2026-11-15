@@ -60,6 +60,12 @@ namespace TheVerge.Bot
         Scene,
 
         /// <summary>inspect:[x,y] — написать в журнал окно клетки (все объекты на ней) из --data; без клетки — клетка бота.</summary>
-        Inspect
+        Inspect,
+
+        /// <summary>walk:&lt;направление&gt;,&lt;шагов&gt;,run|walk — пройти шаги (Стадия 3, нужен --data).</summary>
+        Walk,
+
+        /// <summary>mounted — ждать, что свой персонаж верхом.</summary>
+        Mounted
     }
 }

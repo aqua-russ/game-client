@@ -146,7 +146,7 @@ namespace TheVerge.Network.Framing
             (0xBF, 0x21) => Variable("ClearWeaponAbility"), // не используется
             (0xBF, 0x22) => Variable("DamageOld"), // не используется
             (0xBF, 0x25) => Variable("ToggleSpecialAbility"), // не используется
-            (0xBF, 0x26) => Variable("SpeedControl"),
+            (0xBF, 0x26) => Variable("SpeedControl"), // не используется
             (0xBF, 0x2A) => Variable("RaceChange"), // не используется
             (0xF0, 0x01) => Variable("PartyLocations"),
             (0xF0, 0x02) => Variable("GuildLocations"),

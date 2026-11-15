@@ -4,7 +4,10 @@ using TheVerge.Core.World;
 
 namespace TheVerge.Bot
 {
-    /// <summary>use:0xГРАФИКА — двойной клик по предмету рядом (сервер, например, откроет курсор бинта); ждёт задержку действий.</summary>
+    /// <summary>
+    /// use:0xГРАФИКА — двойной клик по предмету рядом или в своём рюкзаке (сервер, например, откроет курсор бинта или посадит
+    /// на эфирного коня); ждёт задержку действий.
+    /// </summary>
     internal sealed class UseItemStep : IBotStep
     {
         private readonly BotWorld _world;
@@ -25,10 +28,10 @@ namespace TheVerge.Bot
 
         public bool Poll()
         {
-            var item = NearbyItems.Find(_world.Entities, _graphic, _found);
+            var item = NearbyItems.FindNearOrInBackpack(_world.Entities, _graphic, _found);
             if (item == null)
             {
-                Failure = "предмета 0x" + _graphic.ToString("X4") + " нет рядом (не дальше " + NearbyItems.Reach + " клеток).";
+                Failure = "предмета 0x" + _graphic.ToString("X4") + " нет рядом (не дальше " + NearbyItems.Reach + " клеток) и в рюкзаке.";
                 return false;
             }
 

@@ -52,9 +52,7 @@ namespace TheVerge.Bot
             Session.Observer = Flow;
             var watchdog = new LoginWatchdog(Flow.Progress);
             Reconnector = login.Reconnect ? new Reconnector(Flow) : null;
-            Core = Reconnector == null
-                ? new GameClient(Session, clock, Game, watchdog, InWorld.Speech)
-                : new GameClient(Session, clock, Game, watchdog, InWorld.Speech, Reconnector);
+            Core = new GameClient(Session, clock, Timers(watchdog));
         }
 
         public NetworkSession Session { get; }
@@ -88,7 +86,7 @@ namespace TheVerge.Bot
             var entities = new EntityStore();
             var environment = new WorldEnvironment();
             var containers = new ContainerContents(entities);
-            var movement = data == null ? null : CreateMovement(dispatcher, session, entities, data, log);
+            var movement = data == null ? null : CreateMovement(dispatcher, session, entities, data, clock, log);
             WorldHandlers.Register(dispatcher, entities, environment, movement?.Replies);
             ItemHandlers.Register(dispatcher, containers);
             var actions = new ActionTimer();
@@ -115,13 +113,13 @@ namespace TheVerge.Bot
 
         /// <summary>Движение своего персонажа (PLAN Стадия 3): предсказание по карте из --data и ответы сервера на шаги.</summary>
         private static BotMovement CreateMovement(PacketDispatcher dispatcher, NetworkSession session, EntityStore entities,
-            BotWorldData data, ILog log)
+            BotWorldData data, IClock clock, ILog log)
         {
             var sender = new MovementSender(session);
             var motion = new PlayerMotion(entities, new MovementCheck(data.Map, data.Tiles, data.Multis, entities), sender);
             var replies = new MovementReplies(motion, sender, log);
             MovementHandlers.Register(dispatcher, replies);
-            return new BotMovement(motion, replies);
+            return new BotMovement(motion, replies, clock);
         }
 
         /// <summary>Новый вход: стойку и противника сервер пришлёт заново, журнал боя — с чистого листа.</summary>
@@ -129,6 +127,23 @@ namespace TheVerge.Bot
         {
             InWorld.Combat?.State.Reset();
             InWorld.Combat?.Log.Clear();
+        }
+
+        // Таймеры тика: ping и ожидания, очередь речи, темп шагов (с --data), повтор входа (с --reconnect).
+        private ITickHandler[] Timers(LoginWatchdog watchdog)
+        {
+            var timers = new System.Collections.Generic.List<ITickHandler> { Game, watchdog, InWorld.Speech };
+            if (InWorld.Movement != null)
+            {
+                timers.Add(InWorld.Movement.Pacer);
+            }
+
+            if (Reconnector != null)
+            {
+                timers.Add(Reconnector);
+            }
+
+            return timers.ToArray();
         }
 
         // Seed логин-сервера: любое число, кроме 0 (NetState.cs: нулевой сервер отключает).

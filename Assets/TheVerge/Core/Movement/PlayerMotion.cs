@@ -48,6 +48,12 @@ namespace TheVerge.Core.Movement
         /// <summary>Клиент попросил о ресинхронизации и ждёт места от сервера (0x20): шагов нет.</summary>
         public bool IsResyncing { get; private set; }
 
+        /// <summary>Сколько шагов (не поворотов) ушло серверу с начала — для замера темпа и оверлея.</summary>
+        public int MovesSent { get; private set; }
+
+        /// <summary>Шаг или поворот сейчас уйдёт: персонаж в мире, ресинхронизации нет, в очереди есть место.</summary>
+        public bool CanStep => _placed && !IsResyncing && _queue.CanRequestStep && _world.Player != null;
+
         /// <summary>
         /// Шагнуть или повернуться в направлении <paramref name="direction"/> (бит бега в нём не учитывается). Уставший
         /// пешком персонаж идёт шагом, даже если просили бег.
@@ -91,6 +97,7 @@ namespace TheVerge.Core.Movement
             }
 
             Position = target;
+            MovesSent++;
             return StepResult.Moved;
         }
 
