@@ -8,7 +8,7 @@
 |---|---|---|
 | `Projects/Server/` | движок: сеть, пакеты, `Mobile`, `Item`, карта, таймеры | только с разрешения руководителя (`AGENTS.md` §5) |
 | `Projects/UOContent/` | игровое содержимое: навыки, заклинания, предметы, NPC, гампы, обработчики входящих пакетов | да, минимально; своё — в `Custom/TheVerge/` |
-| `Projects/UOContent/Custom/` | наш код: GM-команды сверки клиента с сервером — `TheVerge/Parity/` (`[DumpVisible`, `[DumpMapData`, `[DumpMobile`, `[ParityPlace`); песочница `MinocSandboxInitializer.cs` (выключена, долг) | да |
+| `Projects/UOContent/Custom/` | наш код: GM-команды сверки клиента с сервером — `TheVerge/Parity/` (`[DumpVisible`, `[DumpMapData`, `[DumpMobile`, `[DumpMove`, `[ParityPlace`); песочница `MinocSandboxInitializer.cs` (выключена, долг) | да |
 | `Projects/*.Tests/` | тесты сервера (в том числе тесты пакетов — удобный образец байтов) | — |
 | `Distribution/` | собранный сервер, отсюда он запускается | — |
 | `Distribution/Configuration/` | настройки стенда (в git не хранится) | да + обновить шаблон |

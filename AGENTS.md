@@ -106,8 +106,7 @@ The Verge/                         ← корень репо = Unity-проек�
     │   ├── Session/       GameClient (Tick), конечный автомат логина; Screens/ — модель экранов входа (ADR 0017)
     │   ├── World/         EntityStore (по Serial), Mobile, Item, пространственный индекс
     │   ├── Movement/      очередь шагов, предсказание, проверка проходимости
-    │   ├── <Domain>/      Combat, Items, Gumps, Chat, Skills … — по стадиям плана
-    │   ├── Commands/      команды игрока по доменам (MovementCommands, CombatCommands …) — намерения игрока
+    │   ├── <Domain>/      Combat, Items, Targeting, Chat, Status, MapView, Gumps, Skills … — по стадиям плана; команды игрока (намерения) — в папке своего домена: <Domain>Commands (CombatCommands, ItemCommands …)
     │   └── Ports/         интерфейсы наружу: I<Domain>Sender (отправка), IMapData/ITileData/… (данные), IClock, ILog, INetworkSession
     ├── Network/
     │   ├── Transport/     IConnection, TcpConnection (фоновый поток)
@@ -139,7 +138,7 @@ The Verge/                         ← корень репо = Unity-проек�
 5. Presenter, подписанный на событие, обновляет View.
 
 **Исходящее:**
-1. View передаёт ввод в Presenter → Presenter вызывает команду из `Core/Commands` (`movement.Step(dir, run)`).
+1. View передаёт ввод в Presenter → Presenter вызывает команду своего домена в Core (`<Domain>Commands`, например `combat.Attack(serial)`; у движения ввод идёт в `MoveIntent`, шаг в тике делает `StepPacer` → `PlayerMotion.Step(dir, run)`).
 2. Команда проверяет локальные ограничения (throttle, очередь шагов, sequence), меняет предсказанное состояние и вызывает **порт отправки своего домена** из `Core/Ports` (`IMovementSender.SendStep(dir, run, sequence)`). В Core нет ни id пакетов, ни байтов.
 3. `MovementSender` в `Network/Packets/Movement` реализует порт: пишет `*Packet` через `PacketWriter` в буфер отправки.
 4. Буфер отправки уходит в сокет **один раз в конце `GameClient.Tick`**. Сокет на отправке не блокирует главный поток.
