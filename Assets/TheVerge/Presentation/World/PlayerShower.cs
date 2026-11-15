@@ -14,7 +14,6 @@ namespace TheVerge.Presentation.World
     public sealed class PlayerShower : IDisposable
     {
         private readonly PlayerStepShow _show;
-        private Transform _marker;
         private bool _snapPending = true;
 
         public PlayerShower(PlayerStepShow show)
@@ -23,26 +22,26 @@ namespace TheVerge.Presentation.World
             _show.Snapped += OnSnapped;
         }
 
+        /// <summary>Цилиндр уже стоит на картинке: сервер поставил персонажа и показ был.</summary>
+        public bool IsShown { get; private set; }
+
         /// <summary>Точка земли под персонажем на картинке (за ней следует камера).</summary>
         public Vector3 Ground { get; private set; }
 
-        /// <summary>Поставить цилиндр на картинку момента <paramref name="now"/> (часы ядра). false — персонажа ещё не ставил сервер.</summary>
-        public bool Show(Transform marker, long now)
+        /// <summary>
+        /// Поставить цилиндр на картинку момента <paramref name="now"/> (часы ядра); <paramref name="isNew"/> — цилиндр только
+        /// что взят из пула.
+        /// </summary>
+        public void Show(Transform marker, bool isNew, long now)
         {
             if (!_show.IsPlaced)
             {
-                return false;
+                return;
             }
 
             var step = _show.Current;
-            if (marker != _marker)
-            {
-                _marker = marker;
-                _snapPending = true;
-            }
-
             // Перескок — на начало текущего шага: если после отката в том же тике начался новый шаг, он едет от клетки сервера.
-            if (_snapPending)
+            if (_snapPending || isNew)
             {
                 _snapPending = false;
                 Snap(marker, step.From);
@@ -53,7 +52,7 @@ namespace TheVerge.Presentation.World
                 Glide(marker, step, now);
             }
 
-            return true;
+            IsShown = true;
         }
 
         public void Dispose() => _show.Snapped -= OnSnapped;

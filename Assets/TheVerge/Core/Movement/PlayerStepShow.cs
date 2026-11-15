@@ -52,6 +52,12 @@ namespace TheVerge.Core.Movement
         /// <summary>Сколько предсказанных шагов ждут показа (картинка ещё едет прежний).</summary>
         public int WaitingSteps => _steps.WaitingCount;
 
+        /// <summary>Сколько раз картинка откатилась по отказу сервера (0x21) — встала не туда, куда клиент предсказал.</summary>
+        public int RollbackCount { get; private set; }
+
+        /// <summary>Сколько раз сервер сам переставил персонажа (0x20) на другую клетку, чем показывалась.</summary>
+        public int RepositionCount { get; private set; }
+
         /// <summary>Тик: начать шаги, чья очередь пришла.</summary>
         public void Update(long now)
         {
@@ -87,8 +93,27 @@ namespace TheVerge.Core.Movement
 
         private void OnPlaced(Point3D cell, Direction facing, SnapReason reason)
         {
+            CountJump(cell, reason);
             IsPlaced = true;
             Snap(cell, facing, reason);
+        }
+
+        // Считаются только перескоки, которые видно: отказ в повороте и 0x20 на той же клетке картинку не двигают.
+        private void CountJump(Point3D cell, SnapReason reason)
+        {
+            if (!IsPlaced || cell == _steps.Target)
+            {
+                return;
+            }
+
+            if (reason == SnapReason.Rejected)
+            {
+                RollbackCount++;
+            }
+            else if (reason == SnapReason.Repositioned)
+            {
+                RepositionCount++;
+            }
         }
 
         private void Snap(Point3D cell, Direction facing, SnapReason reason)

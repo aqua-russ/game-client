@@ -1,0 +1,22 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="MovementDebug.uss" />
+    <ui:VisualElement name="movementDebug" class="movement-debug hidden">
+        <ui:VisualElement class="movement-debug-head">
+            <ui:Label text="Отладка движения" class="movement-debug-title" />
+            <ui:Button name="movementDebugToggle" text="Скрыть" />
+        </ui:VisualElement>
+        <ui:VisualElement name="movementDebugBody">
+            <ui:Label text="Свой персонаж" class="movement-debug-section" />
+            <ui:Label name="debugCell" class="movement-debug-line" />
+            <ui:Label name="debugMode" class="movement-debug-line" />
+            <ui:Label name="debugPending" class="movement-debug-line" />
+            <ui:Label name="debugAck" class="movement-debug-line" />
+            <ui:Label name="debugResponse" class="movement-debug-line" />
+            <ui:Label name="debugAnswers" class="movement-debug-line" />
+            <ui:Label name="debugJumps" class="movement-debug-line" />
+            <ui:Label text="Чужие мобы" class="movement-debug-section" />
+            <ui:Label name="debugOthers" class="movement-debug-line" />
+            <ui:Label name="debugOthersSnaps" class="movement-debug-line" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

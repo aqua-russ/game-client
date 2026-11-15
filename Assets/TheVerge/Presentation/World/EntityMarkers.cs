@@ -11,9 +11,9 @@ namespace TheVerge.Presentation.World
     /// <summary>
     /// Мобы — цилиндры, предметы на земле — кубики (PLAN Стадия 2, п. 13). Следует за событиями мира; объекты берутся из
     /// пула и возвращаются в него по удалению (0x1D), очистке мира и уходу предмета в контейнер или на моба. Свой
-    /// персонаж — другого цвета; если его ведёт показыватель (<see cref="PlayerShower"/>), здесь он только создаётся, а
-    /// двигает его показыватель. Чужие мобы пока встают на клетку сервера (их показыватель — следующая часть задачи 3.9).
-    /// Множество — по серийнику.
+    /// персонаж — другого цвета. Цилиндры мобов здесь только создаются: двигают их показыватели (<see cref="MobileShowers"/>,
+    /// раз в кадр — <see cref="ShowMobiles"/>; ADR 0020 п. 5). Кубики предметов стоят на клетке сервера. Множество — по
+    /// серийнику.
     /// </summary>
     public sealed class EntityMarkers : IDisposable
     {
@@ -26,6 +26,9 @@ namespace TheVerge.Presentation.World
             public GameObject Object;
             public Renderer Renderer;
             public bool IsMobile;
+
+            // Только что взят из пула для этого моба: показыватель ставит его на клетку перескоком.
+            public bool IsFresh;
         }
 
         private readonly EntityStore _world;
@@ -34,15 +37,12 @@ namespace TheVerge.Presentation.World
         private readonly Dictionary<uint, Marker> _markers = new Dictionary<uint, Marker>();
         private readonly ObjectPool<Marker> _mobiles;
         private readonly ObjectPool<Marker> _items;
-        private readonly bool _playerShownSeparately;
 
-        /// <param name="playerShownSeparately">Свой цилиндр двигает показыватель шагов, а не события мира.</param>
-        public EntityMarkers(EntityStore world, Transform root, DebugMaterials materials, bool playerShownSeparately)
+        public EntityMarkers(EntityStore world, Transform root, DebugMaterials materials)
         {
             _world = world;
             _root = root;
             _materials = materials;
-            _playerShownSeparately = playerShownSeparately;
             _mobiles = NewPool(PrimitiveType.Cylinder, true);
             _items = NewPool(PrimitiveType.Cube, false);
             _world.MobileChanged += OnMobile;
@@ -58,17 +58,18 @@ namespace TheVerge.Presentation.World
         public static Vector3 MobileCenter(Vector3 ground) =>
             new Vector3(ground.x, ground.y + CellSpace.Height(SceneLimits.MobileHeight) / 2f, ground.z);
 
-        /// <summary>Цилиндр моба, если он есть на карте.</summary>
-        public bool TryGetMobile(Serial serial, out Transform marker)
+        /// <summary>Раз в кадр после тика ядра: каждый цилиндр моба — его показывателю на картинку момента <paramref name="now"/>.</summary>
+        public void ShowMobiles(MobileShowers showers, long now)
         {
-            if (_markers.TryGetValue(serial.Value, out var found) && found.IsMobile)
+            foreach (var pair in _markers)
             {
-                marker = found.Object.transform;
-                return true;
+                var marker = pair.Value;
+                if (marker.IsMobile)
+                {
+                    showers.Show(new Serial(pair.Key), marker.Object.transform, marker.IsFresh, now);
+                    marker.IsFresh = false;
+                }
             }
-
-            marker = null;
-            return false;
         }
 
         public void Dispose()
@@ -103,10 +104,6 @@ namespace TheVerge.Presentation.World
             marker.Renderer.sharedMaterial = isPlayer ? _materials.Player : _materials.Mobile;
             // Свой цилиндр шире остальных: если на клетке стоит ещё кто-то, голубой виден вокруг него.
             marker.Object.transform.localScale = MobileScale(isPlayer ? PlayerRadius : MobileRadius);
-            if (!isPlayer || !_playerShownSeparately)
-            {
-                Place(marker, mobile.Position, SceneLimits.MobileHeight);
-            }
         }
 
         private void OnItem(Item item)
@@ -117,7 +114,7 @@ namespace TheVerge.Presentation.World
                 return;
             }
 
-            Place(Take(item.Serial, false), item.Position, SceneLimits.ItemHeight);
+            PlaceItem(Take(item.Serial, false), item.Position);
         }
 
         private void OnRemoved(Serial serial) => Release(serial.Value);
@@ -132,10 +129,10 @@ namespace TheVerge.Presentation.World
         private static Vector3 MobileScale(float radius) =>
             new Vector3(radius * 2f, CellSpace.Height(SceneLimits.MobileHeight) / 2f, radius * 2f);
 
-        private static void Place(Marker marker, Point3D position, int heightZ)
+        private static void PlaceItem(Marker marker, Point3D position)
         {
             var center = CellSpace.CellCenter(position.X, position.Y, position.Z);
-            center.y += CellSpace.Height(heightZ) / 2f;
+            center.y += CellSpace.Height(SceneLimits.ItemHeight) / 2f;
             marker.Object.transform.position = center;
         }
 
@@ -148,6 +145,7 @@ namespace TheVerge.Presentation.World
 
             Release(serial.Value);
             marker = (mobile ? _mobiles : _items).Get();
+            marker.IsFresh = true;
             _markers[serial.Value] = marker;
             return marker;
         }

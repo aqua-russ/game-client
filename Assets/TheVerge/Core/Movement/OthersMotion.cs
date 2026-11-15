@@ -32,6 +32,7 @@ namespace TheVerge.Core.Movement
         private readonly IClock _clock;
         private readonly Dictionary<uint, ShownSteps> _mobiles = new Dictionary<uint, ShownSteps>();
         private readonly Stack<ShownSteps> _pool = new Stack<ShownSteps>();
+        private readonly int[] _snapsByReason = new int[Enum.GetValues(typeof(SnapReason)).Length];
 
         public OthersMotion(EntityStore world, IClock clock)
         {
@@ -54,6 +55,9 @@ namespace TheVerge.Core.Movement
 
         /// <summary>Сколько было перескоков (с начала), не считая появлений.</summary>
         public int SnapCount { get; private set; }
+
+        /// <summary>Сколько было перескоков по этой причине (с начала); появления не считаются.</summary>
+        public int SnapsOf(SnapReason reason) => _snapsByReason[(int)reason];
 
         /// <summary>Текущий шаг показа моба; моб стоит — шаг на месте. false — моб не чужой или не в мире.</summary>
         public bool TryGetStep(Serial serial, out ShownStep step)
@@ -160,6 +164,7 @@ namespace TheVerge.Core.Movement
             long now = _clock.NowMs;
             int dropped = steps.SnapTo(mobile.Serial, mobile.Position, mobile.Direction, now);
             SnapCount++;
+            _snapsByReason[(int)reason]++;
             Snapped?.Invoke(mobile.Serial, new MotionSnap(mobile.Position, reason, dropped, now));
         }
 

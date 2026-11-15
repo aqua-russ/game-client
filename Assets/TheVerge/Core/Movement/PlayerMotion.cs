@@ -38,6 +38,12 @@ namespace TheVerge.Core.Movement
         /// </summary>
         public event Action<Point3D, Direction, SnapReason>? Placed;
 
+        /// <summary>Запрос шага или поворота ушёл серверу с этим номером (для замера задержки подтверждения — <see cref="StepAckLatency"/>).</summary>
+        public event Action<byte>? Requested;
+
+        /// <summary>Сервер подтвердил запрос с этим номером (0x22), самый старый из ждущих.</summary>
+        public event Action<byte>? Confirmed;
+
         /// <summary>Сервер поставил персонажа на клетку и с тех пор не уводил на другую карту (0xBF 0x08).</summary>
         public bool IsPlaced => _placed;
 
@@ -136,6 +142,7 @@ namespace TheVerge.Core.Movement
 
             _predictor.OnConfirmed(step.Sequence);
             PlaceInWorld(step.TargetPosition, step.Direction, notoriety);
+            Confirmed?.Invoke(step.Sequence);
             return true;
         }
 
@@ -204,6 +211,7 @@ namespace TheVerge.Core.Movement
             _queue.TryEnqueueStep(facing, target, out byte sequence);
             _sender.SendStep(facing, run, sequence);
             IsRunning = run;
+            Requested?.Invoke(sequence);
             return sequence;
         }
 

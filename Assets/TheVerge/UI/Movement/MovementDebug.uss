@@ -1,0 +1,33 @@
+/* Экран отладки движения (PLAN Стадия 3, п. 9). Место на экране задаёт экран, куда он вставлен (LoginScreens.uss). */
+.movement-debug {
+    width: 400px;
+    padding: 8px 10px;
+    background-color: var(--color-card);
+    border-width: 1px;
+    border-color: var(--color-card-border);
+    border-radius: 6px;
+}
+
+.movement-debug-head {
+    flex-direction: row;
+    align-items: center;
+}
+
+.movement-debug-title {
+    flex-grow: 1;
+    font-size: 14px;
+    -unity-font-style: bold;
+    color: var(--color-text);
+}
+
+.movement-debug-section {
+    margin-top: 6px;
+    font-size: 12px;
+    -unity-font-style: bold;
+    color: var(--color-muted);
+}
+
+.movement-debug-line {
+    font-size: 13px;
+    color: var(--color-text);
+}

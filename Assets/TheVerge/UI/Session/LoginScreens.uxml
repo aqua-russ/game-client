@@ -1,5 +1,6 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements">
     <ui:Template name="RunIndicator" src="../Movement/RunIndicator.uxml" />
+    <ui:Template name="MovementDebug" src="../Movement/MovementDebug.uxml" />
     <ui:Style src="LoginScreens.uss" />
     <ui:VisualElement name="screensRoot" class="screens-root">
         <ui:VisualElement name="loginPanel" class="card">
@@ -99,5 +100,6 @@
             </ui:ScrollView>
         </ui:VisualElement>
         <ui:Instance template="RunIndicator" class="run-indicator-host" picking-mode="Ignore" />
+        <ui:Instance template="MovementDebug" class="movement-debug-host" picking-mode="Ignore" />
     </ui:VisualElement>
 </ui:UXML>

@@ -34,6 +34,12 @@ namespace TheVerge.Core.Movement
         /// <summary>Раскладка камеры: по ней клавиши превращаются в направление UO (<see cref="MoveDirectionTable"/>).</summary>
         public CameraLayout Layout { get; set; }
 
+        /// <summary>Сколько раз клавишу движения нажали из покоя (ни одна не была зажата) — для замера отклика (<see cref="StepPacer"/>).</summary>
+        public int Starts { get; private set; }
+
+        /// <summary>Когда клавишу движения нажали из покоя в последний раз (часы клиента).</summary>
+        public long LastStartMs { get; private set; }
+
         /// <summary>Бег для индикатора «Бег / Шаг» и для следующего шага: переключатель `~`, обращённый удержанием Shift.</summary>
         public bool IsRunning => _runToggle ^ _shiftHeld;
 
@@ -48,6 +54,8 @@ namespace TheVerge.Core.Movement
             {
                 _waitingForPair = true;
                 _firstPressMs = _clock.NowMs;
+                LastStartMs = _firstPressMs;
+                Starts++;
             }
 
             _held |= key;

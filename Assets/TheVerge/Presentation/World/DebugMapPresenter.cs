@@ -9,9 +9,9 @@ namespace TheVerge.Presentation.World
 {
     /// <summary>
     /// Отладочная 3D-карта вокруг персонажа (PLAN Стадия 2, п. 13; Стадия 3, п. 9): земля и статика блоками, мобы и
-    /// предметы фигурами, камера сверху. Свой цилиндр ведёт показыватель шагов (<see cref="PlayerShower"/>), камера следует
-    /// за ним плавно; без ходьбы — за клеткой сервера. Создаётся при входе в мир, закрывается при выходе. Правил игры здесь
-    /// нет — только показ мира клиента.
+    /// предметы фигурами, камера сверху. Цилиндры мобов ведут два показывателя клетки (<see cref="MobileShowers"/>: свой и
+    /// чужие), камера следует за своим плавно; без ходьбы — за клеткой сервера. Создаётся при входе в мир, закрывается при
+    /// выходе. Правил игры здесь нет — только показ мира клиента.
     /// </summary>
     public sealed class DebugMapPresenter : IDisposable
     {
@@ -22,7 +22,7 @@ namespace TheVerge.Presentation.World
         private readonly EntityMarkers _markers;
         private readonly DebugCamera _camera;
         private readonly CellPicking _picking;
-        private readonly PlayerShower _player;
+        private readonly MobileShowers _showers;
 
         public DebugMapPresenter(DebugMapParts parts, UnityEngine.Camera camera, WorldUiHooks ui)
         {
@@ -30,10 +30,10 @@ namespace TheVerge.Presentation.World
             _root = new GameObject("DebugMap");
             _materials = new DebugMaterials();
             _terrain = new TerrainPresenter(_world, parts.Builder, new TerrainMeshes(_root.transform, _materials));
-            _markers = new EntityMarkers(_world, _root.transform, _materials, parts.PlayerShow != null);
+            _markers = new EntityMarkers(_world, _root.transform, _materials);
             _camera = new DebugCamera(camera);
             _picking = new CellPicking(_world, parts.Inspector, camera, ui.PointerOverUi, ui.ShowReport);
-            _player = parts.PlayerShow == null ? null : new PlayerShower(parts.PlayerShow);
+            _showers = new MobileShowers(_world, parts.Others, parts.PlayerShow);
         }
 
         public EntityStore Entities => _world;
@@ -49,9 +49,10 @@ namespace TheVerge.Presentation.World
         {
             _terrain.Update();
             _picking.Update(_terrain.Blocks);
-            if (_player != null && _markers.TryGetMobile(_world.PlayerSerial, out var marker) && _player.Show(marker, now))
+            _markers.ShowMobiles(_showers, now);
+            if (_showers.TryGetPlayerGround(out var ground))
             {
-                _camera.Update(_player.Ground);
+                _camera.Update(ground);
                 return;
             }
 
@@ -64,7 +65,7 @@ namespace TheVerge.Presentation.World
 
         public void Dispose()
         {
-            _player?.Dispose();
+            _showers.Dispose();
             _markers.Dispose();
             _terrain.Dispose();
             _materials.Dispose();

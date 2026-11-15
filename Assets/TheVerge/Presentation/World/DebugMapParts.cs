@@ -9,12 +9,15 @@ namespace TheVerge.Presentation.World
     {
         /// <param name="builder">Блоки карты из файлов данных; null — файлов нет, видны только мобы и предметы.</param>
         /// <param name="inspector">Окно клетки по клику; null — файлов нет.</param>
+        /// <param name="others">Шаги показа чужих мобов.</param>
         /// <param name="playerShow">Показ шагов своего персонажа; null — ходьбы нет (без файлов данных), цилиндр — на клетке сервера.</param>
-        public DebugMapParts(EntityStore world, SceneBuilder builder, CellInspector inspector, PlayerStepShow playerShow)
+        public DebugMapParts(EntityStore world, SceneBuilder builder, CellInspector inspector, OthersMotion others,
+            PlayerStepShow playerShow)
         {
             World = world;
             Builder = builder;
             Inspector = inspector;
+            Others = others;
             PlayerShow = playerShow;
         }
 
@@ -23,6 +26,8 @@ namespace TheVerge.Presentation.World
         public SceneBuilder Builder { get; }
 
         public CellInspector Inspector { get; }
+
+        public OthersMotion Others { get; }
 
         public PlayerStepShow PlayerShow { get; }
     }

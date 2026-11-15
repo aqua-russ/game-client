@@ -24,12 +24,22 @@ namespace TheVerge.Core.Movement
         private Direction _followUpDirection;
         private bool _followUpRun;
         private int _followUpResets;
+        private int _respondedStarts;
 
         public StepPacer(MoveIntent intent, PlayerMotion motion)
         {
             _intent = intent;
             _motion = motion;
         }
+
+        /// <summary>Сколько нажатий из покоя получили первый запрос серверу (поворот или шаг).</summary>
+        public int ResponseCount { get; private set; }
+
+        /// <summary>
+        /// Отклик на последнее нажатие из покоя, мс: от нажатия (<see cref="MoveIntent.LastStartMs"/>) до первого запроса
+        /// серверу — ответа сервера клиент не ждёт (шаг предсказан). -1 — отклика ещё не было.
+        /// </summary>
+        public int LastResponseMs { get; private set; } = -1;
 
         public void Update(long now)
         {
@@ -45,6 +55,11 @@ namespace TheVerge.Core.Movement
             }
 
             var result = _motion.Step(direction, run);
+            if (result == StepResult.Turned || result == StepResult.Moved)
+            {
+                NoteResponse(now);
+            }
+
             if (result == StepResult.Turned)
             {
                 // Сервер после поворота считает расписание от «сейчас» — клиент тоже.
@@ -81,6 +96,19 @@ namespace TheVerge.Core.Movement
             {
                 Schedule(now);
             }
+        }
+
+        // Первый запрос после нажатия из покоя — отклик; дальнейшие шаги той же зажатой клавиши — уже не отклик.
+        private void NoteResponse(long now)
+        {
+            if (_intent.Starts == _respondedStarts)
+            {
+                return;
+            }
+
+            _respondedStarts = _intent.Starts;
+            LastResponseMs = (int)(now - _intent.LastStartMs);
+            ResponseCount++;
         }
 
         private void Schedule(long now)

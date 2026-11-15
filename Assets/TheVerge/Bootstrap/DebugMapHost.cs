@@ -3,6 +3,7 @@ using TheVerge.Core.MapView;
 using TheVerge.Core.Ports;
 using TheVerge.Presentation.Input;
 using TheVerge.Presentation.UI;
+using TheVerge.Presentation.UI.Movement;
 using TheVerge.Presentation.World;
 using UnityEngine;
 
@@ -10,8 +11,8 @@ namespace TheVerge.Bootstrap
 {
     /// <summary>
     /// Хозяин отладочной карты и ходьбы (PLAN Стадия 2, п. 13; Стадия 3, п. 9): на время «в мире» создаёт карту
-    /// (<see cref="DebugMapPresenter"/>) и клавиши движения (<see cref="MovementInputPresenter"/>), при выходе из мира или
-    /// новом входе закрывает их. Файлы данных — <see cref="WorldDataSource"/>; без них карты нет, а ходьбы нет — и об этом
+    /// (<see cref="DebugMapPresenter"/>), клавиши движения (<see cref="MovementInputPresenter"/>) и экран отладки движения
+    /// (<see cref="MovementDebugPresenter"/>), при выходе из мира или новом входе закрывает их. Файлы данных — <see cref="WorldDataSource"/>; без них карты нет, а ходьбы нет — и об этом
     /// говорит индикатор «Бег / Шаг».
     /// </summary>
     public sealed class DebugMapHost : IDisposable
@@ -25,6 +26,7 @@ namespace TheVerge.Bootstrap
         private UnityWorld _world;
         private DebugMapPresenter _presenter;
         private MovementInputPresenter _input;
+        private MovementDebugPresenter _debug;
 
         public DebugMapHost(ILog log, Camera camera, WorldDataSource data, WorldUiHooks ui)
         {
@@ -60,6 +62,7 @@ namespace TheVerge.Bootstrap
             }
 
             _presenter.Update(now);
+            _debug.Update(now);
         }
 
         public void Dispose() => Close();
@@ -72,7 +75,11 @@ namespace TheVerge.Bootstrap
             var builder = data == null ? null : new SceneBuilder(data.Map, data.Tiles, data.Multis, entities);
             var inspector = data == null ? null : new CellInspector(data.Map, data.Tiles, data.Multis, entities);
             var movement = world.Movement;
-            _presenter = new DebugMapPresenter(new DebugMapParts(entities, builder, inspector, movement?.Show), _camera, _ui);
+            _presenter = new DebugMapPresenter(new DebugMapParts(entities, builder, inspector, world.Others, movement?.Show), _camera, _ui);
+            var player = movement == null
+                ? default
+                : new PlayerMovementParts(movement.Motion, movement.Replies, movement.Pacer, movement.Latency, movement.Show);
+            _debug = new MovementDebugPresenter(player, world.Others, _ui.MovementDebug);
             if (movement != null)
             {
                 _input = new MovementInputPresenter(movement.Intent, _ui.RunIndicator, _ui.TextInputFocused);
@@ -97,6 +104,8 @@ namespace TheVerge.Bootstrap
 
             _input?.Dispose();
             _input = null;
+            _debug.Dispose();
+            _debug = null;
             _presenter.Dispose();
             _presenter = null;
             _world = null;

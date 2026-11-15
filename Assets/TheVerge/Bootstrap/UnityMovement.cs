@@ -10,8 +10,9 @@ namespace TheVerge.Bootstrap
     /// <summary>
     /// Движение своего персонажа в Unity (PLAN Стадия 3, п. 9) — как BotMovement у бота (dotnet/TheVerge.Bot): клавиши
     /// (<see cref="MoveIntent"/>), темп (<see cref="StepPacer"/>), предсказание шага (<see cref="PlayerMotion"/>) и ответы
-    /// сервера (<see cref="MovementReplies"/>); сверх бота — показ шагов (<see cref="PlayerStepShow"/>). Есть только с
-    /// файлами данных: без карты шаг не предсказать.
+    /// сервера (<see cref="MovementReplies"/>); сверх бота — показ шагов (<see cref="PlayerStepShow"/>) и задержка
+    /// подтверждения для экрана отладки (<see cref="StepAckLatency"/>). Есть только с файлами данных: без карты шаг не
+    /// предсказать.
     /// </summary>
     public sealed class UnityMovement : IDisposable
     {
@@ -22,6 +23,7 @@ namespace TheVerge.Bootstrap
             Intent = new MoveIntent(clock, CameraLayout.NorthUp);
             Pacer = new StepPacer(Intent, motion);
             Show = new PlayerStepShow(motion, clock);
+            Latency = new StepAckLatency(motion, clock);
         }
 
         public PlayerMotion Motion { get; }
@@ -33,6 +35,8 @@ namespace TheVerge.Bootstrap
         public StepPacer Pacer { get; }
 
         public PlayerStepShow Show { get; }
+
+        public StepAckLatency Latency { get; }
 
         /// <summary>Обработчики шагов (0x22, 0x21) — в диспетчер; 0x20 и смена карты идут через мир (WorldHandlers).</summary>
         public static UnityMovement Create(PacketDispatcher dispatcher, NetworkSession session, EntityStore entities,
@@ -48,6 +52,10 @@ namespace TheVerge.Bootstrap
         /// <summary>Сервер подтвердил вход (0x1B): персонаж на его клетке, счёт шагов с нуля.</summary>
         public void OnPlayerConfirmed(PlayerState player) => Motion.EnterWorld(player.Position, player.Direction);
 
-        public void Dispose() => Show.Dispose();
+        public void Dispose()
+        {
+            Latency.Dispose();
+            Show.Dispose();
+        }
     }
 }

@@ -199,3 +199,10 @@
     bottom: 16px;
     align-items: center;
 }
+
+/* Экран отладки движения (UI/Movement/MovementDebug.uxml) — слева под строкой «в мире». */
+.movement-debug-host {
+    position: absolute;
+    top: 52px;
+    left: 12px;
+}

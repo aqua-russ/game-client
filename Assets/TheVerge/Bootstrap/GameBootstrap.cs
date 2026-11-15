@@ -30,6 +30,7 @@ namespace TheVerge.Bootstrap
         private LoginScreens _screens;
         private LoginScreensView _view;
         private DebugMapHost _debugMap;
+        private MovementDebugView _movementDebug;
         private UnityWorld _world;
 
         private void Awake()
@@ -51,8 +52,9 @@ namespace TheVerge.Bootstrap
             _screens.Submitted += OnSubmitted;
             var root = CreateDocument().rootVisualElement;
             _view = new LoginScreensView(root, _screens);
+            _movementDebug = new MovementDebugView(root);
             var ui = new WorldUiHooks(_view.IsPointerOverUi, ShowCellReport, () => _view.IsTextInputFocused,
-                new RunIndicatorView(root));
+                new RunIndicatorView(root), _movementDebug);
             _debugMap = new DebugMapHost(_log, FindCamera(), _data, ui);
             _view.Refresh();
         }
@@ -75,6 +77,7 @@ namespace TheVerge.Bootstrap
 
             _screens.Submitted -= OnSubmitted;
             _debugMap?.Dispose();
+            _movementDebug?.Dispose();
             _view?.Dispose();
             _screens.Dispose();
             _data.Dispose();
