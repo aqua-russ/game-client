@@ -48,6 +48,12 @@ namespace TheVerge.Core.Movement
         /// <summary>Клиент попросил о ресинхронизации и ждёт места от сервера (0x20): шагов нет.</summary>
         public bool IsResyncing { get; private set; }
 
+        /// <summary>
+        /// Сколько раз сервер сам ставил персонажа или отменял ждущие шаги (вход, отказ, 0x20, смена карты, ресинхронизация):
+        /// изменилось — отложенное намерение (шаг после поворота, <see cref="StepPacer"/>) относится к прежнему месту.
+        /// </summary>
+        public int ServerResets { get; private set; }
+
         /// <summary>Сколько шагов (не поворотов) ушло серверу с начала — для замера темпа и оверлея.</summary>
         public int MovesSent { get; private set; }
 
@@ -164,6 +170,7 @@ namespace TheVerge.Core.Movement
         /// <summary>Другая карта (0xBF 0x08): ждущие шаги отменены; шагать некуда, пока сервер не пришлёт место (0x20).</summary>
         public void OnMapChanged()
         {
+            ServerResets++;
             _queue.CancelPending();
             _placed = false;
         }
@@ -171,6 +178,7 @@ namespace TheVerge.Core.Movement
         /// <summary>Клиент шлёт запрос ресинхронизации: ждущие шаги отменены, шагов нет до места от сервера (0x20).</summary>
         public void BeginResync()
         {
+            ServerResets++;
             _queue.CancelPending();
             IsResyncing = true;
         }
@@ -185,6 +193,7 @@ namespace TheVerge.Core.Movement
 
         private void StandAt(Point3D position, Direction direction)
         {
+            ServerResets++;
             _predictor.Forget();
             _placed = true;
             Position = position;

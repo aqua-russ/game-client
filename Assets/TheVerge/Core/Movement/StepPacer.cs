@@ -11,7 +11,8 @@ namespace TheVerge.Core.Movement
     /// <see cref="ClientLimits.MoveCatchUpMs"/> догоняется, большее (игрок стоял) не копится, поэтому темп не отстаёт от
     /// сервера и не опережает его; кредит сервера на джиттер клиент не тратит. Поворот и шаг в ту же сторону уходят в одном
     /// тике (CONTROLS §4), но не раньше срока шага; если поворот занял последнее место в очереди, шаг уходит, как только
-    /// место освободится. Время — только из <see cref="Update"/> (часы клиента, IClock).
+    /// место освободится, — если до того сервер не переставил персонажа и ввод не заблокирован (тогда шаг относился бы
+    /// к прежнему месту и шёл бы мимо воли игрока). Время — только из <see cref="Update"/> (часы клиента, IClock).
     /// </summary>
     public sealed class StepPacer : ITickHandler
     {
@@ -22,6 +23,7 @@ namespace TheVerge.Core.Movement
         private bool _hasFollowUp;
         private Direction _followUpDirection;
         private bool _followUpRun;
+        private int _followUpResets;
 
         public StepPacer(MoveIntent intent, PlayerMotion motion)
         {
@@ -49,6 +51,7 @@ namespace TheVerge.Core.Movement
                 _hasSchedule = false;
                 _followUpDirection = direction;
                 _followUpRun = run;
+                _followUpResets = _motion.ServerResets;
                 _hasFollowUp = true;
                 StepAfterTurn(now);
             }
@@ -61,6 +64,12 @@ namespace TheVerge.Core.Movement
         // Шаг в сторону, куда только что повернулись: сразу или, если очередь полна, как только освободится место.
         private void StepAfterTurn(long now)
         {
+            if (_motion.ServerResets != _followUpResets || _intent.IsBlocked)
+            {
+                _hasFollowUp = false;
+                return;
+            }
+
             var result = _motion.Step(_followUpDirection, _followUpRun);
             if (result == StepResult.QueueFull)
             {
