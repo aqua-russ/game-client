@@ -87,7 +87,8 @@ namespace TheVerge.Bot
             var environment = new WorldEnvironment();
             var containers = new ContainerContents(entities);
             var movement = data == null ? null : CreateMovement(dispatcher, session, entities, data, clock, log);
-            WorldHandlers.Register(dispatcher, entities, environment, movement?.Replies);
+            var others = new OthersMotion(entities, clock);
+            WorldHandlers.Register(dispatcher, entities, environment, movement?.Replies, others);
             ItemHandlers.Register(dispatcher, containers);
             var actions = new ActionTimer();
             var items = new ItemCommands(entities, new ItemSender(session), clock, actions);
@@ -108,6 +109,7 @@ namespace TheVerge.Bot
                 Combat = new BotCombat(combat, new CombatCommands(new CombatSender(session), combat, entities), journal),
                 Corpses = corpses,
                 Movement = movement,
+                Others = new BotOthers(others, entities),
             };
         }
 
@@ -129,10 +131,15 @@ namespace TheVerge.Bot
             InWorld.Combat?.Log.Clear();
         }
 
-        // Таймеры тика: ping и ожидания, очередь речи, темп шагов (с --data), повтор входа (с --reconnect).
+        // Таймеры тика: ping и ожидания, очередь речи, показ шагов чужих, темп шагов (с --data), повтор входа (с --reconnect).
         private ITickHandler[] Timers(LoginWatchdog watchdog)
         {
             var timers = new System.Collections.Generic.List<ITickHandler> { Game, watchdog, InWorld.Speech };
+            if (InWorld.Others != null)
+            {
+                timers.Add(InWorld.Others.Motion);
+            }
+
             if (InWorld.Movement != null)
             {
                 timers.Add(InWorld.Movement.Pacer);
@@ -163,6 +170,7 @@ namespace TheVerge.Bot
                 InWorld.Environment.SoundPlayed -= InWorld.Combat.Log.OnSound;
             }
 
+            InWorld.Others?.Dispose();
             Session.Dispose();
         }
     }

@@ -18,6 +18,7 @@ namespace TheVerge.Bot
         private readonly EntityStore _entities;
         private readonly BotScript _script;
         private readonly IClock _clock;
+        private readonly BotOthers? _others;
         private LoginState _decided;
         private long _inWorldAt = -1;
 
@@ -30,6 +31,7 @@ namespace TheVerge.Bot
             _world = client.World;
             _game = client.Game;
             _clock = clock;
+            _others = client.InWorld.Others;
         }
 
         /// <summary>Бот попросил выйти из игры (после --idle секунд в мире).</summary>
@@ -125,6 +127,8 @@ namespace TheVerge.Bot
             {
                 _log.Info("Статус: " + status + ".");
             }
+
+            _others?.WriteTo(_log);
 
             _log.Info("Выход из игры" + (_game.LastRttMs >= 0 ? " (задержка до сервера " + _game.LastRttMs + " мс)" : string.Empty) + "…");
             LoggedOut = true;

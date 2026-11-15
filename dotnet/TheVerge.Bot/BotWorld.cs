@@ -46,5 +46,8 @@ namespace TheVerge.Bot
 
         /// <summary>Движение своего персонажа (Стадия 3); null — без файлов данных (--data) шаг не предсказать.</summary>
         public BotMovement? Movement { get; init; }
+
+        /// <summary>Показ шагов чужих мобов и что бот по нему видел (Стадия 3, п. 8); null — не подключён (тесты).</summary>
+        public BotOthers? Others { get; init; }
     }
 }

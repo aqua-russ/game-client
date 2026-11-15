@@ -6,16 +6,17 @@ namespace TheVerge.Network.Packets.World
 {
     /// <summary>
     /// Обработчики пакетов мира (PLAN Стадия 2, п. 9) — все разом для Bootstrap и бота. С <see cref="MovementReplies"/> 0x20
-    /// о своём персонаже и смена карты сбрасывают и движение (PLAN Стадия 3, п. 6); без них — только мир.
+    /// о своём персонаже и смена карты сбрасывают и движение (PLAN Стадия 3, п. 6); с <see cref="OthersMotion"/> 0x77 и 0x78
+    /// ведут показ шагов чужих мобов (п. 8); без них — только мир.
     /// </summary>
     public static class WorldHandlers
     {
         public static void Register(PacketDispatcher dispatcher, EntityStore store, WorldEnvironment environment,
-            MovementReplies? movement = null)
+            MovementReplies? movement = null, OthersMotion? others = null)
         {
-            dispatcher.Register(MobileIncomingHandler.PacketId, new MobileIncomingHandler(store).Handle);
+            dispatcher.Register(MobileIncomingHandler.PacketId, new MobileIncomingHandler(store, others).Handle);
             dispatcher.Register(MobileUpdateHandler.PacketId, new MobileUpdateHandler(store, movement).Handle);
-            dispatcher.Register(MobileMovingHandler.PacketId, new MobileMovingHandler(store).Handle);
+            dispatcher.Register(MobileMovingHandler.PacketId, new MobileMovingHandler(store, others).Handle);
             dispatcher.Register(EquipUpdateHandler.PacketId, new EquipUpdateHandler(store).Handle);
             dispatcher.Register(RemoveEntityHandler.PacketId, new RemoveEntityHandler(store).Handle);
             dispatcher.Register(WorldObjectHandler.PacketId, new WorldObjectHandler(store).Handle);

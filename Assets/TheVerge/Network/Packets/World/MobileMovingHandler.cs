@@ -1,3 +1,4 @@
+using TheVerge.Core.Movement;
 using TheVerge.Core.Primitives;
 using TheVerge.Core.World;
 using TheVerge.Network.IO;
@@ -7,17 +8,20 @@ namespace TheVerge.Network.Packets.World
     /// <summary>
     /// 0x77 Mobile Moving: чужой моб сдвинулся или изменился. Сервер: Projects/Server/Network/Packets/OutgoingMobilePackets.cs,
     /// CreateMobileMoving — Serial, short тело, short X, Y, sbyte Z, byte направление, short цвет, byte флаги, byte «злость».
-    /// Неизвестный моб — заглушка (PLAN Стадия 2, п. 7).
+    /// Неизвестный моб — заглушка (PLAN Стадия 2, п. 7). Затем — показ шага чужого моба (<see cref="OthersMotion"/>, п. 8 Стадии 3):
+    /// бит 0x80 в направлении — бег.
     /// </summary>
     public sealed class MobileMovingHandler
     {
         public const byte PacketId = 0x77;
 
         private readonly EntityStore _store;
+        private readonly OthersMotion? _others;
 
-        public MobileMovingHandler(EntityStore store)
+        public MobileMovingHandler(EntityStore store, OthersMotion? others = null)
         {
             _store = store;
+            _others = others;
         }
 
         public void Handle(ref PacketReader reader)
@@ -31,7 +35,10 @@ namespace TheVerge.Network.Packets.World
             var hue = reader.ReadUInt16();
             var flags = reader.ReadByte();
             var notoriety = reader.ReadByte();
-            _store.MoveMobile(serial, new MobileInfo(body, new Point3D(x, y, z), direction, hue, flags, notoriety));
+            if (_store.MoveMobile(serial, new MobileInfo(body, new Point3D(x, y, z), direction, hue, flags, notoriety)) == WorldResult.Applied)
+            {
+                _others?.OnMoving(serial);
+            }
         }
     }
 }

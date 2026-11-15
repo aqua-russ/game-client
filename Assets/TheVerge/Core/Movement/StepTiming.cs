@@ -8,8 +8,9 @@ namespace TheVerge.Core.Movement
     /// Время шага — одно место для темпа и для картинки (PLAN Стадия 3, п. 7; ADR 0020 пп. 4–6). Задержка между шагами у
     /// сервера — таблица «пешком или верхом × шаг или бег» (Projects/UOContent/Mobiles/PlayerMobile.cs,
     /// ComputeMovementSpeed; значения — <see cref="ServerLimits"/>). Картинка показывает шаг столько же; отставшая на
-    /// несколько клеток догоняет быстрее, но не больше чем в <see cref="ClientLimits.StepCatchUpMaxSpeedup"/> раз; разрыв
-    /// больше <see cref="ClientLimits.StepSnapGapCells"/> клеток — перескок. Unity только читает (задачи 3.8, 3.9).
+    /// несколько клеток догоняет быстрее, но не больше чем в <see cref="ClientLimits.StepCatchUpMaxSpeedup"/> раз; рывок
+    /// больше <see cref="ClientLimits.StepSnapGapCells"/> клеток — перескок. Чужие мобы — <see cref="OthersMotion"/>; Unity
+    /// только читает (задача 3.9).
     /// </summary>
     public static class StepTiming
     {
@@ -34,10 +35,13 @@ namespace TheVerge.Core.Movement
             return StepDelayMs(mounted, running) / speedup;
         }
 
-        /// <summary>Перескочить, а не ехать: показанная клетка дальше <see cref="ClientLimits.StepSnapGapCells"/> клеток от нужной.</summary>
-        public static bool ShouldSnap(Point3D shown, Point3D target)
+        /// <summary>
+        /// Перескочить, а не ехать: новая клетка от сервера дальше <see cref="ClientLimits.StepSnapGapCells"/> клеток от
+        /// прежней (рывок одним пакетом). Пачка соседних шагов после лага — не рывок: её картинка догоняет.
+        /// </summary>
+        public static bool ShouldSnap(Point3D previous, Point3D next)
         {
-            int gap = Math.Max(Math.Abs(target.X - shown.X), Math.Abs(target.Y - shown.Y));
+            int gap = Math.Max(Math.Abs(next.X - previous.X), Math.Abs(next.Y - previous.Y));
             return gap > ClientLimits.StepSnapGapCells;
         }
     }

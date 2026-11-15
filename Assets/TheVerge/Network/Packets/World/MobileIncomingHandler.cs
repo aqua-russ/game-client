@@ -1,3 +1,4 @@
+using TheVerge.Core.Movement;
 using TheVerge.Core.Primitives;
 using TheVerge.Core.World;
 using TheVerge.Network.IO;
@@ -9,7 +10,8 @@ namespace TheVerge.Network.Packets.World
     /// SendMobileIncoming — Serial, short тело, short X, Y, sbyte Z, byte направление, short цвет, byte флаги, byte
     /// «злость»; затем на каждый предмет Serial, ushort графика, byte слой, short цвет (новый формат 7.0.33.1+: цвет есть
     /// всегда, флага 0x8000 нет); в конце int 0. Список полный, поэтому не повторённое надетое снимается.
-    /// Длина обязана сходиться со списком: иначе пакет пропускается целиком, мир не меняется.
+    /// Длина обязана сходиться со списком: иначе пакет пропускается целиком, мир не меняется. Затем — показ чужого моба
+    /// (<see cref="OthersMotion"/>): появление или телепорт (Mobile.SetLocation с isTeleport шлёт 0x78), уже с конём, если он надет.
     /// </summary>
     public sealed class MobileIncomingHandler
     {
@@ -20,10 +22,12 @@ namespace TheVerge.Network.Packets.World
         private const int EndMarkLength = 4;
 
         private readonly EntityStore _store;
+        private readonly OthersMotion? _others;
 
-        public MobileIncomingHandler(EntityStore store)
+        public MobileIncomingHandler(EntityStore store, OthersMotion? others = null)
         {
             _store = store;
+            _others = others;
         }
 
         public void Handle(ref PacketReader reader)
@@ -54,6 +58,7 @@ namespace TheVerge.Network.Packets.World
             }
 
             _store.EndEquipment(serial);
+            _others?.OnIncoming(serial);
         }
 
         /// <summary>Сколько предметов в списке; длина, не совпадающая со списком и концом int 0, — ошибка пакета.</summary>
