@@ -130,6 +130,21 @@ namespace TheVerge.Tests.Data.Multis
         }
 
         [Test]
+        public void Uop_ClilocsEatNextPart_ErrorNotCrash()
+        {
+            // Число частей проверяется по размеру частей без clilocs, а clilocs сдвигают следующую часть: испорченный список
+            // clilocs первой части не оставляет места второй — ошибка словами, а не падение на чтении за концом куска.
+            var file = new MultiFileBuilder();
+            file.Add(1, new Part(1, 0, 0, 0, 0, uopFlagCode: 1), new Part(2, 1, 0, 0, 0, uopFlagCode: 1));
+            var raw = MultiFileBuilder.UopEntry(file.Multis[1]);
+            BitConverter.GetBytes(3u).CopyTo(raw, 18);
+            var builder = new UopFileBuilder(4, 10);
+            builder.AddCompressed("build/multicollection/000001.bin", MultiFileBuilder.Zlib(raw), raw.Length);
+
+            Assert.That(LoadUopError(builder.Build()), Does.Contain("MultiCollection.uop"));
+        }
+
+        [Test]
         public void Uop_LengthMismatch_Error()
         {
             var file = new MultiFileBuilder();

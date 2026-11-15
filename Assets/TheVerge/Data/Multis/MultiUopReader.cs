@@ -73,6 +73,13 @@ namespace TheVerge.Data.Multis
             var at = 8;
             for (var i = 0; i < parts.Length; i++)
             {
+                // Число частей выше проверено без clilocs; clilocs прежних частей могли съесть место этой.
+                if (data.Length - at < PartSize)
+                {
+                    error = "части выходят за конец куска";
+                    return null;
+                }
+
                 var span = data.AsSpan(at);
                 var clilocs = BinaryPrimitives.ReadUInt32LittleEndian(span.Slice(10));
                 if (clilocs > (uint)(data.Length - at - PartSize) / 4)
