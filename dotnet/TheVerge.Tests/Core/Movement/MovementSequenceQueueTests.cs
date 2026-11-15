@@ -53,7 +53,7 @@ namespace TheVerge.Tests.Core.Movement
         public void PendingSteps_LimitedByServerLimits()
         {
             var queue = new MovementSequenceQueue();
-            for (int i = 0; i < ServerLimits.MaxUnacknowledgedSteps; i++)
+            for (int i = 0; i < ClientLimits.MaxUnacknowledgedSteps; i++)
             {
                 Assert.That(queue.TryEnqueueStep(Direction.North, Here, out _), Is.True, "шаг " + i);
             }
@@ -62,14 +62,14 @@ namespace TheVerge.Tests.Core.Movement
 
             Assert.That(extra, Is.False, "лишний шаг без ответа сервера не уходит");
             Assert.That(queue.CanRequestStep, Is.False);
-            Assert.That(queue.PendingCount, Is.EqualTo(ServerLimits.MaxUnacknowledgedSteps));
+            Assert.That(queue.PendingCount, Is.EqualTo(ClientLimits.MaxUnacknowledgedSteps));
         }
 
         [Test]
         public void RefusedStep_DoesNotUseSequenceNumber()
         {
             var queue = new MovementSequenceQueue();
-            for (int i = 0; i < ServerLimits.MaxUnacknowledgedSteps; i++)
+            for (int i = 0; i < ClientLimits.MaxUnacknowledgedSteps; i++)
             {
                 queue.TryEnqueueStep(Direction.North, Here, out _);
             }
@@ -78,7 +78,7 @@ namespace TheVerge.Tests.Core.Movement
             queue.ConfirmStep(0, out _);
             queue.TryEnqueueStep(Direction.North, Here, out byte next);
 
-            Assert.That(next, Is.EqualTo(ServerLimits.MaxUnacknowledgedSteps));
+            Assert.That(next, Is.EqualTo(ClientLimits.MaxUnacknowledgedSteps));
         }
 
         [Test]

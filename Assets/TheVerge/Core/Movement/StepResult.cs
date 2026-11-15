@@ -15,7 +15,7 @@ namespace TheVerge.Core.Movement
         /// <summary>Клетка непроходима (MovementCheck): ничего не ушло, номер шага не потрачен.</summary>
         Blocked,
 
-        /// <summary>Без ответа сервера уже висит предел шагов (ServerLimits.MaxUnacknowledgedSteps): ничего не ушло.</summary>
+        /// <summary>Без ответа сервера уже висит предел шагов (ClientLimits.MaxUnacknowledgedSteps): ничего не ушло.</summary>
         QueueFull,
 
         /// <summary>Клиент попросил сервер о ресинхронизации и ждёт его места (0x20): ничего не ушло.</summary>

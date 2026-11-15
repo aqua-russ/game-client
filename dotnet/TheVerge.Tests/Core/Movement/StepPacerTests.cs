@@ -147,18 +147,18 @@ namespace TheVerge.Tests.Core.Movement
             _serverAnswers = false;
             _intent.Press(MoveKeys.Right);
             RunFor(1000, 16);
-            Assert.That(_sender.Steps.Count, Is.EqualTo(ServerLimits.MaxUnacknowledgedSteps), "без ответов — не больше предела");
+            Assert.That(_sender.Steps.Count, Is.EqualTo(ClientLimits.MaxUnacknowledgedSteps), "без ответов — не больше предела");
 
             _intent.Release(MoveKeys.Right);
             _intent.Press(MoveKeys.Up);
             _intent.Release(MoveKeys.Up);
             RunFor(200, 16);
-            Assert.That(_sender.Steps.Count, Is.EqualTo(ServerLimits.MaxUnacknowledgedSteps));
+            Assert.That(_sender.Steps.Count, Is.EqualTo(ClientLimits.MaxUnacknowledgedSteps));
 
             AnswerAll();
             RunFor(32, 16);
 
-            Assert.That(_sender.Steps.Count, Is.EqualTo(ServerLimits.MaxUnacknowledgedSteps + 2), "тап дал поворот и шаг");
+            Assert.That(_sender.Steps.Count, Is.EqualTo(ClientLimits.MaxUnacknowledgedSteps + 2), "тап дал поворот и шаг");
             Assert.That(_motion.StepDirection, Is.EqualTo(Direction.North));
         }
 

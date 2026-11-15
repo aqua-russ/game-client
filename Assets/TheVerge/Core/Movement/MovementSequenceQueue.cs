@@ -17,19 +17,19 @@ namespace TheVerge.Core.Movement
     {
         // Отменённых шагов бывает не больше предела неподтверждённых на один сброс; запас — на второй сброс подряд, пока
         // старые ответы ещё в пути. Переполнение вытесняет самые давние номера: их ответы пришли первыми.
-        private const int CancelledCapacity = 2 * ServerLimits.MaxUnacknowledgedSteps;
+        private const int CancelledCapacity = 2 * ClientLimits.MaxUnacknowledgedSteps;
 
-        private readonly Queue<PendingStep> _pendingSteps = new Queue<PendingStep>(ServerLimits.MaxUnacknowledgedSteps);
+        private readonly Queue<PendingStep> _pendingSteps = new Queue<PendingStep>(ClientLimits.MaxUnacknowledgedSteps);
         private readonly byte[] _cancelled = new byte[CancelledCapacity];
         private int _cancelledCount;
         private byte _nextSequence = ServerLimits.FirstMoveSequence;
 
         public int PendingCount => _pendingSteps.Count;
-        public bool CanRequestStep => _pendingSteps.Count < ServerLimits.MaxUnacknowledgedSteps;
+        public bool CanRequestStep => _pendingSteps.Count < ClientLimits.MaxUnacknowledgedSteps;
 
         /// <summary>
         /// Даёт следующий номер и запоминает шаг как неподтверждённый. Если без ответа уже висит предельное число
-        /// шагов (ServerLimits.MaxUnacknowledgedSteps), шаг не ставится и номер не расходуется.
+        /// шагов (ClientLimits.MaxUnacknowledgedSteps), шаг не ставится и номер не расходуется.
         /// </summary>
         public bool TryEnqueueStep(Direction direction, Point3D targetPosition, out byte sequence)
         {

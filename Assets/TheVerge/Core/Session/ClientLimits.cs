@@ -81,6 +81,12 @@ namespace TheVerge.Core.Session
         public const int CombatLogCapacity = 512;
 
         /// <summary>
+        /// Шагов и поворотов без ответа сервера, после которых клиент ждёт ответа (PLAN Стадия 3, п. 5). Сервер сбрасывает свою
+        /// очередь шагов при <see cref="ServerLimits.ServerStepQueueLimit"/>, поэтому клиент держит заметно меньше.
+        /// </summary>
+        public const int MaxUnacknowledgedSteps = 3;
+
+        /// <summary>
         /// Сколько ждать вторую клавишу перед первым шагом из покоя, мс (PLAN Стадия 3, п. 1; CONTROLS §4): пару клавиш
         /// (W+D) никогда не нажимают ровно одновременно, а без ожидания первый шаг ушёл бы прямо, а не по диагонали.
         /// </summary>

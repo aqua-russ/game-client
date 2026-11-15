@@ -144,7 +144,7 @@ namespace TheVerge.Tests.Core.Movement
 
         private static void FillAndCancel(MovementSequenceQueue queue)
         {
-            for (int i = 0; i < ServerLimits.MaxUnacknowledgedSteps; i++)
+            for (int i = 0; i < ClientLimits.MaxUnacknowledgedSteps; i++)
             {
                 queue.TryEnqueueStep(Direction.North, Here, out _);
             }

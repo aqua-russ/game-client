@@ -117,7 +117,7 @@ namespace TheVerge.Tests.Core.Movement
         public void UnconfirmedLimit_FurtherStepsAndTurnsWait()
         {
             _motion.ResetToServer(Start, Direction.East);
-            for (int i = 0; i < ServerLimits.MaxUnacknowledgedSteps; i++)
+            for (int i = 0; i < ClientLimits.MaxUnacknowledgedSteps; i++)
             {
                 Assert.That(_motion.Step(Direction.East, true), Is.EqualTo(StepResult.Moved), "шаг " + i);
             }
@@ -127,7 +127,7 @@ namespace TheVerge.Tests.Core.Movement
             Assert.That(_motion.Step(Direction.North, true), Is.EqualTo(StepResult.QueueFull));
             Assert.That(_motion.Position, Is.EqualTo(reached));
             Assert.That(_motion.StepDirection, Is.EqualTo(Direction.East));
-            Assert.That(_sender.Steps.Count, Is.EqualTo(ServerLimits.MaxUnacknowledgedSteps));
+            Assert.That(_sender.Steps.Count, Is.EqualTo(ClientLimits.MaxUnacknowledgedSteps));
         }
 
         [Test]

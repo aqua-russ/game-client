@@ -86,7 +86,7 @@ namespace TheVerge.Presentation.UI.Movement
             if (_pending.Changed(pending))
             {
                 Set(MovementDebugLine.Pending, "Неподтверждённых шагов: " + pending.ToString() + " из " +
-                    ServerLimits.MaxUnacknowledgedSteps.ToString());
+                    ClientLimits.MaxUnacknowledgedSteps.ToString());
             }
 
             int response = _player.Pacer.LastResponseMs;

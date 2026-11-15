@@ -20,9 +20,6 @@ namespace TheVerge.Core.Session
         public const byte WrappedMoveSequence = 1;
         public const byte MaxMoveSequence = 255;
 
-        /// <summary>Шагов без подтверждения, после которых клиент ждёт ответа (настройка клиента).</summary>
-        public const int MaxUnacknowledgedSteps = 3;
-
         /// <summary>Сервер сбрасывает очередь шагов при таком размере (movementThrottle.hardQueueLimit).</summary>
         public const int ServerStepQueueLimit = 10;
 
