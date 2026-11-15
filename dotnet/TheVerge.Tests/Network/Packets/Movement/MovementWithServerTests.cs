@@ -132,6 +132,29 @@ namespace TheVerge.Tests.Network.Packets.Movement
             AssertSameCell();
         }
 
+        [TestCase(1, false)]
+        [TestCase(3, false)]
+        [TestCase(1, true)]
+        [TestCase(3, true)]
+        public void ServerResetWhileFirstStepInFlight_OneResync_WalkFinishes(int latency, bool mapChange)
+        {
+            // Телепорт или смена карты, пока первый шаг (номер 0) ещё идёт к серверу: сервер выполняет его после сброса,
+            // клиент один раз просит ресинхронизацию и дальше ходит без новых.
+            _server.LatencyTicks = latency;
+            var target = new Point3D(100, 100, 0);
+            System.Action<long> reset = mapChange
+                ? (System.Action<long>)(tick => _server.ChangeMap(1, target, tick))
+                : tick => _server.Teleport(target, tick);
+
+            Walk(Direction.East, eventAtMove: 0, serverEvent: reset);
+
+            Assert.That(_server.Moves, Is.GreaterThanOrEqualTo(Route));
+            Assert.That(_replies.ResyncCount, Is.EqualTo(1), "ресинхронизация — одна");
+            Assert.That(_server.Resyncs, Is.EqualTo(1));
+            Assert.That(_replies.RejectCount, Is.EqualTo(0));
+            AssertSameCell();
+        }
+
         // Шагать каждый тик, пока сервер не выполнит Route шагов, потом дождаться всех ответов. Событие сервера — один раз,
         // когда он выполнит eventAtMove шагов.
         private void Walk(Direction direction, int eventAtMove = -1, System.Action<long>? serverEvent = null)

@@ -94,6 +94,36 @@ namespace TheVerge.Tests.Core.Movement
             Assert.That(_sender.Last.Sequence, Is.EqualTo(0));
         }
 
+        [TestCase(false)]
+        [TestCase(true)]
+        public void ServerResetDuringFirstStep_OneResync_ThenStepZeroConfirmed(bool mapChange)
+        {
+            // Сервер сам поставил персонажа (телепорт или смена карты), пока шаг 0 ждал ответа: шаг отменён, но после сброса
+            // номер 0 сервер принимает и мог этот шаг выполнить — подтверждение 0 неоднозначно, клиент просит ресинхронизацию.
+            _motion.Step(Direction.East, true);
+            if (mapChange)
+            {
+                _replies.OnMapChanged();
+            }
+
+            _replies.OnServerPosition(Start, Direction.East);
+            _motion.Step(Direction.East, true);
+            _replies.OnAck(0, 1);
+            Assert.That(_sender.Resyncs, Is.EqualTo(1));
+
+            // Ответ на ресинхронизацию: сервер шлёт 0x20 и только потом сбрасывает счёт (IncomingPlayerPackets.Resynchronize:
+            // SendMobileUpdate, затем ResetMovementState). Ответы на все прежние шаги пришли раньше, поэтому следующий шаг 0 —
+            // новый, и его подтверждение принимается.
+            var server = new Point3D(11, 10, 0);
+            _replies.OnServerPosition(server, Direction.East);
+            _motion.Step(Direction.East, true);
+            _replies.OnAck(0, 1);
+
+            Assert.That(_sender.Resyncs, Is.EqualTo(1), "после ответа на ресинхронизацию шаг 0 подтверждается без новой");
+            Assert.That(_motion.PendingSteps, Is.EqualTo(0));
+            Assert.That(_world.Player!.Position, Is.EqualTo(new Point3D(12, 10, 0)));
+        }
+
         [Test]
         public void AckWithoutPendingStep_Resync()
         {

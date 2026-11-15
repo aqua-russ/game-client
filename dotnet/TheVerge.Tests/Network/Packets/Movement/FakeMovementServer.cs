@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using TheVerge.Core.Primitives;
+using TheVerge.Network.Packets.Movement;
 using TheVerge.Network.Session;
 
 namespace TheVerge.Tests.Network.Packets.Movement
@@ -10,7 +11,8 @@ namespace TheVerge.Tests.Network.Packets.Movement
     /// времени), ответы идут через сеть с задержкой в тиках. Шаг при счёте 0 с номером не 0 — отказ и сброс; поворот (другое
     /// направление без бита бега) — подтверждение без шага (Mobile.Move); подтверждение несёт счётчик сервера до шага
     /// (Mobile.Move: SendMovementAck(Sequence)), после шага счётчик = номер + 1, после 255 — 1. Телепорт и смена карты
-    /// сбрасывают счёт (NetState.ResetMovementState) и шлют 0x20 (Mobile.SetLocation, Mobile.InternalMapChange).
+    /// сбрасывают счёт (NetState.ResetMovementState) и шлют 0x20 (Mobile.SetLocation, Mobile.InternalMapChange). Запрос
+    /// ресинхронизации — 0x20 и сброс счёта (IncomingPlayerPackets.Resynchronize).
     /// </summary>
     internal sealed class FakeMovementServer
     {
@@ -47,6 +49,9 @@ namespace TheVerge.Tests.Network.Packets.Movement
 
         public int Rejects { get; private set; }
 
+        /// <summary>Сколько запросов ресинхронизации пришло от клиента.</summary>
+        public int Resyncs { get; private set; }
+
         public bool IsIdle => _toServer.Count == 0 && _toClient.Count == 0;
 
         public void FromClient(byte[] packet, long tick) => _toServer.Enqueue(new Delivery(tick + LatencyTicks, packet));
@@ -72,9 +77,13 @@ namespace TheVerge.Tests.Network.Packets.Movement
             while (_toServer.Count > 0 && _toServer.Peek().Due <= tick)
             {
                 var packet = _toServer.Dequeue().Packet;
-                if (packet[0] == 0x02)
+                if (packet[0] == MoveRequestPacket.PacketId)
                 {
                     OnMoveRequest((Direction)packet[1], packet[2], tick);
+                }
+                else if (packet[0] == ResyncRequestPacket.PacketId)
+                {
+                    OnResync(tick);
                 }
             }
 
@@ -113,6 +122,14 @@ namespace TheVerge.Tests.Network.Packets.Movement
             Direction = direction;
             Send(new byte[] { 0x22, (byte)_sequence, 0x01 }, tick);
             _sequence = sequence == 255 ? 1 : sequence + 1;
+        }
+
+        // Сервер сначала шлёт своё место, затем сбрасывает счёт (0x78 и SendEverything модели не нужны).
+        private void OnResync(long tick)
+        {
+            Resyncs++;
+            Send(MovementReplyPacketTests.MobileUpdate(new Serial(_serial), Position.X, Position.Y, Position.Z, Direction), tick);
+            _sequence = 0;
         }
 
         private void Reject(byte sequence, long tick)

@@ -142,11 +142,21 @@ namespace TheVerge.Core.Movement
 
         /// <summary>
         /// Сервер сам поставил персонажа (0x20: телепорт, ресинхронизация, смена карты, тела, цвета): ждущие шаги отменены,
-        /// следующий шаг с номером 0.
+        /// следующий шаг с номером 0. 0x20 во время ресинхронизации — ответ на неё: сервер шлёт его и только потом сбрасывает
+        /// счёт (IncomingPlayerPackets.Resynchronize), ответы на все прежние шаги уже пришли, и номера отменённых шагов
+        /// забываются — иначе подтверждение нового шага 0 снова считалось бы рассинхроном, и так после каждого шага.
         /// </summary>
         public void ResetToServer(Point3D position, Direction direction)
         {
-            _queue.CancelPending();
+            if (IsResyncing)
+            {
+                _queue.Reset();
+            }
+            else
+            {
+                _queue.CancelPending();
+            }
+
             IsResyncing = false;
             StandAt(position, direction);
         }
