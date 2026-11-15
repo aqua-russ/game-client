@@ -12,6 +12,9 @@ namespace TheVerge.Tests.Core.Session
     /// </summary>
     public sealed class ReconnectorTests
     {
+        // Через сколько после входа сервер выгоняет «неверный клиент» (TARGET.md §3.1; ClientVerification.cs, kickDelay).
+        private const long KickDelayMs = 20000;
+
         private RecordingAccountSender _sender = new RecordingAccountSender();
         private RecordingConnector _connector = new RecordingConnector();
         private LoginFlow _flow = null!;
@@ -60,7 +63,7 @@ namespace TheVerge.Tests.Core.Session
         }
 
         [Test]
-        public void DisconnectedInWorld_ReentersSameShardAndCharacter_AttemptsReset()
+        public void DisconnectedInWorld_ReentersSameShardAndCharacter_AttemptsResetAfterStableStay()
         {
             EnterWorld(characterSlot: 1);
             _reconnector.Update(0);
@@ -85,7 +88,37 @@ namespace TheVerge.Tests.Core.Session
 
             CompleteWorld();
             _reconnector.Update(3000);
-            Assert.That(_reconnector.Attempts, Is.EqualTo(0), "снова в мире — счёт с нуля");
+            Assert.That(_reconnector.Attempts, Is.EqualTo(1), "только вошли — выгнать могут сразу, счёт не обнуляется");
+            _reconnector.Update(3000 + ClientLimits.ReconnectStableMs);
+            Assert.That(_reconnector.Attempts, Is.EqualTo(0), "продержался в мире — счёт с нуля");
+        }
+
+        [Test]
+        public void KickedSoonAfterEveryEntry_GivesUpAfterAllAttempts()
+        {
+            // Вход каждый раз удаётся, но сервер выгоняет через 20 с: попыток всё равно пять, затем ошибка (TARGET.md §3.1,
+            // «Повтор входа»), а не вход по кругу без конца.
+            EnterWorld(characterSlot: 1);
+            long now = 0;
+            _reconnector.Update(now);
+            for (var i = 0; i < ClientLimits.ReconnectDelaysMs.Length; i++)
+            {
+                now += KickDelayMs;
+                _flow.OnDisconnected(DisconnectReason.ServerClosed, string.Empty);
+                _reconnector.Update(now);
+                Assert.That(_reconnector.WillRetry, Is.True, "попытка " + (i + 1));
+                now = Reenter(now + ClientLimits.ReconnectDelaysMs[i]);
+                Assert.That(_flow.State, Is.EqualTo(LoginState.InWorld));
+            }
+
+            now += KickDelayMs;
+            _flow.OnDisconnected(DisconnectReason.ServerClosed, string.Empty);
+            _reconnector.Update(now);
+            _reconnector.Update(now + 100000);
+
+            Assert.That(_reconnector.WillRetry, Is.False);
+            Assert.That(_flow.State, Is.EqualTo(LoginState.Failed));
+            Assert.That(_scheduled.Count, Is.EqualTo(ClientLimits.ReconnectDelaysMs.Length));
         }
 
         [TestCase(LoginErrorKind.LoginDenied)]
@@ -129,6 +162,22 @@ namespace TheVerge.Tests.Core.Session
 
             Assert.That(_flow.State, Is.EqualTo(LoginState.Closed));
             Assert.That(_reconnector.WillRetry, Is.False);
+        }
+
+        // Пауза повтора прошла: вход заново до мира; шард и персонажа выбирает Reconnector. Возвращает время после входа.
+        private long Reenter(long now)
+        {
+            _reconnector.Update(now);
+            _flow.OnConnected();
+            _flow.OnShardList(Shards());
+            _reconnector.Update(++now);
+            _flow.OnRedirect(new ServerRedirect("127.0.0.1", 2593, 9));
+            _flow.OnConnected();
+            _flow.Characters.OnCharacterList(Slots(), new StartingCity[0], 0);
+            _reconnector.Update(++now);
+            CompleteWorld();
+            _reconnector.Update(++now);
+            return now;
         }
 
         private void EnterWorld(int characterSlot)

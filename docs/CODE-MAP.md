@@ -21,7 +21,7 @@
 - **Вход в мир:** `WorldEntry` (`Player` — `Core/World/PlayerState`; после 0x55 шлёт язык и дальность). Ответ на запрос версии в любом состоянии — `ServerRequests`. Служебные пакеты — порт `ISessionSender` (`Network/Packets/Session/SessionSender`), обработчики — `SessionHandlers.Register` (рядом с `LoginFlow`, общий `flow.Progress`).
 - **В мире:** `GameSession` — ping раз в 10 с, `LastRttMs`, `Logout` → ответ 0xD1 → `IServerConnector.Disconnect` (без ответа 5 с — закрытие всё равно).
 - **Ошибки (1.11а):** 0x53 → `CharacterRejected` (`PopupMessageHandler`); молчание сервера 30 с во время входа → `Timeout` (`LoginWatchdog`, таймер); разрыв в первые 25 с в мире → подсказка `DisconnectHint` (время в мире — `GameSession.MsInWorld`).
-- **Повтор входа (1.11б):** `Reconnector` (таймер): паузы `ClientLimits.ReconnectDelaysMs`, `LoginFlow.Restart`, тот же шард (`LoginFlow.SelectedShard`) и персонаж (`CharacterSelection.SelectedName`).
+- **Повтор входа (1.11б):** `Reconnector` (таймер): паузы `ClientLimits.ReconnectDelaysMs`, `LoginFlow.Restart`, тот же шард (`LoginFlow.SelectedShard`) и персонаж (`CharacterSelection.SelectedName`); счёт попыток — заново после `ClientLimits.ReconnectStableMs` в мире.
 - **Тест диалога без сокета:** `FakeConnection.Reply` (ответ на каждую отправку по порядку).
 
 ## 3. Экраны входа в Unity (1.16; [ADR 0017](adr/0017-login-screens-unity.md))

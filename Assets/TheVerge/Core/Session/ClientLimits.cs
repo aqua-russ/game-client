@@ -64,6 +64,12 @@ namespace TheVerge.Core.Session
         /// попыток. Дольше 16 с человек решит сам.
         /// </summary>
         public static readonly int[] ReconnectDelaysMs = { 1000, 2000, 4000, 8000, 16000 };
+        /// <summary>
+        /// Сколько персонаж должен пробыть в мире после повтора, чтобы попытки считались заново, мс. Сервер выгоняет
+        /// «неверный клиент» через 20 с после входа (clientVerification.kickDelay, docs/TARGET.md §3.1): со сбросом сразу при
+        /// входе такой выгон повторялся бы без конца.
+        /// </summary>
+        public const int ReconnectStableMs = 60000;
 
         /// <summary>Адрес логин-сервера на экране входа по умолчанию — локальный стенд (AGENTS.md §1).</summary>
         public const string DefaultServerAddress = "127.0.0.1:2593";

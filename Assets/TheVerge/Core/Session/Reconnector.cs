@@ -6,7 +6,8 @@ namespace TheVerge.Core.Session
     /// Повтор входа с нарастающей паузой (PLAN Стадия 1, «Реакция клиента на ошибки»): не удалось подключиться или
     /// соединение разорвано в мире — новая попытка через <see cref="ClientLimits.ReconnectDelaysMs"/>, тем же шардом и
     /// персонажем; попытки кончились — ошибка остаётся. Отказы сервера (пароль, персонаж) и ошибки протокола не повторяются:
-    /// повтор дал бы то же самое.
+    /// повтор дал бы то же самое. Попытки считаются заново, только когда персонаж продержался в мире
+    /// <see cref="ClientLimits.ReconnectStableMs"/>: сервер, который выгоняет вскоре после входа, иначе гонял бы вход по кругу.
     /// </summary>
     public sealed class Reconnector : ITickHandler
     {
@@ -15,6 +16,7 @@ namespace TheVerge.Core.Session
         private bool _failureHandled;
         private bool _reentering;
         private long _retryAt = -1;
+        private long _inWorldSince = -1;
         private int _shard = -1;
         private string _character = string.Empty;
 
@@ -23,7 +25,7 @@ namespace TheVerge.Core.Session
             _flow = flow;
         }
 
-        /// <summary>Сколько попыток подряд уже сделано; сбрасывается, когда персонаж снова в мире.</summary>
+        /// <summary>Сколько попыток подряд уже сделано; сбрасывается, когда персонаж снова в мире и продержался там.</summary>
         public int Attempts { get; private set; }
 
         /// <summary>Вход упал, но будет повторён: ждать, а не заканчивать.</summary>
@@ -44,7 +46,11 @@ namespace TheVerge.Core.Session
             {
                 _wasInWorld = true;
                 _reentering = false;
-                Attempts = 0;
+                ResetAttemptsWhenStable(now);
+            }
+            else
+            {
+                _inWorldSince = -1;
             }
 
             if (_retryAt >= 0)
@@ -59,6 +65,19 @@ namespace TheVerge.Core.Session
             else if (_reentering)
             {
                 ReselectPrevious(state);
+            }
+        }
+
+        private void ResetAttemptsWhenStable(long now)
+        {
+            if (_inWorldSince < 0)
+            {
+                _inWorldSince = now;
+            }
+
+            if (now - _inWorldSince >= ClientLimits.ReconnectStableMs)
+            {
+                Attempts = 0;
             }
         }
 
