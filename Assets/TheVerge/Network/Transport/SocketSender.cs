@@ -6,7 +6,9 @@ namespace TheVerge.Network.Transport
     /// <summary>
     /// Отправка без блокировки главного потока (AGENTS.md §2.3, исходящее, шаг 4): байты копируются в буфер, а в сокет
     /// уходят асинхронной отправкой ОС. Пока предыдущая отправка не закончилась, новые байты копятся во втором буфере;
-    /// порядок сохраняется. Ошибка отправки — один раз сообщается владельцу, дальше отправка отказывает.
+    /// порядок сохраняется. Ошибка отправки — один раз сообщается владельцу, дальше отправка отказывает. После Dispose
+    /// отправка ничего не трогает: Send отказывает, а завершение отправки ОС, пришедшее позже из потока ввода-вывода,
+    /// пропускается — иначе оно продолжило бы отправку на освобождённом SocketAsyncEventArgs.
     /// </summary>
     internal sealed class SocketSender : IDisposable
     {
@@ -23,6 +25,7 @@ namespace TheVerge.Network.Transport
         private int _inFlightCount;
         private bool _sending;
         private bool _failed;
+        private bool _disposed;
 
         public SocketSender(Socket socket, Action<SocketError> onFailed)
         {
@@ -36,7 +39,7 @@ namespace TheVerge.Network.Transport
         {
             lock (_gate)
             {
-                if (_failed)
+                if (_failed || _disposed)
                 {
                     return false;
                 }
@@ -53,8 +56,19 @@ namespace TheVerge.Network.Transport
 
         public void Dispose()
         {
-            _args.Completed -= OnCompleted;
-            _args.Dispose();
+            lock (_gate)
+            {
+                if (_disposed)
+                {
+                    return;
+                }
+
+                _disposed = true;
+                _pendingCount = 0;
+                _args.Completed -= OnCompleted;
+                // Если отправка ещё идёт, SocketAsyncEventArgs освободится сам по её завершении.
+                _args.Dispose();
+            }
         }
 
         private void Append(ReadOnlySpan<byte> data)
@@ -115,7 +129,8 @@ namespace TheVerge.Network.Transport
         {
             lock (_gate)
             {
-                if (Complete(args))
+                // Закрытие выбрал владелец: ни ошибки, ни продолжения.
+                if (!_disposed && Complete(args))
                 {
                     Pump();
                 }
