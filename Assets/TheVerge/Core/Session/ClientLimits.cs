@@ -73,5 +73,11 @@ namespace TheVerge.Core.Session
         /// Бой с крысой — около 50 событий за 20 с: хватает на несколько минут боя.
         /// </summary>
         public const int CombatLogCapacity = 512;
+
+        /// <summary>
+        /// Сколько ждать вторую клавишу перед первым шагом из покоя, мс (PLAN Стадия 3, п. 1; CONTROLS §4): пару клавиш
+        /// (W+D) никогда не нажимают ровно одновременно, а без ожидания первый шаг ушёл бы прямо, а не по диагонали.
+        /// </summary>
+        public const int MovePairWaitMs = 50;
     }
 }
