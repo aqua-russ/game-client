@@ -43,5 +43,8 @@ namespace TheVerge.Bot
 
         /// <summary>Вещи трупов по слоям (Стадия 4, п. 9, 0x89); null — не подключены.</summary>
         public CorpseEquipment? Corpses { get; init; }
+
+        /// <summary>Движение своего персонажа (Стадия 3); null — без файлов данных (--data) шаг не предсказать.</summary>
+        public BotMovement? Movement { get; init; }
     }
 }

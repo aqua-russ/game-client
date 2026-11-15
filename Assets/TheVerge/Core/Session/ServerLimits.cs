@@ -26,6 +26,12 @@ namespace TheVerge.Core.Session
         /// <summary>Сервер сбрасывает очередь шагов при таком размере (movementThrottle.hardQueueLimit).</summary>
         public const int ServerStepQueueLimit = 10;
 
+        /// <summary>
+        /// Выносливость ниже этой доли максимума, %: шаг бега сначала отнимает ещё единицу (stamina.additionalLossWhenBelow =
+        /// 0.1), а при выносливости 0 бег запрещён (stamina.cannotRunWhenFatigued = True; StaminaSystem.ProcessPlayerMovement).
+        /// </summary>
+        public const int RunExtraStaminaLossBelowPercent = 10;
+
         /// <summary>Речь 0x03 и 0xAD, текстовые команды 0x12: не чаще, мс (throttles.json).</summary>
         public const int SpeechThrottleMs = 25;
 

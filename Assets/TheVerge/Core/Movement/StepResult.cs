@@ -16,6 +16,9 @@ namespace TheVerge.Core.Movement
         Blocked,
 
         /// <summary>Без ответа сервера уже висит предел шагов (ServerLimits.MaxUnacknowledgedSteps): ничего не ушло.</summary>
-        QueueFull
+        QueueFull,
+
+        /// <summary>Клиент попросил сервер о ресинхронизации и ждёт его места (0x20): ничего не ушло.</summary>
+        Resyncing
     }
 }

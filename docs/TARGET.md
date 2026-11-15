@@ -67,6 +67,7 @@
 | Переименование 0x75 | не чаще 500 мс | `throttles.json` |
 | Задержка действий | 500 мс; действует на 0x06, 0x07 (подъём) и 0xBF 0x2C, ответ прицела 0x6C ею не ограничен; раньше срока сервер отвечает «подождите» | `actionDelay` (по умолчанию для pre-AoS); `IncomingEntityPackets.UseReq`, `Mobile.Lift` |
 | Бег при нулевой выносливости | запрещён | `stamina.cannotRunWhenFatigued` = True |
+| Бег при выносливости ниже 10% | шаг бега отнимает ещё 1 выносливость (поэтому при 1 бег уже запрещён); клиент тогда сам идёт шагом (`RunFatigue`, решение 15 ноября) | `stamina.additionalLossWhenBelow` = 0.1 (`ServerLimits.RunExtraStaminaLossBelowPercent`) |
 | Максимум стата | 100 | `stats.statMax` |
 | Выгнать «неверный клиент» | через 20 с после проверки версии | `clientVerification.kickDelay` (`ClientVerification.cs`); по этому времени клиент подсказывает причину разрыва |
 | Дальность обзора | 18 клеток: на 0xC8 клиента сервер всегда отвечает 18 | `IncomingPlayerPackets.cs`, `SetUpdateRange` |

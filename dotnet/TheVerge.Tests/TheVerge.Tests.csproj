@@ -21,6 +21,9 @@
     <None Include="../../docs/protocol/packets.csv" Link="Network/Framing/packets.csv" CopyToOutputDirectory="PreserveNewest" />
     <None Include="Bot/Replays/*.tsv" CopyToOutputDirectory="PreserveNewest" />
     <None Include="Bot/Replays/*.json" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Эталон ходьбы ClassicUO (golden/, docs/REFERENCE-CLIENT.md): по нему сверяются байты запроса шага 0x02. -->
+    <None Include="../../golden/02-walk-20.tsv" Link="Golden/02-walk-20.tsv" CopyToOutputDirectory="PreserveNewest" />
+
   </ItemGroup>
 
   <ItemGroup>

@@ -5,27 +5,25 @@ using TheVerge.Core.World;
 namespace TheVerge.Core.Movement
 {
     /// <summary>
-    /// Движение своего персонажа (PLAN Стадия 3, п. 4; ADR 0020 пп. 1–3): клетка и направление по предсказанию клиента,
+    /// Движение своего персонажа (PLAN Стадия 3, пп. 4–6; ADR 0020 пп. 1–3): клетка и направление по предсказанию клиента,
     /// бег, верховая езда и шаги, ждущие ответа сервера. Правила — Projects/Server/Mobiles/Mobile.cs: шаг в новую сторону
-    /// только поворачивает (Move), шаг в ту же сторону проверяется физикой (CanMove → <see cref="MovementCheck"/>),
-    /// сквозь живого моба игрок проходит лишь с полной выносливостью, и сервер сразу снимает 10 (CheckShove).
+    /// только поворачивает (Move), шаг в ту же сторону проверяется физикой и правилом прохода сквозь мобов
+    /// (<see cref="StepPredictor"/>); уставший пешком идёт шагом (<see cref="RunFatigue"/>). Ответы сервера разбирает <see cref="MovementReplies"/>.
     /// В мир клиента (<see cref="EntityStore"/>) идёт только клетка, которую подтвердил сервер: по ней удаляются далёкие
     /// объекты, а после отката предсказанного шага сервер их заново не пришлёт.
     /// </summary>
     public sealed class PlayerMotion
     {
         private readonly EntityStore _world;
-        private readonly MovementCheck _check;
+        private readonly StepPredictor _predictor;
         private readonly IMovementSender _sender;
         private readonly MovementSequenceQueue _queue = new MovementSequenceQueue();
         private bool _placed;
-        private bool _shoveUnanswered;
-        private byte _shoveSequence;
 
         public PlayerMotion(EntityStore world, MovementCheck check, IMovementSender sender)
         {
             _world = world;
-            _check = check;
+            _predictor = new StepPredictor(check);
             _sender = sender;
         }
 
@@ -47,7 +45,13 @@ namespace TheVerge.Core.Movement
         /// <summary>Шагов и поворотов, ждущих ответа сервера.</summary>
         public int PendingSteps => _queue.PendingCount;
 
-        /// <summary>Шагнуть или повернуться в направлении <paramref name="direction"/> (бит бега в нём не учитывается).</summary>
+        /// <summary>Клиент попросил о ресинхронизации и ждёт места от сервера (0x20): шагов нет.</summary>
+        public bool IsResyncing { get; private set; }
+
+        /// <summary>
+        /// Шагнуть или повернуться в направлении <paramref name="direction"/> (бит бега в нём не учитывается). Уставший
+        /// пешком персонаж идёт шагом, даже если просили бег.
+        /// </summary>
         public StepResult Step(Direction direction, bool run)
         {
             var player = _world.Player;
@@ -56,11 +60,17 @@ namespace TheVerge.Core.Movement
                 return StepResult.NotInWorld;
             }
 
+            if (IsResyncing)
+            {
+                return StepResult.Resyncing;
+            }
+
             if (!_queue.CanRequestStep)
             {
                 return StepResult.QueueFull;
             }
 
+            run = run && (player.IsGhost || IsMounted || RunFatigue.AllowsRun(player.Status.Stam));
             Direction facing = direction & Direction.FacingMask;
             if (facing != StepDirection)
             {
@@ -69,16 +79,15 @@ namespace TheVerge.Core.Movement
                 return StepResult.Turned;
             }
 
-            if (!TryPredict(player, facing, out var target, out bool shoved))
+            if (!_predictor.TryPredict(player, Position, facing, out var target, out bool shoves))
             {
                 return StepResult.Blocked;
             }
 
             byte sequence = Send(facing, run, target);
-            if (shoved)
+            if (shoves)
             {
-                _shoveUnanswered = true;
-                _shoveSequence = sequence;
+                _predictor.OnShoveSent(sequence);
             }
 
             Position = target;
@@ -86,68 +95,67 @@ namespace TheVerge.Core.Movement
         }
 
         /// <summary>
-        /// Подтверждение сервера (0x22): снимает самый старый ждущий шаг, и мир клиента узнаёт подтверждённую клетку.
-        /// Другой номер — false, ничего не меняется (рассинхрон решает вызывающий).
+        /// Подтверждение сервера (0x22): снимает самый старый ждущий шаг, и мир клиента узнаёт подтверждённую клетку и
+        /// известность своего персонажа. Другой номер — false, ничего не меняется (рассинхрон решает вызывающий).
         /// </summary>
-        public bool Confirm(byte sequence)
+        public bool Confirm(byte sequence, byte notoriety = MobileInfo.NotorietyUnknown)
         {
             if (!_queue.ConfirmStep(sequence, out var step))
             {
                 return false;
             }
 
-            if (_shoveUnanswered && step.Sequence == _shoveSequence)
-            {
-                _shoveUnanswered = false;
-            }
-
-            PlaceInWorld(step.TargetPosition, step.Direction);
+            _predictor.OnConfirmed(step.Sequence);
+            PlaceInWorld(step.TargetPosition, step.Direction, notoriety);
             return true;
         }
 
         /// <summary>
-        /// Сервер сам поставил персонажа: вход в мир или отказ шага 0x21 (откат). Персонаж встаёт на клетку и направление
-        /// сервера, очередь пуста, следующий шаг снова с номером 0.
+        /// Отказ сервера (0x21). Настоящий — персонаж встаёт на клетку и направление сервера, остальные ждущие шаги
+        /// отменены, следующий шаг с номером 0; отказ в уже отменённом шаге — старый: false, ничего не меняется.
         /// </summary>
-        public void ResetToServer(Point3D position, Direction direction)
+        public bool Reject(byte sequence, Point3D position, Direction direction)
         {
-            _queue.Reset();
-            _shoveUnanswered = false;
-            _placed = true;
-            Position = position;
-            StepDirection = direction & Direction.FacingMask;
-            IsRunning = (direction & Direction.Running) != 0;
-            PlaceInWorld(position, StepDirection);
-        }
-
-        // Шаг без прохода сквозь мобов; не вышло — с проходом, если он разрешён (shoved: шаг стоил выносливости).
-        // Призраку проход и так разрешён и бесплатен (MoverState.FromMobile, CheckShove: !Alive).
-        private bool TryPredict(Mobile player, Direction facing, out Point3D target, out bool shoved)
-        {
-            var mover = MoverState.FromMobile(player);
-            shoved = false;
-            if (!_check.CheckMovement(Position, facing, mover, out int newZ))
+            if (!_queue.Reject(sequence))
             {
-                shoved = !mover.CanShoveMobiles && CanShove(player)
-                    && _check.CheckMovement(Position, facing, MoverState.FromMobile(player, canShoveMobiles: true), out newZ);
-                if (!shoved)
-                {
-                    target = Position;
-                    return false;
-                }
+                return false;
             }
 
-            var cell = Position.GetStepPoint(facing);
-            target = new Point3D(cell.X, cell.Y, (sbyte)newZ);
+            StandAt(position, direction);
             return true;
         }
 
-        // Mobile.CheckShove: проход стоит 10 выносливости и разрешён только при полной. Пока сервер не ответил на шаг
-        // сквозь моба, выносливость в статусе ещё старая, а сервер её уже снял — второй раз подряд не проходим.
-        private bool CanShove(Mobile player)
+        /// <summary>Вход в мир (0x1B): персонаж на клетке сервера, прежних шагов нет, первый шаг с номером 0.</summary>
+        public void EnterWorld(Point3D position, Direction direction)
         {
-            var stamina = player.Status.Stam;
-            return !_shoveUnanswered && stamina.Maximum > 0 && stamina.Current == stamina.Maximum;
+            _queue.Reset();
+            IsResyncing = false;
+            StandAt(position, direction);
+        }
+
+        /// <summary>
+        /// Сервер сам поставил персонажа (0x20: телепорт, ресинхронизация, смена карты, тела, цвета): ждущие шаги отменены,
+        /// следующий шаг с номером 0.
+        /// </summary>
+        public void ResetToServer(Point3D position, Direction direction)
+        {
+            _queue.CancelPending();
+            IsResyncing = false;
+            StandAt(position, direction);
+        }
+
+        /// <summary>Другая карта (0xBF 0x08): ждущие шаги отменены; шагать некуда, пока сервер не пришлёт место (0x20).</summary>
+        public void OnMapChanged()
+        {
+            _queue.CancelPending();
+            _placed = false;
+        }
+
+        /// <summary>Клиент шлёт запрос ресинхронизации: ждущие шаги отменены, шагов нет до места от сервера (0x20).</summary>
+        public void BeginResync()
+        {
+            _queue.CancelPending();
+            IsResyncing = true;
         }
 
         private byte Send(Direction facing, bool run, Point3D target)
@@ -158,12 +166,22 @@ namespace TheVerge.Core.Movement
             return sequence;
         }
 
-        private void PlaceInWorld(Point3D position, Direction facing)
+        private void StandAt(Point3D position, Direction direction)
+        {
+            _predictor.Forget();
+            _placed = true;
+            Position = position;
+            StepDirection = direction & Direction.FacingMask;
+            IsRunning = (direction & Direction.Running) != 0;
+            PlaceInWorld(position, StepDirection, MobileInfo.NotorietyUnknown);
+        }
+
+        private void PlaceInWorld(Point3D position, Direction facing, byte notoriety)
         {
             var player = _world.Player;
             if (player != null)
             {
-                _world.UpdateMobile(player.Serial, new MobileInfo(player.Body, position, facing, player.Hue, player.Flags, MobileInfo.NotorietyUnknown));
+                _world.UpdateMobile(player.Serial, new MobileInfo(player.Body, position, facing, player.Hue, player.Flags, notoriety));
             }
         }
     }

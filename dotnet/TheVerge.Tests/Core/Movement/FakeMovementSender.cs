@@ -11,7 +11,12 @@ namespace TheVerge.Tests.Core.Movement
 
         public Sent Last => Steps[Steps.Count - 1];
 
+        /// <summary>Сколько раз ушёл запрос ресинхронизации.</summary>
+        public int Resyncs { get; private set; }
+
         public void SendStep(Direction direction, bool run, byte sequence) => Steps.Add(new Sent(direction, run, sequence));
+
+        public void SendResync() => Resyncs++;
 
         internal readonly struct Sent
         {

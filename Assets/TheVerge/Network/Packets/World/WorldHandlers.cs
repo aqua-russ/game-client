@@ -1,20 +1,25 @@
+using TheVerge.Core.Movement;
 using TheVerge.Core.World;
 using TheVerge.Network.Session;
 
 namespace TheVerge.Network.Packets.World
 {
-    /// <summary>Обработчики пакетов мира (PLAN Стадия 2, п. 9) — все разом для Bootstrap и бота.</summary>
+    /// <summary>
+    /// Обработчики пакетов мира (PLAN Стадия 2, п. 9) — все разом для Bootstrap и бота. С <see cref="MovementReplies"/> 0x20
+    /// о своём персонаже и смена карты сбрасывают и движение (PLAN Стадия 3, п. 6); без них — только мир.
+    /// </summary>
     public static class WorldHandlers
     {
-        public static void Register(PacketDispatcher dispatcher, EntityStore store, WorldEnvironment environment)
+        public static void Register(PacketDispatcher dispatcher, EntityStore store, WorldEnvironment environment,
+            MovementReplies? movement = null)
         {
             dispatcher.Register(MobileIncomingHandler.PacketId, new MobileIncomingHandler(store).Handle);
-            dispatcher.Register(MobileUpdateHandler.PacketId, new MobileUpdateHandler(store).Handle);
+            dispatcher.Register(MobileUpdateHandler.PacketId, new MobileUpdateHandler(store, movement).Handle);
             dispatcher.Register(MobileMovingHandler.PacketId, new MobileMovingHandler(store).Handle);
             dispatcher.Register(EquipUpdateHandler.PacketId, new EquipUpdateHandler(store).Handle);
             dispatcher.Register(RemoveEntityHandler.PacketId, new RemoveEntityHandler(store).Handle);
             dispatcher.Register(WorldObjectHandler.PacketId, new WorldObjectHandler(store).Handle);
-            dispatcher.Register(MapChangeHandler.PacketId, MapChangeHandler.SubCommand, new MapChangeHandler(store).Handle);
+            dispatcher.Register(MapChangeHandler.PacketId, MapChangeHandler.SubCommand, new MapChangeHandler(store, movement).Handle);
             dispatcher.Register(ServerChangeHandler.PacketId, new ServerChangeHandler(store, environment).Handle);
             RegisterEnvironment(dispatcher, store, environment);
         }

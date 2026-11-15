@@ -5,6 +5,7 @@ using TheVerge.Core.Targeting;
 using TheVerge.Core.Ports;
 using TheVerge.Core.Session;
 using TheVerge.Core.Combat;
+using TheVerge.Core.Movement;
 using TheVerge.Core.Status;
 using TheVerge.Core.World;
 using TheVerge.Network.Diagnostics;
@@ -13,6 +14,7 @@ using TheVerge.Network.Packets.Chat;
 using TheVerge.Network.Packets.Items;
 using TheVerge.Network.Packets.Session;
 using TheVerge.Network.Packets.Combat;
+using TheVerge.Network.Packets.Movement;
 using TheVerge.Network.Packets.Status;
 using TheVerge.Network.Packets.Targeting;
 using TheVerge.Network.Packets.World;
@@ -40,9 +42,13 @@ namespace TheVerge.Bot
             Game = new GameSession(Flow.Progress, sessionSender, connector, clock);
             AccountHandlers.Register(dispatcher, Flow);
             SessionHandlers.Register(dispatcher, World, new ServerRequests(sessionSender), Game);
-            InWorld = CreateWorld(dispatcher, Session, clock);
+            InWorld = CreateWorld(dispatcher, Session, clock, login.Data, log);
             World.PlayerConfirmed += Entities.Reset;
             World.PlayerConfirmed += ResetCombat;
+            if (InWorld.Movement != null)
+            {
+                World.PlayerConfirmed += InWorld.Movement.OnPlayerConfirmed;
+            }
             Session.Observer = Flow;
             var watchdog = new LoginWatchdog(Flow.Progress);
             Reconnector = login.Reconnect ? new Reconnector(Flow) : null;
@@ -73,13 +79,17 @@ namespace TheVerge.Bot
         /// <summary>Вход закончился и повтора не будет.</summary>
         public bool IsFinished => Flow.IsFinished && (Reconnector == null || !Reconnector.WillRetry);
 
-        /// <summary>Мир и действия в нём (PLAN Стадии 2, 4): обработчики пакетов мира, контейнеров, прицела, состояния мобов.</summary>
-        private static BotWorld CreateWorld(PacketDispatcher dispatcher, NetworkSession session, IClock clock)
+        /// <summary>
+        /// Мир и действия в нём (PLAN Стадии 2–4): обработчики пакетов мира, движения (только с файлами данных), контейнеров,
+        /// прицела, состояния мобов.
+        /// </summary>
+        private static BotWorld CreateWorld(PacketDispatcher dispatcher, NetworkSession session, IClock clock, BotWorldData? data, ILog log)
         {
             var entities = new EntityStore();
             var environment = new WorldEnvironment();
             var containers = new ContainerContents(entities);
-            WorldHandlers.Register(dispatcher, entities, environment);
+            var movement = data == null ? null : CreateMovement(dispatcher, session, entities, data, log);
+            WorldHandlers.Register(dispatcher, entities, environment, movement?.Replies);
             ItemHandlers.Register(dispatcher, containers);
             var actions = new ActionTimer();
             var items = new ItemCommands(entities, new ItemSender(session), clock, actions);
@@ -99,7 +109,19 @@ namespace TheVerge.Bot
                 QuickTargets = new TargetCommands(new QuickTargetSender(session), clock, actions),
                 Combat = new BotCombat(combat, new CombatCommands(new CombatSender(session), combat, entities), journal),
                 Corpses = corpses,
+                Movement = movement,
             };
+        }
+
+        /// <summary>Движение своего персонажа (PLAN Стадия 3): предсказание по карте из --data и ответы сервера на шаги.</summary>
+        private static BotMovement CreateMovement(PacketDispatcher dispatcher, NetworkSession session, EntityStore entities,
+            BotWorldData data, ILog log)
+        {
+            var sender = new MovementSender(session);
+            var motion = new PlayerMotion(entities, new MovementCheck(data.Map, data.Tiles, data.Multis, entities), sender);
+            var replies = new MovementReplies(motion, sender, log);
+            MovementHandlers.Register(dispatcher, replies);
+            return new BotMovement(motion, replies);
         }
 
         /// <summary>Новый вход: стойку и противника сервер пришлёт заново, журнал боя — с чистого листа.</summary>
@@ -116,6 +138,10 @@ namespace TheVerge.Bot
         {
             World.PlayerConfirmed -= Entities.Reset;
             World.PlayerConfirmed -= ResetCombat;
+            if (InWorld.Movement != null)
+            {
+                World.PlayerConfirmed -= InWorld.Movement.OnPlayerConfirmed;
+            }
             Session.Dispose();
         }
     }

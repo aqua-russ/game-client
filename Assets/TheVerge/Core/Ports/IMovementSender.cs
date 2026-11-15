@@ -10,5 +10,10 @@ namespace TheVerge.Core.Ports
     {
         /// <summary>Шаг или поворот на месте: направление (без бита бега), бег и номер шага.</summary>
         void SendStep(Direction direction, bool run, byte sequence);
+
+        /// <summary>
+        /// Просьба к серверу прислать своё место заново (0x22 от клиента, 3 байта): клиент и сервер разошлись в счёте шагов.
+        /// </summary>
+        void SendResync();
     }
 }
