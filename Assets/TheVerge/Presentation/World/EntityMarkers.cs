@@ -78,7 +78,7 @@ namespace TheVerge.Presentation.World
             _world.ItemChanged -= OnItem;
             _world.Removed -= OnRemoved;
             _world.Cleared -= OnCleared;
-            ReleaseAll();
+            DestroyAll();
             _mobiles.Dispose();
             _items.Dispose();
         }
@@ -169,11 +169,32 @@ namespace TheVerge.Presentation.World
             _markers.Clear();
         }
 
+        // Закрытие карты: объекты сразу удаляются, а не возвращаются в пул. При остановке Play Unity удаляет объекты сцены
+        // сам и может сделать это раньше, чем закроется карта, — удалённый объект трогать нельзя, а Destroy его пропускает.
+        private void DestroyAll()
+        {
+            foreach (var marker in _markers.Values)
+            {
+                UnityEngine.Object.Destroy(marker.Object);
+            }
+
+            _markers.Clear();
+        }
+
+        // Объект в пуле мог быть уже удалён самим Unity (остановка Play): такой не включаем и не выключаем.
         private ObjectPool<Marker> NewPool(PrimitiveType shape, bool mobile) => new ObjectPool<Marker>(
             () => Create(shape, mobile),
-            marker => marker.Object.SetActive(true),
-            marker => marker.Object.SetActive(false),
+            marker => SetActive(marker, true),
+            marker => SetActive(marker, false),
             marker => UnityEngine.Object.Destroy(marker.Object));
+
+        private static void SetActive(Marker marker, bool active)
+        {
+            if (marker.Object != null)
+            {
+                marker.Object.SetActive(active);
+            }
+        }
 
         private Marker Create(PrimitiveType shape, bool mobile)
         {
