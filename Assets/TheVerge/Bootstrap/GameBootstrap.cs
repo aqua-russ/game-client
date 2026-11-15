@@ -1,6 +1,7 @@
 using System.Threading;
 using TheVerge.Core.Session.Screens;
-using TheVerge.Core.World;
+using TheVerge.Presentation.UI;
+using TheVerge.Presentation.UI.Movement;
 using TheVerge.Presentation.UI.Session;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -9,9 +10,10 @@ namespace TheVerge.Bootstrap
 {
     /// <summary>
     /// Точка входа сцены Bootstrap.unity (AGENTS.md §2.1): связывает экраны входа (<see cref="LoginScreens"/>, ядро) с их
-    /// разметкой UI Toolkit (<see cref="LoginScreensView"/>) и каждый кадр даёт ядру тик с бюджетом времени
-    /// (ClientLimits.TickBudgetMs). Ссылки на разметку и тему ставит меню «The Verge → Prepare Bootstrap Scene».
-    /// Имя класса и файл не меняются: на них ссылается сцена.
+    /// разметкой UI Toolkit (<see cref="LoginScreensView"/>), отладочную карту и ходьбу (<see cref="DebugMapHost"/>) и каждый
+    /// кадр даёт ядру тик с бюджетом времени (ClientLimits.TickBudgetMs): сначала клавиши, потом тик, потом картинка.
+    /// Ссылки на разметку и тему ставит меню «The Verge → Prepare Bootstrap Scene». Имя класса и файл не меняются: на них
+    /// ссылается сцена.
     /// </summary>
     public sealed class GameBootstrap : MonoBehaviour
     {
@@ -23,10 +25,12 @@ namespace TheVerge.Bootstrap
         private readonly UnityClock _clock = new UnityClock();
         private CancellationTokenSource _stop;
         private PanelSettings _panel;
+        private UnityLog _log;
+        private WorldDataSource _data;
         private LoginScreens _screens;
         private LoginScreensView _view;
         private DebugMapHost _debugMap;
-        private EntityStore _entities;
+        private UnityWorld _world;
 
         private void Awake()
         {
@@ -39,21 +43,25 @@ namespace TheVerge.Bootstrap
             }
 
             _stop = new CancellationTokenSource();
-            var log = new UnityLog();
+            _log = new UnityLog();
+            _data = new WorldDataSource(_log);
             var stop = _stop.Token;
-            _screens = new LoginScreens(() => NewClient(log, stop));
-            _debugMap = new DebugMapHost(log, FindCamera(), position => _view != null && _view.IsPointerOverUi(position),
-                text => _view?.ShowCellReport(text));
+            _screens = new LoginScreens(() => NewClient(stop));
             LoginPrefs.Load(_screens.Form);
             _screens.Submitted += OnSubmitted;
-            _view = new LoginScreensView(CreateDocument().rootVisualElement, _screens);
+            var root = CreateDocument().rootVisualElement;
+            _view = new LoginScreensView(root, _screens);
+            var ui = new WorldUiHooks(_view.IsPointerOverUi, ShowCellReport, () => _view.IsTextInputFocused,
+                new RunIndicatorView(root));
+            _debugMap = new DebugMapHost(_log, FindCamera(), _data, ui);
             _view.Refresh();
         }
 
         private void Update()
         {
+            _debugMap.ReadInput();
             _screens.Tick(_clock.NowMs);
-            _debugMap.Update(_screens.Screen == LoginScreen.InWorld, _entities);
+            _debugMap.Update(_screens.Screen == LoginScreen.InWorld, _world, _clock.NowMs);
             _view.SetMapStatus(_debugMap.Status);
             _view.Refresh();
         }
@@ -69,6 +77,7 @@ namespace TheVerge.Bootstrap
             _debugMap?.Dispose();
             _view?.Dispose();
             _screens.Dispose();
+            _data.Dispose();
             _stop.Cancel();
             _stop.Dispose();
             Destroy(_panel);
@@ -76,11 +85,19 @@ namespace TheVerge.Bootstrap
 
         private void OnSubmitted() => LoginPrefs.Save(_screens.Form);
 
-        // Каждый вход — новый клиент и новый мир; отладочная карта следит за миром текущего входа.
-        private LoginParts NewClient(UnityLog log, CancellationToken stop)
+        // Окно клетки показывается на экране и пишется в журнал Unity (Console), откуда текст можно скопировать.
+        private void ShowCellReport(string text)
         {
-            var parts = UnityLoginClient.Create(_clock, log, stop, out var entities);
-            _entities = entities;
+            _log.Info(text);
+            _view.ShowCellReport(text);
+        }
+
+        // Каждый вход — новый клиент и новый мир; карта и ходьба следят за миром текущего входа. Файлы данных читаются при
+        // первом входе и дальше общие.
+        private LoginParts NewClient(CancellationToken stop)
+        {
+            var parts = UnityLoginClient.Create(_clock, _log, stop, _data.Load(), out var world);
+            _world = world;
             return parts;
         }
 

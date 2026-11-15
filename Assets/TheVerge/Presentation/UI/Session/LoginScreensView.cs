@@ -55,6 +55,7 @@ namespace TheVerge.Presentation.UI.Session
 
             _seenRevision = revision;
             var screen = _screens.Screen;
+            var enteringWorld = screen == LoginScreen.InWorld && _shownScreen != LoginScreen.InWorld;
             if (screen == LoginScreen.CreateCharacter && _shownScreen != LoginScreen.CreateCharacter)
             {
                 _create.Load();
@@ -63,6 +64,11 @@ namespace TheVerge.Presentation.UI.Session
             _shownScreen = screen;
             ShowOnly(screen);
             RefreshPanel(screen);
+            if (enteringWorld)
+            {
+                // Поле пароля могло остаться в фокусе: в мире клавиши движения не должны ему достаться.
+                TextInputFocus.Release(_root.panel);
+            }
         }
 
         /// <summary>Строка отладочной карты на панели «в мире»: что нарисовано или почему карты нет.</summary>
@@ -73,6 +79,9 @@ namespace TheVerge.Presentation.UI.Session
 
         /// <summary>Курсор (пиксели экрана, начало внизу слева) над панелью интерфейса — клик в мир не идёт.</summary>
         public bool IsPointerOverUi(UnityEngine.Vector2 screenPosition) => _guard.IsOver(screenPosition);
+
+        /// <summary>Курсор в видимом поле ввода: горячие клавиши (движение) молчат (CONTROLS §4).</summary>
+        public bool IsTextInputFocused => TextInputFocus.IsEditing(_root.panel);
 
         public void Dispose()
         {

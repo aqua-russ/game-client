@@ -6,8 +6,9 @@ using TheVerge.Core.World;
 namespace TheVerge.Core.MapView
 {
     /// <summary>
-    /// Решает, когда пересобирать отладочную карту: свой персонаж перешёл на другую клетку, сменилась карта, мир очищен,
-    /// появился, изменился или исчез дом или корабль. Движение чужих мобов и обычные предметы карту не трогают.
+    /// Решает, когда пересобирать отладочную карту: свой персонаж отошёл от центра прошлой сборки на
+    /// <see cref="SceneLimits.RebuildStepCells"/> клеток, сменилась карта, мир очищен, появился, изменился или исчез дом или
+    /// корабль. Движение чужих мобов и обычные предметы карту не трогают.
     /// Вызывается из главного потока; <see cref="TryTakeRebuild"/> — раз в кадр.
     /// </summary>
     public sealed class SceneTracker : IDisposable
@@ -42,7 +43,7 @@ namespace TheVerge.Core.MapView
 
             centerX = player.Position.X;
             centerY = player.Position.Y;
-            if (_built && !_dirty && centerX == _x && centerY == _y && map == _map)
+            if (_built && !_dirty && map == _map && !FarFromCenter(centerX, centerY))
             {
                 return false;
             }
@@ -67,6 +68,9 @@ namespace TheVerge.Core.MapView
             _world.Removed -= OnRemoved;
             _world.Cleared -= OnCleared;
         }
+
+        private bool FarFromCenter(int x, int y) =>
+            Math.Max(Math.Abs(x - _x), Math.Abs(y - _y)) >= SceneLimits.RebuildStepCells;
 
         private void OnItemChanged(Item item)
         {

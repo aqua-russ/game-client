@@ -1,3 +1,4 @@
+using TheVerge.Core.Movement;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -5,7 +6,8 @@ namespace TheVerge.Presentation.Camera
 {
     /// <summary>
     /// Отладочная камера (ADR 0015 п. 6: настоящая камера — Стадия 9): смотрит на персонажа сверху под наклоном, север
-    /// карты вверху экрана; колесо мыши — приближение. Поворота нет. Ввод — только Input System.
+    /// карты вверху экрана — клавиши движения по раскладке «север сверху» (<see cref="Layout"/>); колесо мыши —
+    /// приближение. Поворота нет. Ввод — только Input System.
     /// </summary>
     public sealed class DebugCamera
     {
@@ -26,6 +28,9 @@ namespace TheVerge.Presentation.Camera
             _camera.nearClipPlane = 0.3f;
             _camera.farClipPlane = 300f;
         }
+
+        /// <summary>Как камера показывает карту: от этого зависит, какое направление UO даёт клавиша (MoveDirectionTable).</summary>
+        public CameraLayout Layout => CameraLayout.NorthUp;
 
         /// <summary>Раз в кадр: зум по колесу и место камеры; <paramref name="target"/> — точка сцены, на которую смотрим.</summary>
         public void Update(Vector3 target)

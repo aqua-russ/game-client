@@ -190,3 +190,12 @@
     font-size: 13px;
     color: var(--color-text);
 }
+
+/* Индикатор «Бег / Шаг» (UI/Movement/RunIndicator.uxml) — по центру внизу экрана, клики мимо него идут в мир. */
+.run-indicator-host {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 16px;
+    align-items: center;
+}

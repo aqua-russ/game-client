@@ -14,5 +14,15 @@ namespace TheVerge.Core.MapView
 
         /// <summary>Высота кубика предмета на земле.</summary>
         public const int ItemHeight = 4;
+
+        /// <summary>
+        /// Пересобирать карту, когда свой персонаж отошёл от центра прошлой сборки на столько клеток (решение пользователя
+        /// 15 ноября, задача 3.9: пересборка на каждом шаге шла бы при беге верхом 10 раз в секунду). Карта рисуется на
+        /// столько же клеток шире обзора (<see cref="ViewRadius"/>), поэтому всё в обзоре персонажа нарисовано.
+        /// </summary>
+        public const int RebuildStepCells = 4;
+
+        /// <summary>Радиус отладочной карты вокруг центра сборки, клеток: обзор сервера и запас до следующей пересборки.</summary>
+        public const int ViewRadius = Session.ServerLimits.UpdateRange + RebuildStepCells;
     }
 }

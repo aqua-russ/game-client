@@ -49,7 +49,7 @@ namespace TheVerge.Presentation.World
                 return;
             }
 
-            _builder.Build(x, y, SceneViewRadius, _blocks);
+            _builder.Build(x, y, SceneLimits.ViewRadius, _blocks);
             _meshes.Rebuild(_blocks);
             Status = "Карта: блоков " + _blocks.Count + ", центр (" + x + ", " + y + ")";
         }
@@ -59,7 +59,5 @@ namespace TheVerge.Presentation.World
             _tracker.Dispose();
             _meshes.Dispose();
         }
-
-        private static int SceneViewRadius => TheVerge.Core.Session.ServerLimits.UpdateRange;
     }
 }

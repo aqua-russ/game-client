@@ -1,3 +1,4 @@
+using System;
 using TheVerge.Core.Ports;
 using TheVerge.Core.Primitives;
 using TheVerge.Core.World;
@@ -26,6 +27,19 @@ namespace TheVerge.Core.Movement
             _predictor = new StepPredictor(check);
             _sender = sender;
         }
+
+        /// <summary>Шаг предсказан: персонаж уже на новой клетке, запрос ушёл серверу (для показа — <see cref="PlayerStepShow"/>).</summary>
+        public event Action<StepMove>? Moved;
+
+        /// <summary>
+        /// Сервер сам поставил персонажа: клетка, направление (без бита бега) и причина — вход в мир
+        /// (<see cref="SnapReason.Appeared"/>), откат по отказу (<see cref="SnapReason.Rejected"/>), место от сервера
+        /// (<see cref="SnapReason.Repositioned"/>).
+        /// </summary>
+        public event Action<Point3D, Direction, SnapReason>? Placed;
+
+        /// <summary>Сервер поставил персонажа на клетку и с тех пор не уводил на другую карту (0xBF 0x08).</summary>
+        public bool IsPlaced => _placed;
 
         /// <summary>Клетка, где персонаж стоит по предсказанию (сервер мог ещё не ответить на шаги).</summary>
         public Point3D Position { get; private set; }
@@ -102,8 +116,10 @@ namespace TheVerge.Core.Movement
                 _predictor.OnShoveSent(sequence);
             }
 
+            var from = Position;
             Position = target;
             MovesSent++;
+            Moved?.Invoke(new StepMove(from, target, run ? facing | Direction.Running : facing, IsMounted));
             return StepResult.Moved;
         }
 
@@ -134,7 +150,7 @@ namespace TheVerge.Core.Movement
                 return false;
             }
 
-            StandAt(position, direction);
+            StandAt(position, direction, SnapReason.Rejected);
             return true;
         }
 
@@ -143,7 +159,7 @@ namespace TheVerge.Core.Movement
         {
             _queue.Reset();
             IsResyncing = false;
-            StandAt(position, direction);
+            StandAt(position, direction, SnapReason.Appeared);
         }
 
         /// <summary>
@@ -164,7 +180,7 @@ namespace TheVerge.Core.Movement
             }
 
             IsResyncing = false;
-            StandAt(position, direction);
+            StandAt(position, direction, SnapReason.Repositioned);
         }
 
         /// <summary>Другая карта (0xBF 0x08): ждущие шаги отменены; шагать некуда, пока сервер не пришлёт место (0x20).</summary>
@@ -191,7 +207,7 @@ namespace TheVerge.Core.Movement
             return sequence;
         }
 
-        private void StandAt(Point3D position, Direction direction)
+        private void StandAt(Point3D position, Direction direction, SnapReason reason)
         {
             ServerResets++;
             _predictor.Forget();
@@ -200,6 +216,7 @@ namespace TheVerge.Core.Movement
             StepDirection = direction & Direction.FacingMask;
             IsRunning = (direction & Direction.Running) != 0;
             PlaceInWorld(position, StepDirection, MobileInfo.NotorietyUnknown);
+            Placed?.Invoke(position, StepDirection, reason);
         }
 
         private void PlaceInWorld(Point3D position, Direction facing, byte notoriety)

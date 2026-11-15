@@ -11,7 +11,9 @@ namespace TheVerge.Presentation.World
     /// <summary>
     /// Мобы — цилиндры, предметы на земле — кубики (PLAN Стадия 2, п. 13). Следует за событиями мира; объекты берутся из
     /// пула и возвращаются в него по удалению (0x1D), очистке мира и уходу предмета в контейнер или на моба. Свой
-    /// персонаж — другого цвета. Множество — по серийнику.
+    /// персонаж — другого цвета; если его ведёт показыватель (<see cref="PlayerShower"/>), здесь он только создаётся, а
+    /// двигает его показыватель. Чужие мобы пока встают на клетку сервера (их показыватель — следующая часть задачи 3.9).
+    /// Множество — по серийнику.
     /// </summary>
     public sealed class EntityMarkers : IDisposable
     {
@@ -32,12 +34,15 @@ namespace TheVerge.Presentation.World
         private readonly Dictionary<uint, Marker> _markers = new Dictionary<uint, Marker>();
         private readonly ObjectPool<Marker> _mobiles;
         private readonly ObjectPool<Marker> _items;
+        private readonly bool _playerShownSeparately;
 
-        public EntityMarkers(EntityStore world, Transform root, DebugMaterials materials)
+        /// <param name="playerShownSeparately">Свой цилиндр двигает показыватель шагов, а не события мира.</param>
+        public EntityMarkers(EntityStore world, Transform root, DebugMaterials materials, bool playerShownSeparately)
         {
             _world = world;
             _root = root;
             _materials = materials;
+            _playerShownSeparately = playerShownSeparately;
             _mobiles = NewPool(PrimitiveType.Cylinder, true);
             _items = NewPool(PrimitiveType.Cube, false);
             _world.MobileChanged += OnMobile;
@@ -48,6 +53,23 @@ namespace TheVerge.Presentation.World
         }
 
         public int Count => _markers.Count;
+
+        /// <summary>Середина цилиндра моба, стоящего на точке земли <paramref name="ground"/> (клетка → сцена — CellSpace).</summary>
+        public static Vector3 MobileCenter(Vector3 ground) =>
+            new Vector3(ground.x, ground.y + CellSpace.Height(SceneLimits.MobileHeight) / 2f, ground.z);
+
+        /// <summary>Цилиндр моба, если он есть на карте.</summary>
+        public bool TryGetMobile(Serial serial, out Transform marker)
+        {
+            if (_markers.TryGetValue(serial.Value, out var found) && found.IsMobile)
+            {
+                marker = found.Object.transform;
+                return true;
+            }
+
+            marker = null;
+            return false;
+        }
 
         public void Dispose()
         {
@@ -81,7 +103,10 @@ namespace TheVerge.Presentation.World
             marker.Renderer.sharedMaterial = isPlayer ? _materials.Player : _materials.Mobile;
             // Свой цилиндр шире остальных: если на клетке стоит ещё кто-то, голубой виден вокруг него.
             marker.Object.transform.localScale = MobileScale(isPlayer ? PlayerRadius : MobileRadius);
-            Place(marker, mobile.Position, SceneLimits.MobileHeight);
+            if (!isPlayer || !_playerShownSeparately)
+            {
+                Place(marker, mobile.Position, SceneLimits.MobileHeight);
+            }
         }
 
         private void OnItem(Item item)

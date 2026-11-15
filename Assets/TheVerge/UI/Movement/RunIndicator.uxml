@@ -1,0 +1,4 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="RunIndicator.uss" />
+    <ui:Label name="runIndicator" text="Бег" class="run-indicator hidden" />
+</ui:UXML>

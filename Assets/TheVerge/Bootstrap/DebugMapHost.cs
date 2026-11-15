@@ -1,114 +1,106 @@
 using System;
-using System.IO;
 using TheVerge.Core.MapView;
 using TheVerge.Core.Ports;
-using TheVerge.Core.World;
+using TheVerge.Presentation.Input;
+using TheVerge.Presentation.UI;
 using TheVerge.Presentation.World;
 using UnityEngine;
 
 namespace TheVerge.Bootstrap
 {
     /// <summary>
-    /// Хозяин отладочной карты (PLAN Стадия 2, п. 13): читает файлы данных один раз при первом входе в мир, создаёт
-    /// <see cref="DebugMapPresenter"/> на время «в мире» и закрывает его при выходе. Папка данных — настройка Unity
-    /// <c>TheVerge.DataFolder</c>, по умолчанию remaster/uo-data/Ultima Online Classic рядом с папкой клиента.
+    /// Хозяин отладочной карты и ходьбы (PLAN Стадия 2, п. 13; Стадия 3, п. 9): на время «в мире» создаёт карту
+    /// (<see cref="DebugMapPresenter"/>) и клавиши движения (<see cref="MovementInputPresenter"/>), при выходе из мира или
+    /// новом входе закрывает их. Файлы данных — <see cref="WorldDataSource"/>; без них карты нет, а ходьбы нет — и об этом
+    /// говорит индикатор «Бег / Шаг».
     /// </summary>
     public sealed class DebugMapHost : IDisposable
     {
-        private const string FolderKey = "TheVerge.DataFolder";
+        private const string NoWalkingText = "Ходьба недоступна: не найдены файлы данных (папка и причина — в Console)";
 
         private readonly ILog _log;
         private readonly Camera _camera;
-        private readonly Func<Vector2, bool> _pointerOverUi;
-        private readonly Action<string> _showReport;
-        private UnityWorldData _data;
-        private bool _dataTried;
-        private string _dataError = string.Empty;
+        private readonly WorldDataSource _data;
+        private readonly WorldUiHooks _ui;
+        private UnityWorld _world;
         private DebugMapPresenter _presenter;
+        private MovementInputPresenter _input;
 
-        /// <param name="pointerOverUi">Позиция курсора на экране → над панелью ли он.</param>
-        /// <param name="showReport">Показать окно клетки (клик по клетке).</param>
-        public DebugMapHost(ILog log, Camera camera, Func<Vector2, bool> pointerOverUi, Action<string> showReport)
+        public DebugMapHost(ILog log, Camera camera, WorldDataSource data, WorldUiHooks ui)
         {
             _log = log;
             _camera = camera;
-            _pointerOverUi = pointerOverUi;
-            _showReport = showReport;
+            _data = data;
+            _ui = ui;
         }
 
         /// <summary>Что показать на панели «в мире»; пусто — ничего.</summary>
         public string Status => _presenter != null ? _presenter.Status : string.Empty;
 
-        /// <summary>Раз в кадр: <paramref name="entities"/> — мир текущего входа (null — клиента нет).</summary>
-        public void Update(bool inWorld, EntityStore entities)
+        /// <summary>Раз в кадр до тика ядра: клавиши движения → намерение, чтобы нажатие и шаг пришлись на один кадр.</summary>
+        public void ReadInput() => _input?.Update(_presenter.CameraLayout);
+
+        /// <summary>Раз в кадр после тика ядра: <paramref name="world"/> — мир текущего входа (null — клиента нет).</summary>
+        /// <param name="now">Часы ядра (IClock).</param>
+        public void Update(bool inWorld, UnityWorld world, long now)
         {
-            if (!inWorld || entities == null)
+            if (!inWorld || world == null || world != _world)
             {
                 Close();
+            }
+
+            if (!inWorld || world == null)
+            {
                 return;
             }
 
-            if (_presenter != null && _presenter.Entities != entities)
+            if (_presenter == null)
             {
-                Close();
+                Open(world);
             }
 
-            _presenter ??= Open(entities);
-            _presenter.Update();
+            _presenter.Update(now);
         }
 
-        public void Dispose()
-        {
-            Close();
-            _data?.Dispose();
-            _data = null;
-        }
+        public void Dispose() => Close();
 
-        private DebugMapPresenter Open(EntityStore entities)
+        private void Open(UnityWorld world)
         {
-            EnsureData();
-            var builder = _data == null ? null : new SceneBuilder(_data.Map, _data.Tiles, _data.Multis, entities);
-            var inspector = _data == null ? null : new CellInspector(_data.Map, _data.Tiles, _data.Multis, entities);
-            var presenter = new DebugMapPresenter(entities, builder, inspector, _camera, _pointerOverUi, ShowReport);
-            if (_data == null)
+            _world = world;
+            var data = _data.Load();
+            var entities = world.Entities;
+            var builder = data == null ? null : new SceneBuilder(data.Map, data.Tiles, data.Multis, entities);
+            var inspector = data == null ? null : new CellInspector(data.Map, data.Tiles, data.Multis, entities);
+            var movement = world.Movement;
+            _presenter = new DebugMapPresenter(new DebugMapParts(entities, builder, inspector, movement?.Show), _camera, _ui);
+            if (movement != null)
             {
-                _log.Warning("Отладочная карта без земли: " + _dataError);
+                _input = new MovementInputPresenter(movement.Intent, _ui.RunIndicator, _ui.TextInputFocused);
+            }
+            else
+            {
+                _ui.RunIndicator.ShowUnavailable(NoWalkingText);
             }
 
-            return presenter;
-        }
-
-        // Окно клетки показывается на экране и пишется в журнал Unity (Console), откуда текст можно скопировать.
-        private void ShowReport(string text)
-        {
-            _log.Info(text);
-            _showReport(text);
+            if (data == null)
+            {
+                _log.Warning("Отладочная карта без земли и без ходьбы: " + _data.Problem);
+            }
         }
 
         private void Close()
         {
-            _presenter?.Dispose();
-            _presenter = null;
-        }
-
-        private void EnsureData()
-        {
-            if (_dataTried)
+            if (_presenter == null)
             {
                 return;
             }
 
-            _dataTried = true;
-            var folder = PlayerPrefs.GetString(FolderKey, DefaultFolder());
-            _data = UnityWorldData.Load(folder, _log, out _dataError);
-            if (_data == null)
-            {
-                _dataError = "файлы данных (" + folder + "): " + _dataError;
-            }
+            _input?.Dispose();
+            _input = null;
+            _presenter.Dispose();
+            _presenter = null;
+            _world = null;
+            _ui.RunIndicator.Hide();
         }
-
-        // Assets → The Verge → client → remaster: три шага вверх от папки Assets.
-        private static string DefaultFolder() =>
-            Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "..", "uo-data", "Ultima Online Classic"));
     }
 }

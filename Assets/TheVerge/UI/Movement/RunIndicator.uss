@@ -1,0 +1,20 @@
+/* Индикатор «Бег / Шаг» (CONTROLS §4). Место на экране задаёт экран, куда он вставлен (LoginScreens.uss). */
+.run-indicator {
+    padding: 4px 16px;
+    font-size: 16px;
+    -unity-font-style: bold;
+    color: var(--color-text);
+    background-color: var(--color-card);
+    border-width: 1px;
+    border-color: var(--color-card-border);
+    border-radius: 6px;
+}
+
+.run-indicator--walk {
+    color: var(--color-muted);
+}
+
+.run-indicator--unavailable {
+    -unity-font-style: normal;
+    color: var(--color-danger);
+}

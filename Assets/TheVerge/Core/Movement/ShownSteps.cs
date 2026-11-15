@@ -3,9 +3,9 @@ using TheVerge.Core.Primitives;
 namespace TheVerge.Core.Movement
 {
     /// <summary>
-    /// Шаги показа одного чужого моба: текущий шаг картинки и очередь пришедших, но ещё не показанных (кольцо без новой
-    /// памяти). <see cref="Target"/> — последняя клетка от сервера. Правила — <see cref="OthersMotion"/>, время шага —
-    /// <see cref="StepTiming"/>.
+    /// Шаги показа одного моба: текущий шаг картинки и очередь пришедших, но ещё не показанных (кольцо без новой памяти).
+    /// <see cref="Target"/> — последняя клетка (от сервера или, у своего персонажа, предсказанная). Правила — чужие
+    /// <see cref="OthersMotion"/>, свой <see cref="PlayerStepShow"/>; время шага — <see cref="StepTiming"/>.
     /// </summary>
     internal sealed class ShownSteps
     {

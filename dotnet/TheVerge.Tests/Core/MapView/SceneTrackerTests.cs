@@ -7,8 +7,10 @@ using static TheVerge.Tests.Core.World.WorldSamples;
 namespace TheVerge.Tests.Core.MapView
 {
     /// <summary>
-    /// Когда пересобирать отладочную карту: когда свой персонаж перешёл на другую клетку, сменилась карта, мир очищен или
-    /// появился/исчез дом или корабль. Перемещение чужих мобов и обычных предметов карту не трогает.
+    /// Когда пересобирать отладочную карту: свой персонаж отошёл от центра прошлой сборки на SceneLimits.RebuildStepCells
+    /// клеток (4 — решение пользователя 15 ноября, задача 3.9: на каждом шаге пересборка при беге верхом шла бы 10 раз в
+    /// секунду; карта рисуется на столько же клеток шире обзора), сменилась карта, мир очищен или появился/исчез дом или
+    /// корабль. Перемещение чужих мобов и обычных предметов карту не трогает.
     /// </summary>
     public sealed class SceneTrackerTests
     {
@@ -54,15 +56,50 @@ namespace TheVerge.Tests.Core.MapView
             Assert.That(Take(), Is.False);
         }
 
-        [Test]
-        public void PlayerStepsToOtherCell_Rebuild()
+        [TestCase(101, 100)]
+        [TestCase(103, 100)]
+        [TestCase(97, 103)]
+        [TestCase(103, 97)]
+        public void PlayerWithinThreeCellsOfCenter_NoRebuild(int x, int y)
         {
             EnterWorld();
 
-            _store.MovePlayerTo(new Point3D(101, 100, 0));
+            _store.MovePlayerTo(new Point3D((short)x, (short)y, 0));
 
-            Assert.That(Take(out var x, out var y, out _), Is.True);
-            Assert.That((x, y), Is.EqualTo((101, 100)));
+            Assert.That(Take(), Is.False);
+        }
+
+        [TestCase(104, 100)]
+        [TestCase(96, 100)]
+        [TestCase(100, 104)]
+        [TestCase(102, 96)]
+        public void PlayerFourCellsFromCenter_RebuildAroundPlayer(int x, int y)
+        {
+            EnterWorld();
+
+            _store.MovePlayerTo(new Point3D((short)x, (short)y, 0));
+
+            Assert.That(Take(out var cx, out var cy, out _), Is.True);
+            Assert.That((cx, cy), Is.EqualTo((x, y)));
+            Assert.That(Take(), Is.False);
+        }
+
+        [Test]
+        public void StepByStep_RebuildEveryFourthCell_FromNewCenter()
+        {
+            EnterWorld();
+            var rebuilds = new System.Collections.Generic.List<int>();
+
+            for (short x = 101; x <= 112; x++)
+            {
+                _store.MovePlayerTo(new Point3D(x, 100, 0));
+                if (Take(out var cx, out _, out _))
+                {
+                    rebuilds.Add(cx);
+                }
+            }
+
+            Assert.That(rebuilds, Is.EqualTo(new[] { 104, 108, 112 }));
         }
 
         [Test]
