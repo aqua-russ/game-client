@@ -108,5 +108,20 @@ namespace TheVerge.Core.Session
         /// 900 мс — помещаются: всплеск лага догоняется без перескока; место секундной давности в бою хуже перескока.
         /// </summary>
         public const int StepBacklogSnapMs = 1000;
+
+        /// <summary>
+        /// Режим «симуляция пинга» (PLAN Стадия 3, п. 9; ADR 0020 п. 9): задержка по умолчанию в каждую сторону, мс. 50 туда и
+        /// 50 обратно — пинг около 100 мс, середина целевого диапазона ADR 0020 (до 200 мс).
+        /// </summary>
+        public const int LagSimulationDefaultDelayMs = 50;
+
+        /// <summary>Разброс по умолчанию в каждую сторону, ± мс: в сумме ±30 мс, как в целях ADR 0020.</summary>
+        public const int LagSimulationDefaultJitterMs = 15;
+
+        /// <summary>Наибольшая задержка в одну сторону, мс: всплеск лага 500 мс (критерии Стадии 3) помещается с запасом.</summary>
+        public const int LagSimulationMaxDelayMs = 1000;
+
+        /// <summary>Наибольший разброс в одну сторону, ± мс.</summary>
+        public const int LagSimulationMaxJitterMs = 500;
     }
 }

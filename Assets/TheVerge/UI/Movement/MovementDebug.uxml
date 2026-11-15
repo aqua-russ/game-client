@@ -1,4 +1,5 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Template name="LagSimulation" src="../Diagnostics/LagSimulation.uxml" />
     <ui:Style src="MovementDebug.uss" />
     <ui:VisualElement name="movementDebug" class="movement-debug hidden">
         <ui:VisualElement class="movement-debug-head">
@@ -17,6 +18,7 @@
             <ui:Label text="Чужие мобы" class="movement-debug-section" />
             <ui:Label name="debugOthers" class="movement-debug-line" />
             <ui:Label name="debugOthersSnaps" class="movement-debug-line" />
+            <ui:Instance template="LagSimulation" />
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

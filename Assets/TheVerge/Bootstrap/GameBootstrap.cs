@@ -1,7 +1,7 @@
 using System.Threading;
+using TheVerge.Core.Diagnostics;
 using TheVerge.Core.Session.Screens;
 using TheVerge.Presentation.UI;
-using TheVerge.Presentation.UI.Movement;
 using TheVerge.Presentation.UI.Session;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -30,7 +30,10 @@ namespace TheVerge.Bootstrap
         private LoginScreens _screens;
         private LoginScreensView _view;
         private DebugMapHost _debugMap;
-        private MovementDebugView _movementDebug;
+        private WorldPanels _panels;
+
+        // Симуляция пинга (PLAN Стадия 3, п. 9): на весь запуск, по умолчанию выключена; включает экран отладки.
+        private readonly LagSimulation _lag = new LagSimulation();
         private UnityWorld _world;
 
         private void Awake()
@@ -52,10 +55,9 @@ namespace TheVerge.Bootstrap
             _screens.Submitted += OnSubmitted;
             var root = CreateDocument().rootVisualElement;
             _view = new LoginScreensView(root, _screens);
-            _movementDebug = new MovementDebugView(root);
-            var ui = new WorldUiHooks(_view.IsPointerOverUi, ShowCellReport, () => _view.IsTextInputFocused,
-                new RunIndicatorView(root), _movementDebug);
-            _debugMap = new DebugMapHost(_log, FindCamera(), _data, ui);
+            _panels = new WorldPanels(root);
+            var ui = new WorldUiHooks(_view.IsPointerOverUi, ShowCellReport, () => _view.IsTextInputFocused, _panels);
+            _debugMap = new DebugMapHost(_log, FindCamera(), _data, ui, _lag);
             _view.Refresh();
         }
 
@@ -77,7 +79,7 @@ namespace TheVerge.Bootstrap
 
             _screens.Submitted -= OnSubmitted;
             _debugMap?.Dispose();
-            _movementDebug?.Dispose();
+            _panels?.Dispose();
             _view?.Dispose();
             _screens.Dispose();
             _data.Dispose();
@@ -99,7 +101,7 @@ namespace TheVerge.Bootstrap
         // первом входе и дальше общие.
         private LoginParts NewClient(CancellationToken stop)
         {
-            var parts = UnityLoginClient.Create(_clock, _log, stop, _data.Load(), out var world);
+            var parts = UnityLoginClient.Create(_clock, _log, stop, new UnityClientOptions(_data.Load(), _lag), out var world);
             _world = world;
             return parts;
         }

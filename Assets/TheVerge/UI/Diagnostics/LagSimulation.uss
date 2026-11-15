@@ -1,0 +1,39 @@
+/* Панель «Симуляция пинга» внутри экрана отладки движения (UI/Movement/MovementDebug.uxml). */
+.lag-simulation {
+    margin-top: 8px;
+    padding-top: 6px;
+    border-top-width: 1px;
+    border-color: var(--color-card-border);
+}
+
+.lag-title {
+    font-size: 12px;
+    -unity-font-style: bold;
+    color: var(--color-muted);
+}
+
+.lag-row {
+    flex-direction: row;
+    align-items: center;
+}
+
+.lag-row-label {
+    width: 120px;
+    font-size: 13px;
+    color: var(--color-text);
+}
+
+.lag-field {
+    width: 72px;
+}
+
+.lag-sign {
+    margin: 0 4px;
+    color: var(--color-text);
+}
+
+.lag-hint {
+    font-size: 11px;
+    white-space: normal;
+    color: var(--color-muted);
+}

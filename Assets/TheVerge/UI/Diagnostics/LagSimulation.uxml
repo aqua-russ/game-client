@@ -1,0 +1,20 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="LagSimulation.uss" />
+    <ui:VisualElement name="lagSimulation" class="lag-simulation">
+        <ui:Label text="Симуляция пинга" class="lag-title" />
+        <ui:Toggle name="lagEnabled" label="Включить" />
+        <ui:VisualElement class="lag-row">
+            <ui:Label text="От сервера, мс" class="lag-row-label" />
+            <ui:IntegerField name="lagInDelay" is-delayed="true" class="lag-field" />
+            <ui:Label text="±" class="lag-sign" />
+            <ui:IntegerField name="lagInJitter" is-delayed="true" class="lag-field" />
+        </ui:VisualElement>
+        <ui:VisualElement class="lag-row">
+            <ui:Label text="К серверу, мс" class="lag-row-label" />
+            <ui:IntegerField name="lagOutDelay" is-delayed="true" class="lag-field" />
+            <ui:Label text="±" class="lag-sign" />
+            <ui:IntegerField name="lagOutJitter" is-delayed="true" class="lag-field" />
+        </ui:VisualElement>
+        <ui:Label text="Число — затем Enter. Задержка подтверждения шага меняется сразу, пинг в верхней строке — за 10 с." class="lag-hint" />
+    </ui:VisualElement>
+</ui:UXML>
