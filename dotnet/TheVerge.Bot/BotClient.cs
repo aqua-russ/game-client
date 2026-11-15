@@ -157,6 +157,12 @@ namespace TheVerge.Bot
             {
                 World.PlayerConfirmed -= InWorld.Movement.OnPlayerConfirmed;
             }
+
+            if (InWorld.Combat != null)
+            {
+                InWorld.Environment.SoundPlayed -= InWorld.Combat.Log.OnSound;
+            }
+
             Session.Dispose();
         }
     }

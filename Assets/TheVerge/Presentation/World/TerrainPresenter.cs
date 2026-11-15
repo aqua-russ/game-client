@@ -9,7 +9,8 @@ namespace TheVerge.Presentation.World
     /// <summary>
     /// Ведёт карту вокруг персонажа: когда <see cref="SceneTracker"/> просит, собирает блоки (<see cref="SceneBuilder"/>) и
     /// кладёт их в сетки. Без данных карты или на карте, файлов которой нет, показывает только пояснение в
-    /// <see cref="Status"/>. Вызывается раз в кадр.
+    /// <see cref="Status"/>. Вызывается раз в кадр. Сетки (<see cref="TerrainMeshes"/>) принадлежат ему и освобождаются в
+    /// <see cref="Dispose"/>: сетка Unity сама с объектом сцены не удаляется и копилась бы при каждом выходе из мира.
     /// </summary>
     public sealed class TerrainPresenter : IDisposable
     {
@@ -53,7 +54,11 @@ namespace TheVerge.Presentation.World
             Status = "Карта: блоков " + _blocks.Count + ", центр (" + x + ", " + y + ")";
         }
 
-        public void Dispose() => _tracker.Dispose();
+        public void Dispose()
+        {
+            _tracker.Dispose();
+            _meshes.Dispose();
+        }
 
         private static int SceneViewRadius => TheVerge.Core.Session.ServerLimits.UpdateRange;
     }
