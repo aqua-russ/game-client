@@ -124,6 +124,8 @@ namespace TheVerge.Bot
                     return BotActionKind.Blocked;
                 case "resync" when argument.Length == 0:
                     return BotActionKind.Resync;
+                case "randomwalk" when RandomWalkRequest.TryParse(argument, out _):
+                    return BotActionKind.RandomWalk;
                 default:
                     return null;
             }

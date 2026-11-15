@@ -161,6 +161,8 @@ namespace TheVerge.Bot
                     return new BlockedStep(_world, _log, _clock, action.Argument);
                 case BotActionKind.Resync:
                     return new ResyncStep(_world, _log);
+                case BotActionKind.RandomWalk:
+                    return new RandomWalkStep(_world, _log, action.Argument);
                 default:
                     return new OpenBackpackStep(_world, _log);
             }

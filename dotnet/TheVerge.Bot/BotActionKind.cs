@@ -74,6 +74,8 @@ namespace TheVerge.Bot
         /// <summary>blocked:&lt;направление&gt; — впереди преграда: клиент не пускает, шаг не уходит.</summary>
         Blocked,
         /// <summary>resync — спросить сервер, где персонаж (0x22 → 0x20), и сверить с предсказанием клиента.</summary>
-        Resync
+        Resync,
+        /// <summary>randomwalk:шагов,номер,x0,y0,x1,y1,run|walk|mix — случайная прогулка внутри квадрата (random-walk).</summary>
+        RandomWalk
     }
 }

@@ -55,6 +55,21 @@ namespace TheVerge.Tests.Core.Movement
         }
 
         [Test]
+        public void CanMove_AsksStepCheckFromPredictedCell_SendsNothing()
+        {
+            Assert.That(_motion.CanMove(Direction.East), Is.False, "до входа в мир шагать некуда");
+            _motion.ResetToServer(Start, Direction.North);
+            _map.AddStatic(11, 9, new StaticTile(0x0013, 0, 0));
+
+            Assert.That(_motion.CanMove(Direction.East), Is.True);
+            Assert.That(_motion.CanMove(Direction.Right), Is.False, "стена на северо-востоке");
+            _motion.Step(Direction.East, true);
+            _motion.Step(Direction.East, true);
+            Assert.That(_motion.CanMove(Direction.North), Is.False, "с предсказанной клетки (11, 10) на север — стена");
+            Assert.That(_sender.Steps.Count, Is.EqualTo(2), "проверка ничего не отправляет");
+        }
+
+        [Test]
         public void NewDirection_OnlyTurns_ThenSameDirectionMoves()
         {
             _motion.ResetToServer(Start, Direction.North);

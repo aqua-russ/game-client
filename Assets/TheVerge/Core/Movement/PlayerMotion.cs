@@ -81,6 +81,17 @@ namespace TheVerge.Core.Movement
         public bool CanStep => _placed && !IsResyncing && _queue.CanRequestStep && _world.Player != null;
 
         /// <summary>
+        /// Пустит ли проверка шага из предсказанной клетки в эту сторону — то же, что решит <see cref="Step"/>; ничего не
+        /// отправляет (выбор пути: случайная ходьба бота, позже — путь по клику, PLAN Стадия 3, п. 11).
+        /// </summary>
+        public bool CanMove(Direction direction)
+        {
+            var player = _world.Player;
+            return _placed && player != null &&
+                   _predictor.TryPredict(player, Position, direction & Direction.FacingMask, out _, out _);
+        }
+
+        /// <summary>
         /// Шагнуть или повернуться в направлении <paramref name="direction"/> (бит бега в нём не учитывается). Уставший
         /// пешком персонаж идёт шагом, даже если просили бег.
         /// </summary>
