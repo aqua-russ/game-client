@@ -97,6 +97,8 @@ namespace TheVerge.Bot
                     return new TargetStep(_world, _log, action.Argument);
                 case BotActionKind.SeenItem:
                     return new SeenItemStep(_world, _log, action.Argument);
+                case BotActionKind.NearItem:
+                    return new NearItemStep(_world, _log, action.Argument);
                 case BotActionKind.SeenMobile:
                     return new SeenMobileStep(_world, _log, action.Argument);
                 case BotActionKind.Dump:
@@ -124,7 +126,7 @@ namespace TheVerge.Bot
             }
         }
 
-        // Бой, смерть и движение своего персонажа (Стадии 3, 4); остальное — рюкзак.
+        // Бой и смерть (Стадия 4); остальное — движение и рюкзак.
         private IBotStep CreateBodyStep(BotAction action)
         {
             switch (action.Kind)
@@ -139,10 +141,26 @@ namespace TheVerge.Bot
                     return new AliveStep(_world, _log);
                 case BotActionKind.DeathOf:
                     return new DeathOfStep(_world, _log, action.Argument);
+                default:
+                    return CreateMovementStep(action);
+            }
+        }
+
+        // Движение своего персонажа (Стадия 3); остальное — рюкзак.
+        private IBotStep CreateMovementStep(BotAction action)
+        {
+            switch (action.Kind)
+            {
                 case BotActionKind.Walk:
                     return new WalkStep(_world, _log, _clock, action.Argument);
                 case BotActionKind.Mounted:
                     return new MountedStep(_world, _log);
+                case BotActionKind.Goto:
+                    return new GotoStep(_world, _log, _clock, action.Argument);
+                case BotActionKind.Blocked:
+                    return new BlockedStep(_world, _log, _clock, action.Argument);
+                case BotActionKind.Resync:
+                    return new ResyncStep(_world, _log);
                 default:
                     return new OpenBackpackStep(_world, _log);
             }

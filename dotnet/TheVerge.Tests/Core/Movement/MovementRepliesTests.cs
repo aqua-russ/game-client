@@ -55,6 +55,25 @@ namespace TheVerge.Tests.Core.Movement
         }
 
         [Test]
+        public void RequestResync_AsksServer_StandsUntilServerPosition_NotCountedAsMismatch()
+        {
+            _motion.Step(Direction.East, true);
+            _replies.OnAck(0, 1);
+
+            _replies.RequestResync();
+
+            Assert.That(_sender.Resyncs, Is.EqualTo(1));
+            Assert.That(_motion.IsResyncing, Is.True);
+            Assert.That(_motion.Step(Direction.East, true), Is.EqualTo(StepResult.Resyncing));
+            Assert.That(_replies.ResyncCount, Is.EqualTo(0), "сверку попросили сами — это не рассинхрон");
+
+            _replies.OnServerPosition(new Point3D(11, 10, 0), Direction.East);
+
+            Assert.That(_motion.IsResyncing, Is.False);
+            Assert.That(_motion.Position, Is.EqualTo(new Point3D(11, 10, 0)));
+        }
+
+        [Test]
         public void Reject_RollsBack_LoggedAndCounted_NotAnError()
         {
             _motion.Step(Direction.East, true);

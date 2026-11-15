@@ -27,7 +27,7 @@ namespace TheVerge.Core.Movement
         /// <summary>Сколько раз сервер отказал в шаге (старые отказы в отменённых шагах не считаются).</summary>
         public int RejectCount { get; private set; }
 
-        /// <summary>Сколько раз клиент просил о ресинхронизации.</summary>
+        /// <summary>Сколько раз клиент просил о ресинхронизации из-за рассинхрона (подтверждение не того шага).</summary>
         public int ResyncCount { get; private set; }
 
         /// <summary>0x22: шаг выполнен; известность своего персонажа — в мир клиента.</summary>
@@ -40,6 +40,16 @@ namespace TheVerge.Core.Movement
 
             _log.Warning("Подтверждение шага " + sequence + " не совпало с ожидаемым — запрос ресинхронизации.");
             ResyncCount++;
+            _motion.BeginResync();
+            _sender.SendResync();
+        }
+
+        /// <summary>
+        /// Спросить сервер, где персонаж, по своей воле (сверка бота — tools/check/scenes.sh): тот же запрос 0x22, что при
+        /// рассинхроне, и до ответа 0x20 шагов нет. <see cref="ResyncCount"/> не растёт: это не рассинхрон.
+        /// </summary>
+        public void RequestResync()
+        {
             _motion.BeginResync();
             _sender.SendResync();
         }

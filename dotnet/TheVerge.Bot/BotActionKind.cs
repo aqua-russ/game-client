@@ -21,7 +21,7 @@ namespace TheVerge.Bot
         /// <summary>say:&lt;текст&gt; — сказать (и GM-команды: «[go 1500 1600»).</summary>
         Say,
 
-        /// <summary>at:x,y — ждать, пока свой персонаж не окажется в этой клетке.</summary>
+        /// <summary>at:x,y[,z] — ждать, пока свой персонаж не окажется в этой клетке (и на этой высоте).</summary>
         WaitAt,
 
         /// <summary>target:here|self|x,y,z|cancel — ответить на курсор сервера (после [add, [remove …).</summary>
@@ -29,6 +29,8 @@ namespace TheVerge.Bot
 
         /// <summary>seen:0xГРАФИКА — ждать предмет с этой графикой на земле в клетке персонажа.</summary>
         SeenItem,
+        /// <summary>near:0xГРАФИКА — ждать предмет с этой графикой на земле не дальше 2 клеток (дверь открылась).</summary>
+        NearItem,
         /// <summary>seenmob:0xТЕЛО — ждать чужого моба с этим телом (после [add).</summary>
         SeenMobile,
 
@@ -66,6 +68,12 @@ namespace TheVerge.Bot
         Walk,
 
         /// <summary>mounted — ждать, что свой персонаж верхом.</summary>
-        Mounted
+        Mounted,
+        /// <summary>goto:x,y,run|walk — дойти до клетки по диагонали и прямой (Стадия 3, п. 10, нужен --data).</summary>
+        Goto,
+        /// <summary>blocked:&lt;направление&gt; — впереди преграда: клиент не пускает, шаг не уходит.</summary>
+        Blocked,
+        /// <summary>resync — спросить сервер, где персонаж (0x22 → 0x20), и сверить с предсказанием клиента.</summary>
+        Resync
     }
 }

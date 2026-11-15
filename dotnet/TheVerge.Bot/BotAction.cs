@@ -49,13 +49,15 @@ namespace TheVerge.Bot
                     return BotActionKind.Bandage;
                 case "say" when argument.Trim().Length > 0 && argument.Trim().Length <= ServerLimits.SpeechMaxChars:
                     return BotActionKind.Say;
-                case "at" when TryParseCell(argument, out _, out _):
+                case "at" when TryParseCell(argument, out _, out _) || TryParsePoint(argument, out _):
                     return BotActionKind.WaitAt;
                 case "target" when argument == "here" || argument == "self" || argument == "cancel" ||
                                    TryParsePoint(argument, out _) || TryParseGraphic(argument, out _) || TryParseMobileBody(argument, out _):
                     return BotActionKind.Target;
                 case "seen" when SeenItemStep.TryParse(argument, out _, out _):
                     return BotActionKind.SeenItem;
+                case "near" when TryParseGraphic(argument, out _):
+                    return BotActionKind.NearItem;
                 case "seenmob" when TryParseGraphic(argument, out _):
                     return BotActionKind.SeenMobile;
                 default:
@@ -116,6 +118,12 @@ namespace TheVerge.Bot
                     return BotActionKind.Walk;
                 case "mounted" when argument.Length == 0:
                     return BotActionKind.Mounted;
+                case "goto" when GotoRequest.TryParse(argument, out _):
+                    return BotActionKind.Goto;
+                case "blocked" when CompassDirection.TryParse(argument, out _):
+                    return BotActionKind.Blocked;
+                case "resync" when argument.Length == 0:
+                    return BotActionKind.Resync;
                 default:
                     return null;
             }
