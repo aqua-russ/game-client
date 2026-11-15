@@ -165,15 +165,16 @@ namespace TheVerge.Tests.Core.Movement
         [Test]
         public void TurnWithOneFreeSlot_StepGoesWhenSlotFrees()
         {
+            int limit = ClientLimits.MaxUnacknowledgedSteps;
             _serverAnswers = false;
             _intent.Press(MoveKeys.Right);
-            RunFor(300, 16);
-            Assert.That(_sender.Steps.Count, Is.EqualTo(2));
+            RunFor(50 + 200 * (limit - 2) + 100, 16);
+            Assert.That(_sender.Steps.Count, Is.EqualTo(limit - 1), "без ответов — на одно место меньше предела");
 
             _intent.Release(MoveKeys.Right);
             _intent.Press(MoveKeys.Up);
             RunFor(400, 16);
-            Assert.That(_sender.Steps.Count, Is.EqualTo(3), "поворот занял последнее место");
+            Assert.That(_sender.Steps.Count, Is.EqualTo(limit), "поворот занял последнее место");
             Assert.That(_sender.Last.Direction, Is.EqualTo(Direction.North));
 
             _intent.Release(MoveKeys.Up);
@@ -181,8 +182,8 @@ namespace TheVerge.Tests.Core.Movement
             long freedAt = _clock.NowMs;
             RunFor(16, 16);
 
-            Assert.That(_sender.Steps.Count, Is.EqualTo(4), "шаг после поворота ушёл, как только освободилось место");
-            Assert.That(_sentAt[3], Is.EqualTo(freedAt));
+            Assert.That(_sender.Steps.Count, Is.EqualTo(limit + 1), "шаг после поворота ушёл, как только освободилось место");
+            Assert.That(_sentAt[limit], Is.EqualTo(freedAt));
             Assert.That(_motion.Position.Y, Is.EqualTo(Start.Y - 1));
         }
 

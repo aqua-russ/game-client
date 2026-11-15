@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using TheVerge.Core.Movement;
 using TheVerge.Core.Primitives;
+using TheVerge.Core.Session;
 using TheVerge.Core.Tiles;
 using TheVerge.Core.World;
 using TheVerge.Tests.Core.MapView;
@@ -70,7 +71,7 @@ namespace TheVerge.Tests.Core.Movement
 
             RunFor(200);
 
-            Assert.That(_sender.Steps.Count, Is.EqualTo(3), "шаг к прежнему месту не ушёл");
+            Assert.That(_sender.Steps.Count, Is.EqualTo(ClientLimits.MaxUnacknowledgedSteps), "шаг к прежнему месту не ушёл");
             Assert.That(_motion.Position, Is.EqualTo(There));
         }
 
@@ -83,7 +84,7 @@ namespace TheVerge.Tests.Core.Movement
 
             RunFor(200);
 
-            Assert.That(_sender.Steps.Count, Is.EqualTo(3));
+            Assert.That(_sender.Steps.Count, Is.EqualTo(ClientLimits.MaxUnacknowledgedSteps));
             Assert.That(_motion.Position.Y, Is.EqualTo(Start.Y));
         }
 
@@ -95,20 +96,23 @@ namespace TheVerge.Tests.Core.Movement
 
             RunFor(16);
 
-            Assert.That(_sender.Steps.Count, Is.EqualTo(4));
+            Assert.That(_sender.Steps.Count, Is.EqualTo(ClientLimits.MaxUnacknowledgedSteps + 1));
             Assert.That(_motion.Position.Y, Is.EqualTo(Start.Y - 1));
         }
 
-        // Бег вправо без ответов сервера, затем тап вверх: поворот занимает последнее место в очереди, шаг после него ждёт.
+        // Бег вправо без ответов сервера, пока не останется одно место в очереди (первый шаг — после ожидания второй
+        // клавиши, дальше по шагу в 200 мс), затем тап вверх: поворот занимает последнее место, шаг после него ждёт.
         private void TurnIntoFullQueue()
         {
+            int limit = ClientLimits.MaxUnacknowledgedSteps;
             _intent.Press(MoveKeys.Right);
-            RunFor(300);
+            RunFor(50 + 200 * (limit - 2) + 100);
+            Assert.That(_sender.Steps.Count, Is.EqualTo(limit - 1), "одно место в очереди осталось");
             _intent.Release(MoveKeys.Right);
             _intent.Press(MoveKeys.Up);
             RunFor(400);
             _intent.Release(MoveKeys.Up);
-            Assert.That(_sender.Steps.Count, Is.EqualTo(3), "поворот занял последнее место");
+            Assert.That(_sender.Steps.Count, Is.EqualTo(limit), "поворот занял последнее место");
             Assert.That(_sender.Last.Direction, Is.EqualTo(Direction.North));
         }
 

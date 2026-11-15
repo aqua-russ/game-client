@@ -81,10 +81,12 @@ namespace TheVerge.Core.Session
         public const int CombatLogCapacity = 512;
 
         /// <summary>
-        /// Шагов и поворотов без ответа сервера, после которых клиент ждёт ответа (PLAN Стадия 3, п. 5). Сервер сбрасывает свою
-        /// очередь шагов при <see cref="ServerLimits.ServerStepQueueLimit"/>, поэтому клиент держит заметно меньше.
+        /// Шагов и поворотов без ответа сервера, после которых клиент ждёт ответа (PLAN Стадия 3, п. 5). Как у ClassicUO
+        /// (MAX_STEP_COUNT = 5): при пинге около 430 мс бег верхом идёт по расписанию сервера, а поворот и шаг за ним уходят
+        /// в одном тике (с 3 шаг ждал ответа). Сервер сбрасывает свою очередь шагов при
+        /// <see cref="ServerLimits.ServerStepQueueLimit"/> — вдвое больше; темп отправки по-прежнему по расписанию сервера.
         /// </summary>
-        public const int MaxUnacknowledgedSteps = 3;
+        public const int MaxUnacknowledgedSteps = 5;
 
         /// <summary>
         /// Сколько ждать вторую клавишу перед первым шагом из покоя, мс (PLAN Стадия 3, п. 1; CONTROLS §4): пару клавиш
