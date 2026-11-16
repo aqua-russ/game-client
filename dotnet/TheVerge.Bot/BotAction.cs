@@ -126,6 +126,10 @@ namespace TheVerge.Bot
                     return BotActionKind.Resync;
                 case "randomwalk" when RandomWalkRequest.TryParse(argument, out _):
                     return BotActionKind.RandomWalk;
+                case "waitsteps" when WaitStepsStep.TryParse(argument, out _, out _):
+                    return BotActionKind.WaitSteps;
+                case "lagspike" when LagSpikeStep.TryParse(argument, out _):
+                    return BotActionKind.LagSpike;
                 default:
                     return null;
             }

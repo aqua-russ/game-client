@@ -52,6 +52,15 @@ namespace TheVerge.Bot
                     return Value(args, ref i, v => parsed.Overrides.Login = v);
                 case "--character":
                     return Value(args, ref i, v => parsed.Overrides.Character = v);
+                default:
+                    return ApplyExtra(args, ref i, parsed);
+            }
+        }
+
+        private static string ApplyExtra(string[] args, ref int i, ParsedArguments parsed)
+        {
+            switch (args[i])
+            {
                 case "--config":
                     return Value(args, ref i, v => parsed.ConfigPath = v);
                 case "--data":
@@ -64,6 +73,16 @@ namespace TheVerge.Bot
                     return ReadAction(args, ref i, parsed);
                 case "--convert-capture":
                     return ReadCapture(args, ref i, parsed);
+                case "--check-walk":
+                    return Value(args, ref i, v => { parsed.Mode = BotMode.CheckWalk; parsed.WalkLogPath = v; });
+                case "--lag":
+                    return ReadLag(args, ref i, parsed, incoming: true, outgoing: true);
+                case "--lag-in":
+                    return ReadLag(args, ref i, parsed, incoming: true, outgoing: false);
+                case "--lag-out":
+                    return ReadLag(args, ref i, parsed, incoming: false, outgoing: true);
+                case "--lag-seed":
+                    return ReadLagSeed(args, ref i, parsed);
                 default:
                     return "неизвестный параметр «" + args[i] + "». Список параметров: --help.";
             }
@@ -129,5 +148,24 @@ namespace TheVerge.Bot
             int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out var port) && port >= 1 && port <= ushort.MaxValue
                 ? port
                 : (int?)null;
+
+        private static string ReadLag(string[] args, ref int i, ParsedArguments parsed, bool incoming, bool outgoing)
+        {
+            var flag = args[i];
+            var result = string.Empty;
+            var error = Value(args, ref i, v => result = LagArguments.Apply(flag, v, parsed.Lag, incoming, outgoing));
+            return error.Length > 0 ? error : result;
+        }
+
+        private static string ReadLagSeed(string[] args, ref int i, ParsedArguments parsed)
+        {
+            var valid = true;
+            var error = Value(args, ref i, v =>
+            {
+                valid = int.TryParse(v, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var seed);
+                parsed.LagSeed = seed;
+            });
+            return error.Length == 0 && !valid ? "--lag-seed: нужно целое число." : error;
+        }
     }
 }

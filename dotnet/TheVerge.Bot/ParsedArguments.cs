@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TheVerge.Core.Diagnostics;
 
 namespace TheVerge.Bot
 {
@@ -10,6 +11,12 @@ namespace TheVerge.Bot
         public BotMode Mode { get; internal set; } = BotMode.Run;
 
         public BotOverrides Overrides { get; } = new BotOverrides();
+
+        /// <summary>Искусственная задержка сети (--lag, --lag-in, --lag-out); по умолчанию выключена.</summary>
+        public LagSimulation Lag { get; } = LagArguments.CreateEmpty();
+
+        /// <summary>Необязательный seed для повторяемого разброса задержки (--lag-seed).</summary>
+        public int? LagSeed { get; internal set; }
 
         /// <summary>Файл настроек из --config; null — файл по умолчанию (remaster/secrets/bot.json).</summary>
         public string? ConfigPath { get; internal set; }
@@ -37,5 +44,8 @@ namespace TheVerge.Bot
 
         /// <summary>Куда записать лог пакетов для --convert-capture.</summary>
         public string CaptureLogPath { get; internal set; } = string.Empty;
+
+        /// <summary>Лог пакетов для проверки шагов (--check-walk).</summary>
+        public string WalkLogPath { get; internal set; } = string.Empty;
     }
 }

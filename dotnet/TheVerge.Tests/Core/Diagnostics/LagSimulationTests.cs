@@ -116,5 +116,33 @@ namespace TheVerge.Tests.Core.Diagnostics
             Assert.That(min, Is.EqualTo(70));
             Assert.That(max, Is.EqualTo(130));
         }
+
+        [Test]
+        public void IncomingSpike_TriggeredAndTakenOnce_ClampedToLimits()
+        {
+            var lag = new LagSimulation();
+            Assert.That(lag.TakeIncomingSpikeMs(), Is.EqualTo(0));
+
+            lag.TriggerIncomingSpike(500);
+            Assert.That(lag.TakeIncomingSpikeMs(), Is.EqualTo(500));
+            Assert.That(lag.TakeIncomingSpikeMs(), Is.EqualTo(0), "всплеск забирается один раз");
+
+            lag.TriggerIncomingSpike(-10);
+            Assert.That(lag.TakeIncomingSpikeMs(), Is.EqualTo(0));
+
+            lag.TriggerIncomingSpike(5000);
+            Assert.That(lag.TakeIncomingSpikeMs(), Is.EqualTo(ClientLimits.LagSimulationMaxDelayMs));
+        }
+
+        [Test]
+        public void IncomingSpike_MultipleBeforeTake_KeepsLargest()
+        {
+            var lag = new LagSimulation();
+            lag.TriggerIncomingSpike(200);
+            lag.TriggerIncomingSpike(500);
+            lag.TriggerIncomingSpike(150);
+
+            Assert.That(lag.TakeIncomingSpikeMs(), Is.EqualTo(500));
+        }
     }
 }

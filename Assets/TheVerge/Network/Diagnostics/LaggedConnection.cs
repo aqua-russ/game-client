@@ -24,6 +24,7 @@ namespace TheVerge.Network.Diagnostics
         private readonly ArrayPool<byte> _pool;
         private readonly DelayLine<InboundEvent> _incoming;
         private readonly DelayLine<OutgoingChunk> _outgoing;
+        private long _incomingHoldUntilMs = long.MinValue;
         private bool _disposed;
 
         /// <param name="pool">Откуда брать буферы для копий задержанной отправки.</param>
@@ -69,15 +70,21 @@ namespace TheVerge.Network.Diagnostics
         {
             long now = _clock.NowMs;
             SendDue(now);
+            int spike = _lag.TakeIncomingSpikeMs();
+            if (spike > 0)
+            {
+                _incomingHoldUntilMs = Math.Max(_incomingHoldUntilMs, now + spike);
+            }
+
             var lag = _lag.Incoming;
-            if (_incoming.Count == 0 && lag.IsNone)
+            if (_incoming.Count == 0 && lag.IsNone && now >= _incomingHoldUntilMs)
             {
                 return _inner.TryReceive(out item);
             }
 
             while (_inner.TryReceive(out var arrived))
             {
-                _incoming.Push(arrived, now, lag);
+                _incoming.Push(arrived, now, lag, _incomingHoldUntilMs);
             }
 
             return _incoming.TryPop(now, out item);

@@ -149,5 +149,62 @@ namespace TheVerge.Tests.Bot
         {
             Assert.That(BotArguments.Parse(new[] { "--fast" }).Error, Does.Contain("--fast"));
         }
+
+        [Test]
+        public void Lag_SymmetricAndPerDirection_AndSeed()
+        {
+            var sym = BotArguments.Parse(new[] { "--lag", "50,15", "--lag-seed", "42" });
+            Assert.That(sym.Error, Is.Empty);
+            Assert.That(sym.Lag.Enabled, Is.True);
+            Assert.That(sym.Lag.IncomingDelayMs, Is.EqualTo(50));
+            Assert.That(sym.Lag.IncomingJitterMs, Is.EqualTo(15));
+            Assert.That(sym.Lag.OutgoingDelayMs, Is.EqualTo(50));
+            Assert.That(sym.Lag.OutgoingJitterMs, Is.EqualTo(15));
+            Assert.That(sym.LagSeed, Is.EqualTo(42));
+
+            var asym = BotArguments.Parse(new[] { "--lag-in", "120", "--lag-out", "40,10" });
+            Assert.That(asym.Error, Is.Empty);
+            Assert.That(asym.Lag.Enabled, Is.True);
+            Assert.That(asym.Lag.IncomingDelayMs, Is.EqualTo(120));
+            Assert.That(asym.Lag.IncomingJitterMs, Is.EqualTo(0));
+            Assert.That(asym.Lag.OutgoingDelayMs, Is.EqualTo(40));
+            Assert.That(asym.Lag.OutgoingJitterMs, Is.EqualTo(10));
+
+            var zero = BotArguments.Parse(new[] { "--lag", "0,0" });
+            Assert.That(zero.Error, Is.Empty);
+            Assert.That(zero.Lag.Enabled, Is.False);
+        }
+
+        [TestCase("--lag", "1500")]
+        [TestCase("--lag", "50,600")]
+        [TestCase("--lag", "abc")]
+        [TestCase("--lag-in", "-5,0")]
+        [TestCase("--lag-out", "10,20,30")]
+        [TestCase("--lag-seed", "abc")]
+        public void BadLag_Error(string flag, string value)
+        {
+            Assert.That(BotArguments.Parse(new[] { flag, value }).Error, Does.Contain(flag));
+        }
+
+        [Test]
+        public void CheckWalk_ModeAndPath()
+        {
+            var parsed = BotArguments.Parse(new[] { "--check-walk", "golden/02-walk-20.tsv" });
+
+            Assert.That(parsed.Error, Is.Empty);
+            Assert.That(parsed.Mode, Is.EqualTo(BotMode.CheckWalk));
+            Assert.That(parsed.WalkLogPath, Is.EqualTo("golden/02-walk-20.tsv"));
+        }
+
+        [TestCase("waitsteps:0x0190,5", true)]
+        [TestCase("waitsteps:0x0190,0", false)]
+        [TestCase("waitsteps:190,5", false)]
+        [TestCase("lagspike:500", true)]
+        [TestCase("lagspike:0", false)]
+        [TestCase("lagspike:1500", false)]
+        public void LagActions_Parse(string text, bool valid)
+        {
+            Assert.That(BotAction.Parse(text, out _) != null, Is.EqualTo(valid));
+        }
     }
 }

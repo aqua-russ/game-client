@@ -12,5 +12,8 @@ namespace TheVerge.Bot
 
         /// <summary>Перевести запись посредника в лог пакетов (--convert-capture, tools/golden/record.sh).</summary>
         ConvertCapture = 3,
+
+        /// <summary>Проверить лог шагов против карты и физики клиента (--check-walk, PLAN Стадия 3, п. 12).</summary>
+        CheckWalk = 4,
     }
 }

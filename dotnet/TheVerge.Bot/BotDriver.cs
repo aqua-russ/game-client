@@ -18,6 +18,7 @@ namespace TheVerge.Bot
         private readonly EntityStore _entities;
         private readonly BotScript _script;
         private readonly IClock _clock;
+        private readonly BotMovement? _movement;
         private readonly BotOthers? _others;
         private LoginState _decided;
         private long _inWorldAt = -1;
@@ -31,6 +32,7 @@ namespace TheVerge.Bot
             _world = client.World;
             _game = client.Game;
             _clock = clock;
+            _movement = client.InWorld.Movement;
             _others = client.InWorld.Others;
         }
 
@@ -129,6 +131,11 @@ namespace TheVerge.Bot
             }
 
             _others?.WriteTo(_log);
+            var movement = _movement?.Stats.Describe();
+            if (!string.IsNullOrEmpty(movement))
+            {
+                _log.Info(movement);
+            }
 
             _log.Info("Выход из игры" + (_game.LastRttMs >= 0 ? " (задержка до сервера " + _game.LastRttMs + " мс)" : string.Empty) + "…");
             LoggedOut = true;

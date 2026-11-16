@@ -1,23 +1,21 @@
 #!/usr/bin/env python3
-"""Посредник между клиентом UO и сервером: пишет все байты сеанса в обе стороны (PLAN Стадия 0, п. 6).
+"""Посредник между клиентом UO и сервером: пишет все байты сеанса в обе стороны и умеет имитировать задержку,
+разброс и всплески лага (PLAN Стадия 0, п. 6; Стадия 3, п. 12).
 
-    proxy.py --listen ПОРТ --server ХОСТ:ПОРТ --capture ФАЙЛ [--until-game-closed] [--status ФАЙЛ]
+    proxy.py --listen ПОРТ --server ХОСТ:ПОРТ --capture ФАЙЛ [--lag ЗАДЕРЖКА[,РАЗБРОС]] [--until-game-closed] [--status ФАЙЛ]
     proxy.py --self-test
 
 Клиент подключается к посреднику, посредник — к серверу. Каждый кусок данных записывается строкой
 «мс, соединение, c2s|s2c, байты hex»; ещё строки open и close (c — закрыл клиент, s — сервер). Перевести запись в лог
 пакетов: TheVerge.Bot --convert-capture ЗАПИСЬ ЛОГ.
 
-Переадресация 0x8C (OutgoingAccountPackets.cs, SendPlayServerAck: 4 байта адреса, 2 байта порта, 4 байта ключа) идёт
-на соединении входа без сжатия; посредник подменяет в ней адрес и порт на свои, иначе клиент ушёл бы на игровой сервер
-мимо него. В записи остаются байты сервера как есть.
-
---until-game-closed: выйти, когда закрылось игровое соединение (клиент прислал 0x91) и других не осталось.
---status: файл, куда пишется «game» после 0x91 — по нему скрипт знает, что клиент входит в мир.
+Задержка и разброс работают по тому же правилу, что DelayLine в клиенте: постоянная часть ± разброс (не меньше нуля),
+пакеты никогда не обгоняют друг друга. Запись c2s ставит время отправки клиентом, s2c — время получения клиентом.
 Совместим с Python 3.9.
 """
 import argparse
 import asyncio
+import random
 import sys
 import time
 
@@ -76,13 +74,56 @@ class LoginRewriter:
         return out
 
 
+class DelayLine:
+    """Очередь задержки одного направления без обгона пакетов (как Network/Diagnostics/DelayLine.cs)."""
+
+    def __init__(self, delay_ms=0, jitter_ms=0, rng=None):
+        self.delay_ms = max(0, delay_ms)
+        self.jitter_ms = max(0, jitter_ms)
+        self.rng = rng or random.Random()
+        self.last_release = 0.0
+        self.hold_until = 0.0
+
+    def is_active(self):
+        return self.delay_ms > 0 or self.jitter_ms > 0 or self.hold_until > 0.0
+
+    def sample_s(self):
+        if self.delay_ms == 0 and self.jitter_ms == 0:
+            return 0.0
+        offset = self.rng.randint(-self.jitter_ms, self.jitter_ms) if self.jitter_ms > 0 else 0
+        return max(0, self.delay_ms + offset) / 1000.0
+
+    def next_release(self, now):
+        release = max(now + self.sample_s(), self.last_release, self.hold_until)
+        self.last_release = release
+        return release
+
+
+class LagProfile:
+    """Параметры задержки, разброса и периодического входящего всплеска для посредника."""
+
+    def __init__(self, in_delay=0, in_jitter=0, out_delay=0, out_jitter=0, spike_ms=0, spike_every_ms=0, seed=None):
+        self.in_delay = max(0, in_delay)
+        self.in_jitter = max(0, in_jitter)
+        self.out_delay = max(0, out_delay)
+        self.out_jitter = max(0, out_jitter)
+        self.spike_ms = max(0, spike_ms)
+        self.spike_every_ms = max(0, spike_every_ms)
+        self.rng = random.Random(seed) if seed is not None else random.Random()
+
+    def new_line(self, incoming):
+        return DelayLine(self.in_delay if incoming else self.out_delay,
+                         self.in_jitter if incoming else self.out_jitter, self.rng)
+
+
 class Proxy:
-    def __init__(self, listen, server_host, server_port, capture, until_game_closed, status):
+    def __init__(self, listen, server_host, server_port, capture, until_game_closed, status, lag=None):
         self.listen = listen
         self.server = (server_host, server_port)
         self.capture = capture
         self.until_game_closed = until_game_closed
         self.status = status
+        self.lag = lag or LagProfile()
         self.next_id = 1
         self.open = 0
         self.game_closed = False
@@ -102,26 +143,59 @@ class Proxy:
             client_writer.close()
             self.finish_connection(False)
             return
-        state = {"head": b"", "game": False, "closed": None}
+        state = {"head": b"", "game": False, "closed": None, "next_spike": 0.0}
         rewriter = LoginRewriter(self.listen)
+        c2s_q, s2c_q = asyncio.Queue(), asyncio.Queue()
+        c2s_line, s2c_line = self.lag.new_line(False), self.lag.new_line(True)
         await asyncio.gather(
-            self.pump(cid, client_reader, server_writer, "c2s", state, None),
-            self.pump(cid, server_reader, client_writer, "s2c", state, rewriter))
+            self.pump_read(cid, client_reader, c2s_q, "c2s", state, None, c2s_line),
+            self.pump_write(cid, server_writer, c2s_q, "c2s", state),
+            self.pump_read(cid, server_reader, s2c_q, "s2c", state, rewriter, s2c_line),
+            self.pump_write(cid, client_writer, s2c_q, "s2c", state))
         self.finish_connection(state["game"])
 
-    async def pump(self, cid, reader, writer, direction, state, rewriter):
+    async def pump_read(self, cid, reader, queue, direction, state, rewriter, line):
         try:
             while True:
                 data = await reader.read(65536)
                 if not data:
                     break
-                self.capture.write(cid, direction, data.hex())
-                if direction == "c2s" and not state["game"]:
-                    self.watch_game(cid, data, state)
+                now = time.monotonic()
+                if direction == "c2s":
+                    self.capture.write(cid, direction, data.hex())
+                    if not state["game"]:
+                        self.watch_game(cid, data, state)
+                raw = data
                 if rewriter is not None and not state["game"]:
                     data = rewriter.feed(data)
-                writer.write(data)
-                await writer.drain()
+                if direction == "s2c" and state["game"] and self.lag.spike_ms > 0:
+                    if state["next_spike"] == 0.0:
+                        state["next_spike"] = now + self.lag.spike_every_ms / 1000.0
+                    if now >= state["next_spike"]:
+                        line.hold_until = max(line.hold_until, now + self.lag.spike_ms / 1000.0)
+                        state["next_spike"] = (now + (self.lag.spike_ms + self.lag.spike_every_ms) / 1000.0) if self.lag.spike_every_ms > 0 else float("inf")
+                release = line.next_release(now) if line.is_active() else 0.0
+                await queue.put((release, raw, data))
+        except (ConnectionError, OSError):
+            pass
+        await queue.put(None)
+
+    async def pump_write(self, cid, writer, queue, direction, state):
+        try:
+            while True:
+                item = await queue.get()
+                if item is None:
+                    break
+                release, raw, data = item
+                if release > 0.0:
+                    wait = release - time.monotonic()
+                    if wait > 0:
+                        await asyncio.sleep(wait)
+                if direction == "s2c":
+                    self.capture.write(cid, direction, raw.hex())
+                if data:
+                    writer.write(data)
+                    await writer.drain()
         except (ConnectionError, OSError):
             pass
         if state["closed"] is None:
@@ -206,11 +280,65 @@ async def self_test():
         problems.append("клиент получил %s, ждали %s" % (got.hex(), expected.hex()))
     if redirect[4:].hex() not in text or "\topen" not in text or "\tclose\t" not in text:
         problems.append("в записи нет исходных байтов сервера, open или close:\n" + text)
+
+    # Проверка искусственной задержки и порядка при разбросе: ~120 мс туда-обратно (80±20 + 40±10).
+    lag = LagProfile(in_delay=80, in_jitter=20, out_delay=40, out_jitter=10, seed=7)
+    lag_path = os.path.join(tempfile.mkdtemp(), "lag-test.capture")
+    lag_cap = Capture(lag_path)
+
+    async def echo_server(reader, writer):
+        while True:
+            chunk = await reader.read(100)
+            if not chunk:
+                break
+            writer.write(chunk)
+            await writer.drain()
+        writer.close()
+
+    echo_up = await asyncio.start_server(echo_server, "127.0.0.1", 0)
+    echo_port = echo_up.sockets[0].getsockname()[1]
+    lag_proxy = Proxy(0, "127.0.0.1", echo_port, lag_cap, False, None, lag)
+    lag_srv = await asyncio.start_server(lag_proxy.handle, "127.0.0.1", 0)
+    lr, lw = await asyncio.open_connection("127.0.0.1", lag_srv.sockets[0].getsockname()[1])
+    t0 = time.monotonic()
+    payload = bytes(range(1, 21))
+    for b in payload:
+        lw.write(bytes([b]))
+        await lw.drain()
+        await asyncio.sleep(0.002)
+    received = b""
+    while len(received) < len(payload):
+        more = await lr.read(100)
+        if not more:
+            break
+        received += more
+    elapsed_ms = int((time.monotonic() - t0) * 1000)
+    lw.close()
+    await asyncio.sleep(0.15)
+    lag_cap.close()
+    lag_srv.close()
+    echo_up.close()
+    if received != payload:
+        problems.append("лаг: порядок или байты исказились (%s)" % received.hex())
+    if elapsed_ms < 85:
+        problems.append("лаг: задержка слишком мала (%d мс)" % elapsed_ms)
+
     if problems:
         print("ОШИБКА самопроверки посредника: " + "; ".join(problems))
         return 1
-    print("Самопроверка посредника: ОК (0x8C подменён на свой порт, разрезанный пакет собран, запись с байтами сервера)")
+    print("Самопроверка посредника: ОК (0x8C подменён, разрезанный пакет собран, лаг %d мс без перестановки)" % elapsed_ms)
     return 0
+
+
+def parse_lag_pair(text):
+    parts = text.split(",")
+    if len(parts) > 2:
+        raise ValueError("формат: задержка[,разброс]")
+    delay = int(parts[0])
+    jitter = int(parts[1]) if len(parts) == 2 else 0
+    if delay < 0 or delay > 1000 or jitter < 0 or jitter > 500:
+        raise ValueError("допустимо: задержка 0..1000, разброс 0..500")
+    return delay, jitter
 
 
 def main():
@@ -218,6 +346,14 @@ def main():
     parser.add_argument("--listen", type=int, default=2594)
     parser.add_argument("--server", default="127.0.0.1:2593")
     parser.add_argument("--capture")
+    parser.add_argument("--lag", help="задержка[,разброс] мс в каждую сторону, например 50,15")
+    parser.add_argument("--delay-in", type=int, default=0)
+    parser.add_argument("--jitter-in", type=int, default=0)
+    parser.add_argument("--delay-out", type=int, default=0)
+    parser.add_argument("--jitter-out", type=int, default=0)
+    parser.add_argument("--lag-seed", type=int)
+    parser.add_argument("--spike-ms", type=int, default=0, help="входящий всплеск задержки в игре, мс")
+    parser.add_argument("--spike-every", type=int, default=5000, help="пауза между всплесками, мс (0 — один раз)")
     parser.add_argument("--until-game-closed", action="store_true")
     parser.add_argument("--status")
     parser.add_argument("--self-test", action="store_true")
@@ -226,10 +362,15 @@ def main():
         return asyncio.run(self_test())
     if not args.capture:
         parser.error("нужен --capture ФАЙЛ")
+    in_d, in_j, out_d, out_j = args.delay_in, args.jitter_in, args.delay_out, args.jitter_out
+    if args.lag:
+        d, j = parse_lag_pair(args.lag)
+        in_d, in_j, out_d, out_j = d, j, d, j
+    lag = LagProfile(in_d, in_j, out_d, out_j, args.spike_ms, args.spike_every, args.lag_seed)
     host, port = args.server.rsplit(":", 1)
     capture = Capture(args.capture)
     try:
-        asyncio.run(Proxy(args.listen, host, int(port), capture, args.until_game_closed, args.status).run())
+        asyncio.run(Proxy(args.listen, host, int(port), capture, args.until_game_closed, args.status, lag).run())
     except KeyboardInterrupt:
         pass
     finally:

@@ -76,6 +76,10 @@ namespace TheVerge.Bot
         /// <summary>resync — спросить сервер, где персонаж (0x22 → 0x20), и сверить с предсказанием клиента.</summary>
         Resync,
         /// <summary>randomwalk:шагов,номер,x0,y0,x1,y1,run|walk|mix — случайная прогулка внутри квадрата (random-walk).</summary>
-        RandomWalk
+        RandomWalk,
+        /// <summary>waitsteps:0xТЕЛО,количество — ждать N шагов чужого моба с этим телом (для проверки лага).</summary>
+        WaitSteps,
+        /// <summary>lagspike:мс — устроить входящий всплеск задержки и дождаться пачки (Стадия 3, п. 12).</summary>
+        LagSpike
     }
 }

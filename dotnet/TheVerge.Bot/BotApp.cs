@@ -2,7 +2,10 @@ using System;
 using System.Buffers;
 using System.IO;
 using System.Threading;
+using TheVerge.Core.Diagnostics;
+using TheVerge.Core.Ports;
 using TheVerge.Core.Session;
+using TheVerge.Network.Diagnostics;
 using TheVerge.Network.Transport;
 
 namespace TheVerge.Bot
@@ -64,6 +67,11 @@ namespace TheVerge.Bot
                 if (dataError.Length > 0)
                 {
                     return Exit(BotExitCode.BadArguments, "ОШИБКА: " + dataError);
+                }
+
+                if (parsed.Mode == BotMode.CheckWalk)
+                {
+                    return WalkLogVerifier.Run(parsed.WalkLogPath, data?.Map, data?.Tiles, data?.Multis, _output);
                 }
 
                 return parsed.Mode == BotMode.SelfCheck ? BotSelfCheck.Run(_output) : RunWithSettings(parsed, data, interrupt);
@@ -131,6 +139,13 @@ namespace TheVerge.Bot
                     log.Info("Лог пакетов: " + packetLog.Path);
                 }
 
+                if (parsed.Lag.Enabled)
+                {
+                    log.Info("Симуляция пинга: от сервера " + parsed.Lag.IncomingDelayMs + " ±" + parsed.Lag.IncomingJitterMs +
+                             " мс, к серверу " + parsed.Lag.OutgoingDelayMs + " ±" + parsed.Lag.OutgoingJitterMs + " мс.");
+                }
+
+                var random = parsed.LagSeed.HasValue ? new Random(parsed.LagSeed.Value) : new Random();
                 var credentials = new LoginCredentials(settings.Login, settings.Password);
                 var login = new BotLogin(settings.Host, settings.Port, credentials, settings.Character, parsed.CreateCharacter)
                 {
@@ -138,8 +153,9 @@ namespace TheVerge.Bot
                     Reconnect = parsed.Reconnect,
                     Actions = parsed.Actions,
                     Data = data,
+                    Lag = parsed.Lag,
                 };
-                var code = new BotRunner(NewConnection, clock, log, packetLog?.Writer).Run(login, interrupt);
+                var code = new BotRunner(() => NewConnection(clock, parsed.Lag, random), clock, log, packetLog?.Writer).Run(login, interrupt);
                 return Exit(code, string.Empty);
             }
         }
@@ -162,8 +178,9 @@ namespace TheVerge.Bot
             return true;
         }
 
-        private static IConnection NewConnection() =>
-            new TcpConnection(ArrayPool<byte>.Shared, ClientLimits.ConnectTimeoutMs, ClientLimits.InboundQueueBytes);
+        private static IConnection NewConnection(IClock clock, LagSimulation lag, Random random) => new LaggedConnection(
+            new TcpConnection(ArrayPool<byte>.Shared, ClientLimits.ConnectTimeoutMs, ClientLimits.InboundQueueBytes),
+            clock, lag, random, ArrayPool<byte>.Shared);
 
         private int Exit(int code, string message)
         {

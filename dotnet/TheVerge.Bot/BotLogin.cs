@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TheVerge.Core.Diagnostics;
 using TheVerge.Core.Session;
 
 namespace TheVerge.Bot
@@ -38,6 +39,9 @@ namespace TheVerge.Bot
 
         /// <summary>Файлы данных из --data (для mapdump); null — не заданы.</summary>
         public BotWorldData? Data { get; set; }
+
+        /// <summary>Настройки симуляции задержки сети (--lag); null — не подключена.</summary>
+        public LagSimulation? Lag { get; set; }
 
         public string Endpoint => Host + ":" + Port;
     }

@@ -15,6 +15,7 @@ namespace TheVerge.Core.Diagnostics
         private int _incomingJitterMs = ClientLimits.LagSimulationDefaultJitterMs;
         private int _outgoingDelayMs = ClientLimits.LagSimulationDefaultDelayMs;
         private int _outgoingJitterMs = ClientLimits.LagSimulationDefaultJitterMs;
+        private int _pendingIncomingSpikeMs;
 
         public bool Enabled { get; set; }
 
@@ -47,6 +48,18 @@ namespace TheVerge.Core.Diagnostics
 
         /// <summary>Задержка пакетов к серверу; выключено — <see cref="LagSettings.None"/>.</summary>
         public LagSettings Outgoing => Enabled ? new LagSettings(_outgoingDelayMs, _outgoingJitterMs) : LagSettings.None;
+
+        /// <summary>Устроить разовый входящий всплеск лага: держать входящие пакеты <paramref name="durationMs"/> мс (в пределах лимита).</summary>
+        public void TriggerIncomingSpike(int durationMs) =>
+            _pendingIncomingSpikeMs = Math.Max(_pendingIncomingSpikeMs, ClampDelay(durationMs));
+
+        /// <summary>Забрать заказанный входящий всплеск, мс; 0 — всплеск не заказан.</summary>
+        public int TakeIncomingSpikeMs()
+        {
+            int spike = _pendingIncomingSpikeMs;
+            _pendingIncomingSpikeMs = 0;
+            return spike;
+        }
 
         private static int ClampDelay(int value) => Math.Min(Math.Max(value, 0), ClientLimits.LagSimulationMaxDelayMs);
 

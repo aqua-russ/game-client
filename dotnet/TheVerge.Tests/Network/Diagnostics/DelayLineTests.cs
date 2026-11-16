@@ -106,5 +106,21 @@ namespace TheVerge.Tests.Network.Diagnostics
 
             Assert.That(System.GC.GetAllocatedBytesForCurrentThread() - before, Is.EqualTo(0));
         }
+
+        [Test]
+        public void MinRelease_HoldsAllUntilDeadline_ReleasesBurstInOrder()
+        {
+            var line = new DelayLine<int>(new StepRandom(0));
+
+            line.Push(1, 1000, LagSettings.None, minReleaseMs: 1500);
+            line.Push(2, 1100, LagSettings.None, minReleaseMs: 1500);
+            line.Push(3, 1200, LagSettings.None, minReleaseMs: 1500);
+
+            Assert.That(line.TryPop(1499, out _), Is.False);
+            Assert.That(line.TryPop(1500, out var a), Is.True);
+            Assert.That(line.TryPop(1500, out var b), Is.True);
+            Assert.That(line.TryPop(1500, out var c), Is.True);
+            Assert.That((a, b, c), Is.EqualTo((1, 2, 3)));
+        }
     }
 }

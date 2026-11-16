@@ -1,5 +1,6 @@
 using System;
 using TheVerge.Core.Chat;
+using TheVerge.Core.Diagnostics;
 using TheVerge.Core.Items;
 using TheVerge.Core.Targeting;
 using TheVerge.Core.Ports;
@@ -42,7 +43,7 @@ namespace TheVerge.Bot
             Game = new GameSession(Flow.Progress, sessionSender, connector, clock);
             AccountHandlers.Register(dispatcher, Flow);
             SessionHandlers.Register(dispatcher, World, new ServerRequests(sessionSender), Game);
-            InWorld = CreateWorld(dispatcher, Session, clock, login.Data, log);
+            InWorld = CreateWorld(dispatcher, Session, clock, login.Data, login.Lag, log);
             World.PlayerConfirmed += Entities.Reset;
             World.PlayerConfirmed += ResetCombat;
             if (InWorld.Movement != null)
@@ -81,7 +82,8 @@ namespace TheVerge.Bot
         /// Мир и действия в нём (PLAN Стадии 2–4): обработчики пакетов мира, движения (только с файлами данных), контейнеров,
         /// прицела, состояния мобов.
         /// </summary>
-        private static BotWorld CreateWorld(PacketDispatcher dispatcher, NetworkSession session, IClock clock, BotWorldData? data, ILog log)
+        private static BotWorld CreateWorld(PacketDispatcher dispatcher, NetworkSession session, IClock clock, BotWorldData? data,
+            LagSimulation? lag, ILog log)
         {
             var entities = new EntityStore();
             var environment = new WorldEnvironment();
@@ -110,6 +112,7 @@ namespace TheVerge.Bot
                 Corpses = corpses,
                 Movement = movement,
                 Others = new BotOthers(others, entities),
+                Lag = lag,
             };
         }
 
@@ -170,6 +173,7 @@ namespace TheVerge.Bot
                 InWorld.Environment.SoundPlayed -= InWorld.Combat.Log.OnSound;
             }
 
+            InWorld.Movement?.Dispose();
             InWorld.Others?.Dispose();
             Session.Dispose();
         }

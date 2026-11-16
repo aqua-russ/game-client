@@ -21,6 +21,7 @@ namespace TheVerge.Bot
         private readonly BotWorld _world;
         private readonly ILog _log;
         private readonly RandomWalkRequest _request;
+        private readonly PaceTracker _pace;
         private readonly Random _random;
         private readonly Direction[] _choices = new Direction[8];
         private PlayerMotion? _motion;
@@ -34,10 +35,11 @@ namespace TheVerge.Bot
         private int _runs;
         private int _walks;
 
-        public RandomWalkStep(BotWorld world, ILog log, string argument)
+        public RandomWalkStep(BotWorld world, ILog log, IClock clock, string argument)
         {
             _world = world;
             _log = log;
+            _pace = new PaceTracker(clock);
             RandomWalkRequest.TryParse(argument, out _request);
             _random = new Random(_request.Seed);
         }
@@ -83,12 +85,19 @@ namespace TheVerge.Bot
                 return false;
             }
 
+            _pace.Stop();
             _log.Info(Report(movement));
+            if (_pace.HasTempo)
+            {
+                _log.Info(_pace.Describe());
+            }
+
             return true;
         }
 
         public void Finish()
         {
+            _pace.Stop();
             Hold(_world.Movement?.Intent, MoveKeys.None);
             if (_motion != null)
             {
@@ -99,6 +108,7 @@ namespace TheVerge.Bot
         private void Start(BotMovement movement)
         {
             _motion = movement.Motion;
+            _pace.Start(_motion);
             _motion.Moved += OnMoved;
             _sentBefore = _motion.MovesSent;
             _rejectsBefore = movement.Replies.RejectCount;

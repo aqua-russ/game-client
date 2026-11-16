@@ -20,6 +20,7 @@ namespace TheVerge.Bot
         private readonly ILog _log;
         private readonly IClock _clock;
         private readonly GotoRequest _request;
+        private readonly PaceTracker _pace;
         private MoveKeys _held;
         private bool _started;
         private int _sentBefore;
@@ -33,6 +34,7 @@ namespace TheVerge.Bot
             _world = world;
             _log = log;
             _clock = clock;
+            _pace = new PaceTracker(clock);
             GotoRequest.TryParse(argument, out _request);
         }
 
@@ -78,14 +80,25 @@ namespace TheVerge.Bot
                 return false;
             }
 
+            _pace.Stop();
             _log.Info(Report(movement));
+            if (_pace.HasTempo)
+            {
+                _log.Info(_pace.Describe());
+            }
+
             return true;
         }
 
-        public void Finish() => Hold(_world.Movement?.Intent, MoveKeys.None);
+        public void Finish()
+        {
+            _pace.Stop();
+            Hold(_world.Movement?.Intent, MoveKeys.None);
+        }
 
         private void Start(BotMovement movement, Point3D position)
         {
+            _pace.Start(movement.Motion);
             if (movement.Intent.IsRunning != _request.Run)
             {
                 movement.Intent.ToggleRun();

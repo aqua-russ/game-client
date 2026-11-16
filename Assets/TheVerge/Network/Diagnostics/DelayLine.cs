@@ -26,10 +26,13 @@ namespace TheVerge.Network.Diagnostics
         /// <summary>Сколько элементов ждёт своего срока.</summary>
         public int Count => _queue.Count;
 
-        /// <summary>Элемент пришёл в момент <paramref name="now"/>; его задержка — по <paramref name="lag"/>.</summary>
-        public void Push(T item, long now, LagSettings lag)
+        /// <summary>
+        /// Элемент пришёл в момент <paramref name="now"/>; его задержка — по <paramref name="lag"/>, но не раньше
+        /// <paramref name="minReleaseMs"/> (для разовых всплесков лага).
+        /// </summary>
+        public void Push(T item, long now, LagSettings lag, long minReleaseMs = 0)
         {
-            long release = Math.Max(now + lag.SampleMs(_random), _lastReleaseMs);
+            long release = Math.Max(Math.Max(now + lag.SampleMs(_random), _lastReleaseMs), minReleaseMs);
             _lastReleaseMs = release;
             _queue.Enqueue(new Entry(item, release));
         }

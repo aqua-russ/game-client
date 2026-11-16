@@ -1,4 +1,5 @@
 using TheVerge.Core.Chat;
+using TheVerge.Core.Diagnostics;
 using TheVerge.Core.Items;
 using TheVerge.Core.Targeting;
 using TheVerge.Core.World;
@@ -49,5 +50,8 @@ namespace TheVerge.Bot
 
         /// <summary>Показ шагов чужих мобов и что бот по нему видел (Стадия 3, п. 8); null — не подключён (тесты).</summary>
         public BotOthers? Others { get; init; }
+
+        /// <summary>Настройки симуляции задержки сети для всплесков (Стадия 3, п. 12); null — не подключены.</summary>
+        public LagSimulation? Lag { get; init; }
     }
 }

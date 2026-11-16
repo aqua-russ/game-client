@@ -162,7 +162,11 @@ namespace TheVerge.Bot
                 case BotActionKind.Resync:
                     return new ResyncStep(_world, _log);
                 case BotActionKind.RandomWalk:
-                    return new RandomWalkStep(_world, _log, action.Argument);
+                    return new RandomWalkStep(_world, _log, _clock, action.Argument);
+                case BotActionKind.WaitSteps:
+                    return new WaitStepsStep(_world, _log, action.Argument);
+                case BotActionKind.LagSpike:
+                    return new LagSpikeStep(_world, _log, _clock, action.Argument);
                 default:
                     return new OpenBackpackStep(_world, _log);
             }
