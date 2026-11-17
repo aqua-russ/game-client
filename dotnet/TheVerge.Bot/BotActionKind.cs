@@ -71,6 +71,8 @@ namespace TheVerge.Bot
         Mounted,
         /// <summary>goto:x,y,run|walk — дойти до клетки по диагонали и прямой (Стадия 3, п. 10, нужен --data).</summary>
         Goto,
+        /// <summary>path:x,y[,z],run|walk — дойти до клетки с обходом препятствий по A* (Стадия 3, п. 11, нужен --data).</summary>
+        Path,
         /// <summary>blocked:&lt;направление&gt; — впереди преграда: клиент не пускает, шаг не уходит.</summary>
         Blocked,
         /// <summary>resync — спросить сервер, где персонаж (0x22 → 0x20), и сверить с предсказанием клиента.</summary>

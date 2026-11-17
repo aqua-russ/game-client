@@ -157,6 +157,8 @@ namespace TheVerge.Bot
                     return new MountedStep(_world, _log);
                 case BotActionKind.Goto:
                     return new GotoStep(_world, _log, _clock, action.Argument);
+                case BotActionKind.Path:
+                    return new PathStep(_world, _log, _clock, action.Argument);
                 case BotActionKind.Blocked:
                     return new BlockedStep(_world, _log, _clock, action.Argument);
                 case BotActionKind.Resync:

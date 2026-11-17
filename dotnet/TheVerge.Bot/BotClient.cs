@@ -121,10 +121,11 @@ namespace TheVerge.Bot
             BotWorldData data, IClock clock, ILog log)
         {
             var sender = new MovementSender(session);
-            var motion = new PlayerMotion(entities, new MovementCheck(data.Map, data.Tiles, data.Multis, entities), sender);
+            var check = new MovementCheck(data.Map, data.Tiles, data.Multis, entities);
+            var motion = new PlayerMotion(entities, check, sender);
             var replies = new MovementReplies(motion, sender, log);
             MovementHandlers.Register(dispatcher, replies);
-            return new BotMovement(motion, replies, clock);
+            return new BotMovement(motion, replies, clock, check);
         }
 
         /// <summary>Новый вход: стойку и противника сервер пришлёт заново, журнал боя — с чистого листа.</summary>

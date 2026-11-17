@@ -120,6 +120,8 @@ namespace TheVerge.Bot
                     return BotActionKind.Mounted;
                 case "goto" when GotoRequest.TryParse(argument, out _):
                     return BotActionKind.Goto;
+                case "path" when PathRequest.TryParse(argument, out _):
+                    return BotActionKind.Path;
                 case "blocked" when CompassDirection.TryParse(argument, out _):
                     return BotActionKind.Blocked;
                 case "resync" when argument.Length == 0:

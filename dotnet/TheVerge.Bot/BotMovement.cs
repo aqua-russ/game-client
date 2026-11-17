@@ -12,10 +12,11 @@ namespace TheVerge.Bot
     /// </summary>
     public sealed class BotMovement : IDisposable
     {
-        public BotMovement(PlayerMotion motion, MovementReplies replies, IClock clock)
+        public BotMovement(PlayerMotion motion, MovementReplies replies, IClock clock, MovementCheck? check = null)
         {
             Motion = motion;
             Replies = replies;
+            Check = check;
             Intent = new MoveIntent(clock, CameraLayout.NorthUp);
             Pacer = new StepPacer(Intent, motion);
             Stats = new MovementStats(motion, replies, clock);
@@ -24,6 +25,8 @@ namespace TheVerge.Bot
         public PlayerMotion Motion { get; }
 
         public MovementReplies Replies { get; }
+
+        public MovementCheck? Check { get; }
 
         public MoveIntent Intent { get; }
 

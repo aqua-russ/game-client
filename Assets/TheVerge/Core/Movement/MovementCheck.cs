@@ -26,6 +26,10 @@ namespace TheVerge.Core.Movement
             _surface = new MovementSurface(mapData, tileData, multiData, entities);
         }
 
+        public int MapWidth => _map.Width;
+
+        public int MapHeight => _map.Height;
+
         public bool CheckMovement(Point3D loc, Direction direction, out int newZ) =>
             CheckMovement(loc, direction, MoverState.Player(), out newZ);
 
